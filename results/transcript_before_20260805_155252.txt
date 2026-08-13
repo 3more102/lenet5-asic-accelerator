@@ -1,0 +1,6 @@
+# ** Note: (vish-4074) File C:\Users\omar\Downloads\DR.Rania\LeNet5_ASIC_Project\vsim.wlf is still open, viewing file in live viewing mode.
+# 
+# C:\Users\omar\Downloads\DR.Rania\LeNet5_ASIC_Project\vsim.wlf opened as dataset "vsim"
+add wave -r /*
+wave zoom full
+# {0 ps} {11865 ns}

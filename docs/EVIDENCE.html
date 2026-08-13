@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeNet-5 ASIC — Visual Evidence Walkthrough</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --panel: #f7f9fb;
+    --panel-2: #eef2f6;
+    --ink: #16181d;
+    --ink-2: #3d4450;
+    --ink-3: #5a6472;
+    --line: #d7dde5;
+    --line-2: #c3c9d2;
+    --accent: #2f4f7a;
+    --accent-soft: #dce7f5;
+    --good: #2c6e49;
+    --good-soft: #e2eee0;
+    --warn: #8a5a1e;
+    --warn-soft: #f5e9d8;
+    --mono: Consolas, "Cascadia Mono", "SF Mono", Menlo, monospace;
+    --sans: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a;
+      --panel: #1b1e24;
+      --panel-2: #232730;
+      --ink: #e8ecf1;
+      --ink-2: #c3cad4;
+      --ink-3: #949dab;
+      --line: #2e3440;
+      --line-2: #3a4150;
+      --accent: #8fb3e0;
+      --accent-soft: #1e2937;
+      --good: #7fc79a;
+      --good-soft: #1c2a22;
+      --warn: #d9ac6e;
+      --warn-soft: #2b2418;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a; --panel: #1b1e24; --panel-2: #232730;
+    --ink: #e8ecf1; --ink-2: #c3cad4; --ink-3: #949dab;
+    --line: #2e3440; --line-2: #3a4150;
+    --accent: #8fb3e0; --accent-soft: #1e2937;
+    --good: #7fc79a; --good-soft: #1c2a22;
+    --warn: #d9ac6e; --warn-soft: #2b2418;
+  }
+  :root[data-theme="light"] {
+    --bg: #ffffff; --panel: #f7f9fb; --panel-2: #eef2f6;
+    --ink: #16181d; --ink-2: #3d4450; --ink-3: #5a6472;
+    --line: #d7dde5; --line-2: #c3c9d2;
+    --accent: #2f4f7a; --accent-soft: #dce7f5;
+    --good: #2c6e49; --good-soft: #e2eee0;
+    --warn: #8a5a1e; --warn-soft: #f5e9d8;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.6;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px 72px; }
+
+  header.top {
+    border-bottom: 1px solid var(--line);
+    padding: 40px 0 26px; margin-bottom: 30px;
+  }
+  header.top h1 { font-size: 1.85rem; line-height: 1.25; margin: 0 0 10px; letter-spacing: -0.4px; }
+  header.top .sub { color: var(--ink-3); font-size: 0.95rem; margin: 0; }
+  .lede {
+    background: var(--panel); border-left: 3px solid var(--accent);
+    padding: 16px 18px; margin: 22px 0 0; border-radius: 0 4px 4px 0;
+    color: var(--ink-2); font-size: 0.97rem;
+  }
+
+  nav.toc {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 14px 18px; margin: 0 0 40px;
+  }
+  nav.toc h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--ink-3); margin: 0 0 9px; font-weight: 600; }
+  nav.toc ol { margin: 0; padding-left: 20px; column-gap: 34px; }
+  nav.toc li { margin: 3px 0; font-size: 0.92rem; }
+  nav.toc a { color: var(--accent); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+  @media (min-width: 720px) { nav.toc ol { columns: 2; } }
+
+  section.shot { margin: 0 0 60px; scroll-margin-top: 20px; }
+  section.shot > h2 {
+    font-size: 1.28rem; margin: 0 0 4px; letter-spacing: -0.2px;
+    padding-bottom: 8px; border-bottom: 2px solid var(--ink);
+  }
+  section.shot > h2 .tag {
+    display: inline-block; background: var(--accent-soft); color: var(--accent);
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
+    padding: 3px 8px; border-radius: 3px; margin-right: 10px;
+    vertical-align: 2px; font-family: var(--mono);
+  }
+  .claim { color: var(--ink-3); font-size: 0.93rem; margin: 8px 0 16px; font-style: italic; }
+
+  .cmd {
+    font-family: var(--mono); font-size: 0.86rem;
+    background: #1e222a; color: #e8ecf1;
+    padding: 9px 13px; border-radius: 4px; margin: 0 0 14px;
+    overflow-x: auto; white-space: pre;
+  }
+  .cmd::before { content: "$ "; color: #7f8b9c; }
+
+  figure { margin: 0 0 18px; }
+  figure img {
+    width: 100%; height: auto; display: block;
+    border: 1px solid var(--line-2); border-radius: 5px;
+    background: #000;
+  }
+
+  h3 { font-size: 0.98rem; margin: 22px 0 8px; color: var(--ink); }
+  h3::before { content: ""; display: inline-block; width: 3px; height: 0.85em;
+    background: var(--accent); margin-right: 8px; vertical-align: -1px; border-radius: 2px; }
+  p { margin: 0 0 12px; color: var(--ink-2); }
+  ul { margin: 0 0 12px; padding-left: 22px; color: var(--ink-2); }
+  li { margin-bottom: 7px; }
+  code {
+    font-family: var(--mono); font-size: 0.86em;
+    background: var(--panel-2); padding: 1px 5px; border-radius: 3px;
+    color: var(--ink);
+  }
+  b, strong { color: var(--ink); }
+
+  table { width: 100%; border-collapse: collapse; margin: 0 0 14px; font-size: 0.89rem; }
+  th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); font-weight: 600; }
+  td.num, th.num { text-align: right; white-space: nowrap; font-family: var(--mono); }
+  tbody tr:nth-child(even) td { background: var(--panel); }
+
+  .note {
+    border: 1px solid var(--line-2); border-left: 3px solid var(--good);
+    background: var(--good-soft); padding: 13px 16px; margin: 0 0 14px;
+    border-radius: 0 4px 4px 0; font-size: 0.93rem;
+  }
+  .note.caution { border-left-color: var(--warn); background: var(--warn-soft); }
+  .note .h { font-weight: 700; display: block; margin-bottom: 4px; color: var(--ink); }
+
+  .scroll { overflow-x: auto; }
+
+  footer {
+    border-top: 1px solid var(--line); margin-top: 20px; padding-top: 22px;
+    color: var(--ink-3); font-size: 0.88rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>LeNet-5 ASIC Convolution Accelerator<br>Visual Evidence Walkthrough</h1>
+  <p class="sub">Seven captured screens, in the order you should present them &middot; verified against the logs on 2026-08-08</p>
+  <div class="lede">
+    Each section below shows one screenshot and then reads it line by line: what
+    the command was, what is actually visible on screen, what to point at, and
+    what it does and does not prove.
+    The sequence is deliberate — it climbs from <i>&ldquo;we read the paper
+    correctly&rdquo;</i> to <i>&ldquo;a real synthesizer accepted the gates.&rdquo;</i>
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>The seven screens</h2>
+  <ol>
+    <li><a href="#a1">The canonical paper model is correct</a></li>
+    <li><a href="#a2">The oracle is unit-tested before it is trusted</a></li>
+    <li><a href="#a3">Full open-source regression — Icarus Verilog 12.0</a></li>
+    <li><a href="#a4">The same verdicts in a commercial simulator</a></li>
+    <li><a href="#a5">The waveform — handshake, backpressure, tagged output</a></li>
+    <li><a href="#a6">Real synthesis, real gates — Yosys 0.52</a></li>
+    <li><a href="#a7">Where the cycle count comes from</a></li>
+  </ol>
+</nav>
+
+<!-- ============================== A1 ============================== -->
+<section class="shot" id="a1">
+  <h2><span class="tag">A1</span>The canonical paper model is correct</h2>
+  <p class="claim">Proves: we implemented LeCun 1998, not something loosely inspired by it.</p>
+
+  <div class="cmd">python golden/run_lenet5_demo.py</div>
+
+  <figure>
+    <img src="screenshots/01_canonical_model.png"
+         alt="Console output listing the LeNet-5 layer shape chain C1 to F6 with per-layer parameter counts, ten RBF scores, and a demo prediction of 0">
+  </figure>
+
+  <h3>What is on screen</h3>
+  <p>
+    The float64 reference network in <code>golden/lenet5.py</code> runs one forward
+    pass and prints the shape and trainable-parameter count of every layer, then the
+    ten Euclidean-RBF output scores, then its predicted class.
+  </p>
+
+  <h3>What to point at — the parameter column, not the shapes</h3>
+  <p>
+    Anyone can produce the right tensor shapes. The parameter counts are the part
+    that only comes out right if the architecture is right, and every one of them
+    decomposes:
+  </p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Layer</th><th>Shape</th><th class="num">Params</th><th>Where the number comes from</th></tr></thead>
+    <tbody>
+      <tr><td>C1</td><td>(6, 28, 28)</td><td class="num">156</td><td>6 maps &times; (5&times;5 kernel + 1 bias) = 6 &times; 26</td></tr>
+      <tr><td>S2</td><td>(6, 14, 14)</td><td class="num">12</td><td>6 maps &times; (1 trainable coefficient + 1 bias)</td></tr>
+      <tr><td>C3</td><td>(16, 10, 10)</td><td class="num">1,516</td><td><b>60</b> connections &times; 25 + 16 biases = 1,500 + 16</td></tr>
+      <tr><td>S4</td><td>(16, 5, 5)</td><td class="num">32</td><td>16 maps &times; 2</td></tr>
+      <tr><td>C5</td><td>(120, 1, 1)</td><td class="num">48,120</td><td>120 &times; (16&times;25 + 1) = 120 &times; 401</td></tr>
+      <tr><td>F6</td><td>(84,)</td><td class="num">10,164</td><td>84 &times; (120 + 1) = 84 &times; 121</td></tr>
+      <tr><td colspan="2"><b>Total</b></td><td class="num"><b>60,000</b></td><td>the figure quoted in the paper</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="h">The single best line to point at: C3 = 1,516</span>
+    This one number <em>is</em> the proof of the sparse connection table. A fully
+    connected C3 would be 16 &times; 6 &times; 25 + 16 = <b>2,416</b> parameters. Getting
+    1,516 means exactly <b>60</b> of the 96 possible channel pairs are wired — LeCun's
+    Table I, reproduced. If someone doubts the sparsity was implemented rather than
+    just described, this is the answer, and it is on screen already.
+  </div>
+
+  <h3>Reading the RBF scores</h3>
+  <p>
+    <code>RBF scores: [83.5219 88.2647 84.5042 87.2701 83.6658 83.9099 84.4934
+    85.1584 85.1243 84.6251]</code>. RBF outputs are <b>Euclidean distances to class
+    prototypes</b>, so the network picks the <b>smallest</b>, not the largest. The
+    minimum is 83.5219 at index 0 — which is precisely the
+    <code>Demo prediction: 0</code> printed underneath. The screen is internally
+    consistent, and you can walk the examiner through that in ten seconds.
+  </p>
+
+  <div class="note caution">
+    <span class="h">Expect this question: &ldquo;why does this say 0 when your RTL says class 6?&rdquo;</span>
+    Because they are two different models, on purpose. <b>This</b> screen is the
+    float64 / scaled-tanh / RBF <em>paper</em> network. The RTL implements the int8 /
+    ReLU / dense+argmax <em>deployment</em> network, whose oracle is
+    <code>golden/deploy.py</code>. They are not required to agree, and with untrained
+    weights neither prediction means anything about digit recognition. Say so before
+    you are asked — volunteering it reads as rigour, conceding it later reads as a
+    patch.
+  </div>
+
+  <h3>What this does not prove</h3>
+  <p>
+    Nothing about the hardware, and nothing about accuracy. The weights here are
+    deterministic-random. This screen establishes one thing only, and establishes it
+    completely: the architecture is the paper's architecture.
+  </p>
+</section>
+
+<!-- ============================== A2 ============================== -->
+<section class="shot" id="a2">
+  <h2><span class="tag">A2</span>The oracle is unit-tested before it is trusted</h2>
+  <p class="claim">Answers the sharpest question in the review: &ldquo;you checked RTL against a Python model — how do you know the <em>model</em> is right?&rdquo;</p>
+
+  <div class="cmd">wsl -e make golden-test</div>
+
+  <figure>
+    <img src="screenshots/02_golden_tests.png"
+         alt="Python unittest output listing individually named golden-model tests each marked ok, ending in Ran 15 tests in 0.131s and OK">
+  </figure>
+
+  <h3>What is on screen</h3>
+  <p>
+    Verbose <code>unittest</code> output: every test named in full, each ending
+    <code>... ok</code>, closing with <b><code>Ran 15 tests in 0.113s</code></b> and
+    <b><code>OK</code></b>.
+  </p>
+
+  <h3>Why the test <em>names</em> are the argument</h3>
+  <p>
+    Do not just say &ldquo;15 tests pass&rdquo; — a green bar proves nothing about what
+    was checked. Read three names off the screen instead, because each one closes a
+    specific way the oracle could be silently wrong:
+  </p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Test visible on screen</th><th>The failure it rules out</th></tr></thead>
+    <tbody>
+      <tr><td><code>test_hand_calculated_convolution</code></td><td>The convolution is checked against arithmetic worked out <b>by hand</b> — not against another NumPy call that could share the same bug.</td></tr>
+      <tr><td><code>test_requantize_rounding_and_saturation</code></td><td>Pins the exact fixed-point rule: round half away from zero, ReLU, <em>then</em> saturate. This is the contract that makes bit-exact RTL comparison possible at all.</td></tr>
+      <tr><td><code>test_c3_table_has_60_connections</code></td><td>Asserts the paper's sparse table numerically, so a typo in the mask cannot pass unnoticed.</td></tr>
+      <tr><td><code>test_argmax_classifier_tie_breaks_to_lowest_index</code></td><td>Two equal top scores resolve deterministically to the lower index — an ambiguity that would otherwise differ between Python and RTL.</td></tr>
+      <tr><td><code>test_dense_rejects_incompatible_shapes</code></td><td>Negative testing: the model raises rather than broadcasting silently.</td></tr>
+      <tr><td><code>test_disconnected_channel_is_ignored</code></td><td>A masked-off C3 channel pair contributes nothing — sparsity is enforced, not decorative.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="h">The sentence to say out loud</span>
+    <i>&ldquo;Before we trusted the oracle we unit-tested it against hand arithmetic and
+    against the paper's own table. Each verification layer catches a class of error
+    the layer below it cannot: the unit tests catch a wrong model, the testbenches
+    catch wrong RTL, the second simulator catches a tool artifact, and synthesis
+    catches RTL that simulates but cannot be built.&rdquo;</i>
+  </div>
+</section>
+
+<!-- ============================== A3 ============================== -->
+<section class="shot" id="a3">
+  <h2><span class="tag">A3</span>Full open-source regression — Icarus Verilog 12.0</h2>
+  <p class="claim">Proves: all eight self-checking testbenches pass, end to end, in a freely reproducible toolchain.</p>
+
+  <div class="cmd">wsl -e bash scripts/regression_summary.sh</div>
+
+  <figure>
+    <img src="screenshots/03_icarus_regression.png"
+         alt="Console output of the Icarus regression summary showing Ran 15 tests, OK, and eight PASS lines ending with tb_lenet5_top">
+  </figure>
+
+  <h3>What is on screen</h3>
+  <p>
+    The wrapper script runs the entire <code>make regression</code> target — Python
+    unit tests, lint/elaboration, all eight RTL testbenches and the canonical demo —
+    then prints <b>only the verdict lines</b>, so the whole result fits on one screen
+    instead of scrolling past thousands of compile lines. The full transcript stays
+    in <code>results/regression_summary.log</code>.
+  </p>
+
+  <h3>The eight lines, and what each one is actually checking</h3>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>PASS line</th><th>What it verifies</th></tr></thead>
+    <tbody>
+      <tr><td><code>tb_conv5x5_pe</code></td><td>accumulation, bias injection and backpressure at the processing-element level</td></tr>
+      <tr><td><code>tb_lenet5_c3_connectivity</code></td><td>the exact 60-connection table, asserted in RTL</td></tr>
+      <tr><td><code>tb_conv2d_engine</code></td><td><b>48 outputs</b> matched the Python golden model, pixel for pixel</td></tr>
+      <tr><td><code>tb_avg_pool2x2_stream</code></td><td>12 pooled outputs matched the model</td></tr>
+      <tr><td><code>tb_dense_engine</code></td><td>5 dense outputs matched the model (F6 configuration)</td></tr>
+      <tr><td><code>tb_classifier_argmax</code></td><td>predicted class 3 matched the model</td></tr>
+      <tr><td><code>tb_classifier_argmax_tie</code></td><td>a tied maximum resolved to the lowest index</td></tr>
+      <tr><td><code>tb_lenet5_top</code></td><td><b>predicted class 6, bit-exact against <code>golden/deploy.py</code> end to end</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    Every one of these is <b>self-checking</b>: the testbench computes its expected
+    result from the oracle and calls <code>$fatal</code> on mismatch. There is no
+    eyeballed waveform anywhere in the pass/fail path — the waveform in A5 is for
+    <em>explaining</em> the design, not for judging it.
+  </p>
+
+  <h3>Two details worth pre-empting</h3>
+  <ul>
+    <li>
+      <b>The last line is the one to point at.</b>
+      <code>8/8 RTL testbenches passed -- full log in results/regression_summary.log</code>
+      is not a hand-written banner: the script counts the <code>PASS</code> lines it
+      actually found in the log. If a testbench had failed, or had not run at all, the
+      count would not read 8 — so the summary cannot flatter the result.
+    </li>
+    <li>
+      <b>The run takes a few minutes</b>, dominated by <code>tb_lenet5_top</code>,
+      which simulates <b>202,866 cycles</b>. A watchdog fires <code>$fatal</code> at
+      600,000 cycles, so the test finishes inside <b>34%</b> of its budget — a hang
+      cannot masquerade as a pass. Screen A7 shows that arithmetic being derived from
+      the simulator's own timestamp.
+    </li>
+  </ul>
+</section>
+
+<!-- ============================== A4 ============================== -->
+<section class="shot" id="a4">
+  <h2><span class="tag">A4</span>The same verdicts in a commercial simulator</h2>
+  <p class="claim">Proves: the results are not an artifact of one particular tool.</p>
+
+  <div class="cmd">.\scripts\run_modelsim.ps1</div>
+
+  <figure>
+    <img src="screenshots/04_modelsim_regression.png"
+         alt="PowerShell output showing per-testbench vector shapes then PASS: all ModelSim/Questa regressions completed">
+  </figure>
+
+  <h3>What is on screen</h3>
+  <p>
+    Three things stacked on one screen. First <code>golden/generate_vectors.py</code>
+    writes the stimulus <em>and</em> the expected results for every testbench, echoing
+    the configuration of each as it goes. Then ModelSim/Questa Intel FPGA Edition
+    10.5b replays all eight testbenches, finishing on
+    <b><code>PASS: all ModelSim/Questa regressions completed</code></b>. Finally the
+    eight <code>#&nbsp;PASS</code> verdicts are pulled back out of ModelSim's own
+    transcript, so the individual results and the completion banner are visible
+    together rather than one scrolling away above the other.
+  </p>
+  <p>
+    The closing line carries the compile evidence too:
+    <b><code>8/8 testbenches PASS; '# Errors: 0, Warnings: 0' on all 9
+    compile/sim steps</code></b>. That is the &ldquo;0 errors, 0 warnings across all 14
+    RTL and 8 testbench files&rdquo; claim from page 1 of the presentation guide, shown
+    rather than asserted.
+  </p>
+
+  <h3>Those five configuration lines are more useful than they look</h3>
+  <p>
+    They are not decoration — they are where the headline numbers come from, and two
+    of them tie directly to other screens:
+  </p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Line on screen</th><th>What it tells you</th></tr></thead>
+    <tbody>
+      <tr><td><code>conv2d_engine: 3x7x8 -&gt; 4x3x4</code></td><td>3 input channels &times; 7 rows &times; 8 cols in, 4 output channels &times; 3 &times; 4 out. <b>4 &times; 3 &times; 4 = 48</b> — this is the origin of &ldquo;48/48 outputs matched&rdquo;.</td></tr>
+      <tr><td><code>pool: 2x4x6 -&gt; 2x2x3</code></td><td>2&times;2 average pooling halves both spatial dimensions: 2 &times; 2 &times; 3 = 12 outputs.</td></tr>
+      <tr><td><code>dense_engine (F6 config): 10 -&gt; 5</code></td><td>A reduced dense layer, 5 outputs — enough to exercise the 8-lane datapath and its reduction tree.</td></tr>
+      <tr><td><code>classifier_argmax: 6 -&gt; 4 classes, winner=3</code></td><td>Matches <code>PASS tb_classifier_argmax: predicted class 3</code> in A3. Same number, two simulators.</td></tr>
+      <tr><td><code>lenet5_top: 1x32x32 -&gt; class 6</code></td><td>The full canonical input, one channel, 32&times;32 — and the same <b>class 6</b> the Icarus run reports. This is the cross-simulator agreement, visible on one line.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="h">The argument this screen makes</span>
+    <i>&ldquo;Two independent simulators — one open source, one commercial — produce
+    identical verdicts on identical stimulus. That rules out a tool-specific
+    artifact.&rdquo;</i> Then, if you want the strongest version:
+    <i>&ldquo;What it cannot rule out is a </i>simulation<i> artifact — code that every
+    simulator accepts but no synthesizer will build. That took a third tool, which is
+    screen A6.&rdquo;</i>
+  </div>
+
+  <div class="note caution">
+    <span class="h">The one honest caveat on this screen</span>
+    The eight <code>#&nbsp;PASS</code> lines are read back from ModelSim's
+    <code>transcript</code> file after the run, not printed live by the run itself —
+    the command line says so explicitly. That is a presentation convenience, not a
+    result being manufactured: the same eight verdicts, with their
+    <code>#&nbsp;Errors: 0, Warnings: 0</code> summaries, are preserved verbatim in
+    <code>results/modelsim_run.log</code>. If anyone asks to see the raw run, open that
+    file. Note also that the project-root <code>transcript</code> is overwritten by
+    whatever ModelSim command ran last — the durable copy is the one in
+    <code>results/</code>.
+  </div>
+</section>
+
+<!-- ============================== A5 ============================== -->
+<section class="shot" id="a5">
+  <h2><span class="tag">A5</span>The waveform — handshake, backpressure, tagged output</h2>
+  <p class="claim">Proves: the streaming interface behaves correctly under stress, not just on the happy path.</p>
+
+  <div class="cmd">vsim -gui -do scripts/demo_wave.do</div>
+
+  <figure>
+    <img src="screenshots/05_modelsim_waveform.png"
+         alt="ModelSim wave window for tb_conv2d_engine with grouped signals: control and status, output stream, activation load, weight and bias load, connectivity load">
+  </figure>
+
+  <h3>What is on screen</h3>
+  <p>
+    One command compiles the design, loads <code>tb_conv2d_engine</code>, applies a
+    curated and <b>grouped</b> signal set, runs to completion and zooms to fit — so
+    the window opens on a finished, readable simulation rather than a wall of
+    unsorted nets. The visible time range is <b>0 to 11,865 ns</b>, with the cursor
+    at 11,300 ns.
+  </p>
+
+  <h3>Read it in three passes</h3>
+
+  <p><b>Pass 1 &mdash; the handshake (CONTROL AND STATUS).</b>
+    <code>rst_n</code> releases, <code>start</code> pulses once, <code>busy</code>
+    rises and stays high through the compute, and at the cursor <code>done</code> = 1
+    with <code>busy</code> back to 0. Critically, <b><code>config_error</code> is flat
+    at 0 for the entire run</b> — the engine's guard against an illegal layer
+    configuration never fires. Point at that signal explicitly; it is the difference
+    between &ldquo;it finished&rdquo; and &ldquo;it finished for the right reason.&rdquo;
+  </p>
+
+  <p><b>Pass 2 &mdash; the load phases.</b> Before any arithmetic, three write-enable
+    bursts fill the activation, weight/bias and connectivity memories. The final
+    addresses on the left-hand value column are worth reading out, because each one
+    is exactly the configuration from screen A4 (<code>3x7x8 -&gt; 4x3x4</code>) minus
+    one:
+  </p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Signal</th><th class="num">Final address</th><th>Elements</th><th>Why that is the right number</th></tr></thead>
+    <tbody>
+      <tr><td><code>load_act_addr</code></td><td class="num">167</td><td class="num">168</td><td>3 channels &times; 7 rows &times; 8 cols</td></tr>
+      <tr><td><code>load_wgt_addr</code></td><td class="num">299</td><td class="num">300</td><td>4 out &times; 3 in &times; 25 taps</td></tr>
+      <tr><td><code>load_bias_addr</code></td><td class="num">3</td><td class="num">4</td><td>one bias per output channel</td></tr>
+      <tr><td><code>load_conn_addr</code></td><td class="num">11</td><td class="num">12</td><td>4 out &times; 3 in connectivity entries</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    All four are consistent with each other <em>and</em> with the console output in
+    A4. That is a cross-check between two independent screens, and it is the kind of
+    detail that makes a reviewer stop probing.
+  </p>
+
+  <p><b>Pass 3 &mdash; the output stream, and the deliberate cruelty.</b> This is the
+    part to spend time on. <code>out_valid</code> is a <b>gapped</b> burst rather than
+    a solid block, because the testbench drops <code>out_ready</code> on a fixed
+    pattern — <code>out_ready &lt;= ((cycle_count % 7) != 3)</code>, roughly one cycle
+    in seven refusing data. Despite that, <code>out_channel</code> steps cleanly
+    <b>0 &rarr; 1 &rarr; 2 &rarr; 3</b> while <code>out_y</code> and <code>out_x</code>
+    cycle beneath it, and all <b>48</b> tagged pixels arrive in order.
+  </p>
+
+  <div class="note">
+    <span class="h">Why this is the most persuasive screen in the set</span>
+    A stall is where streaming hardware usually breaks — it drops a sample, or it
+    replays one, or the coordinate tag slips out of step with the data. This waveform
+    shows the engine <b>stalling and holding</b> data <em>and</em> coordinates
+    together, under a stall pattern the testbench inflicts on purpose. It is evidence
+    of adversarial testing, not of a demo arranged to succeed.
+  </div>
+
+  <div class="note caution">
+    <span class="h">Do not overclaim the waveform</span>
+    The waveform is an <em>explanatory</em> artifact. The pass/fail decision was
+    already made by the self-checking testbench in A3/A4, which compares against the
+    oracle and <code>$fatal</code>s on mismatch. Say &ldquo;here is what the checker was
+    checking,&rdquo; never &ldquo;here is how we verified it.&rdquo; A reviewer who hears the
+    second version will ask whether anything was verified by eye.
+  </div>
+
+  <p style="color: var(--ink-3); font-size: 0.9rem;">
+    Toolchain note: an open-source equivalent exists —
+    <code>wsl -e gtkwave results/conv2d_engine.vcd</code> — so nothing in this screen
+    depends on holding a commercial licence.
+  </p>
+</section>
+
+<!-- ============================== A6 ============================== -->
+<section class="shot" id="a6">
+  <h2><span class="tag">A6</span>Real synthesis, real gates — Yosys 0.52</h2>
+  <p class="claim">Proves: the arithmetic RTL is genuinely buildable — and this step caught a bug both simulators missed.</p>
+
+  <div class="cmd">wsl -e bash scripts/synth_summary.sh</div>
+
+  <figure>
+    <img src="screenshots/06_yosys_synthesis.png"
+         alt="Yosys synthesis summary showing wire and cell counts for conv5x5_pe, avg_pool2x2_int8 and dense_row_mac">
+  </figure>
+
+  <h3>What is on screen</h3>
+  <p>
+    Generic synthesis of the three currently-synthesizable modules, reduced to the
+    headline figures. These are the exact numbers quoted on page 1 of the
+    presentation guide, so the guide is reproducible from the tool in one command:
+  </p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Module</th><th class="num">Wires</th><th class="num">Cells</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>conv5x5_pe</code> (+ <code>conv5x5_row_mac</code>, <code>requantize</code>)</td><td class="num">1,320</td><td class="num">4,727</td><td>41 flip-flops (40 <code>$_DFFE_PN0P_</code> + 1 <code>$_DFF_PN0_</code>)</td></tr>
+      <tr><td><code>avg_pool2x2_int8</code></td><td class="num">137</td><td class="num">303</td><td>purely combinational, no clock port</td></tr>
+      <tr><td><code>dense_row_mac</code></td><td class="num">1,175</td><td class="num">4,672</td><td>purely combinational, 8 lanes</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Where the gates actually go</h3>
+  <p>
+    The full log breaks the PE down, and being able to account for your own gate
+    count is the difference between quoting a tool and understanding it:
+  </p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Sub-block</th><th class="num">Cells</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>conv5x5_row_mac</code></td><td class="num">2,870</td><td>5 signed 8&times;8 multipliers + explicit two-level adder tree</td></tr>
+      <tr><td><code>requantize</code></td><td class="num">1,554</td><td>33-bit round-away-from-zero, ReLU, saturate</td></tr>
+      <tr><td><code>conv5x5_pe</code> glue</td><td class="num">305</td><td>accumulator control and bias injection</td></tr>
+      <tr><td><b>hierarchy total</b></td><td class="num"><b>4,727</b></td><td>the three sum to 4,729; cross-boundary optimisation accounts for the difference</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="h">Two observations that will impress, and both are derivable live</span>
+    <b>1. <code>dense_row_mac</code>'s 4,672 cells are not anomalous.</b> It has 8
+    lanes where <code>conv5x5_row_mac</code> has 5. That is 2,870 &divide; 5 &asymp;
+    <b>574 cells per multiplier</b>, so 8 &times; 574 &asymp; 4,592, plus one extra
+    reduction level &asymp; 4,672. The number falls straight out of the lane count.<br><br>
+    <b>2. <code>requantize</code> is a third of the PE — and it is the first thing we
+    would optimise.</b> <code>shift_i</code> is a runtime <code>[5:0]</code> input, so
+    Yosys must infer a full barrel shifter. Every layer actually uses
+    <b>shift = 7</b>. Fixing the shift at elaboration time would collapse most of
+    those 1,554 cells for zero functional change. Offer this when asked &ldquo;what
+    would you improve?&rdquo; — it is specific, measured, and it shows you read your own
+    synthesis report rather than just its last line.
+  </div>
+
+  <h3>The story this screen exists to tell</h3>
+  <p>
+    <code>dense_row_mac</code>'s original reduction tree used a procedural
+    <code>while</code> loop with a variable-stride <code>for</code> bound. It
+    <b>simulated correctly in both ModelSim and Icarus.</b> Yosys rejected it:
+    <i>2nd expression of procedural for-loop is not constant</i>. It was rebuilt as an
+    elaboration-time <code>generate</code>/<code>genvar</code> pairwise tree,
+    re-verified functionally identical in both simulators, and is now confirmed
+    synthesizable — which is why it appears on this screen at all.
+  </p>
+  <p>
+    Say: <i>&ldquo;This is why we insisted on running a real synthesizer instead of
+    assuming simulation equals hardware. A tool you have not run is a claim you have
+    not checked.&rdquo;</i>
+  </p>
+
+  <div class="note caution">
+    <span class="h">The boundary — state it before you are asked</span>
+    These are <b>technology-independent generic cell counts</b> from
+    <code>proc; opt; fsm; opt; memory; opt; techmap; opt</code>. <b>No PDK was
+    supplied</b>, so there is no standard-cell library, no timing arcs and no
+    capacitance model. That means <b>no</b> silicon area, <b>no</b> power, <b>no</b>
+    maximum frequency, <b>no</b> DRC/LVS/scan. A cell count is a complexity measure;
+    anyone quoting mm&sup2; or mW from this output is inventing it. Only three of the
+    fourteen modules are synthesized here because the other four controllers hold
+    behavioural ROM and scratch arrays that a production design replaces with compiled
+    SRAM macros — synthesizing those without a PDK would produce a meaningless pile of
+    inferred flip-flops.
+  </div>
+</section>
+
+<!-- ============================== A7 ============================== -->
+<section class="shot" id="a7">
+  <h2><span class="tag">A7</span>Where the cycle count comes from</h2>
+  <p class="claim">Proves: the headline performance number is derived from the simulator's own timestamp, not asserted.</p>
+
+  <div class="cmd">Select-String -Path transcript -Pattern 'tb_lenet5_top'</div>
+
+  <figure>
+    <img src="screenshots/07_end_to_end_cycles.png"
+         alt="Console output showing the tb_lenet5_top PASS line, ModelSim's finish time of 2028660 ns, and the conversion to 202,866 cycles at 100 MHz with watchdog margin">
+  </figure>
+
+  <h3>What is on screen</h3>
+  <p>
+    The end-to-end verdict together with the raw simulator timestamp that produced it:
+    <code>#&nbsp;Time: 2028660 ns&nbsp;&nbsp;Iteration: 1&nbsp;&nbsp;Instance:
+    /tb_lenet5_top</code>. Underneath, the arithmetic is spelled out rather than
+    left for the audience to trust.
+  </p>
+
+  <h3>The derivation, step by step</h3>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Step</th><th class="num">Value</th><th>Where it comes from</th></tr></thead>
+    <tbody>
+      <tr><td>Simulated time at <code>$finish</code></td><td class="num">2,028,660 ns</td><td>ModelSim's own timestamp — not a number we chose</td></tr>
+      <tr><td>Clock period</td><td class="num">10 ns</td><td>the stated 100 MHz reference</td></tr>
+      <tr><td>Cycles</td><td class="num">202,866</td><td>2,028,660 &divide; 10</td></tr>
+      <tr><td>Wall-clock equivalent</td><td class="num">2.03 ms</td><td>202,866 &times; 10 ns</td></tr>
+      <tr><td>Watchdog budget</td><td class="num">600,000</td><td><code>vectors/config.svh</code></td></tr>
+      <tr><td>Margin</td><td class="num">397,134</td><td>600,000 &minus; 202,866 — finished at 34% of budget</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="h">Why this screen is worth its slot</span>
+    &ldquo;202,866 cycles&rdquo; is the single most quotable number in the project, and it
+    is the one an examiner is most likely to ask you to justify. This screen answers
+    that before it is asked: the figure is a division performed on a timestamp the
+    simulator printed, with every intermediate value visible. There is nothing to take
+    on faith. It also shows the run finishing with <b>397,134 cycles of margin</b>
+    against the watchdog — so the pass is a real completion, not a test that ran out
+    of time in a way that happened to look successful.
+  </div>
+
+  <div class="note caution">
+    <span class="h">Two things this number is not</span>
+    <b>It is not a timing result.</b> 100 MHz is a <em>stated reference clock used for
+    unit conversion</em>. Cycles are what was measured; the millisecond figure is just
+    cycles &divide; 100 MHz. With no PDK there is no closed timing and therefore no
+    claimed maximum frequency.<br><br>
+    <b>It is not a throughput target.</b> 202,866 cycles &asymp; <b>493
+    inferences/second</b> is a deliberately non-overlapped verification baseline: every
+    stage runs to completion before the next begins, ROM loading is not overlapped with
+    compute, and the pooling and dense controllers are unpipelined. That simplicity is
+    what makes a bit-exact end-to-end golden comparison possible in the first place. If
+    challenged on the number, agree with the challenge and name the two fixes —
+    overlap ROM load with the previous stage's compute, and pipeline the controllers.
+  </div>
+</section>
+
+<footer>
+  <p>
+    <b>Sequence rationale.</b> A1 establishes the architecture, A2 establishes the
+    oracle, A3 and A4 establish the RTL in two independent simulators, A5 shows the
+    interface surviving deliberate stress, A6 shows a third tool — a synthesizer —
+    catching what neither simulator could, and A7 shows the headline number being
+    derived rather than claimed. Each screen closes a gap the previous one leaves
+    open, which is why presenting them out of order weakens all seven.
+  </p>
+  <p>
+    Companion document: <b>results/VERIFICATION_SUMMARY.md</b> (the written record).
+    All figures re-verified against <code>results/regression_summary.log</code>,
+    <code>results/modelsim_run.log</code> and <code>results/synth_summary.log</code> on
+    2026-08-08.
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

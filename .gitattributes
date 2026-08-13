@@ -1,0 +1,29 @@
+# Normalize everything to LF inside the repository; check out with the
+# platform's native endings except where a tool insists on one or the other.
+* text=auto
+
+Makefile    text eol=lf
+*.sh        text eol=lf
+*.ys        text eol=lf
+*.sdc       text eol=lf
+*.ps1       text eol=crlf
+
+*.png       binary
+*.pdf       binary
+*.wlf       binary
+*.vcd       binary
+*.vvp       binary
+
+# --- GitHub linguist ---
+# Without these the language bar reports this as an HTML/Python repo: the
+# presentation exports in docs/ are large, and vectors/ holds ~30 generated
+# hex dumps that would otherwise bloat every pull-request diff.
+*.sv        linguist-language=SystemVerilog
+*.svh       linguist-language=SystemVerilog
+*.do        linguist-language=Tcl
+*.ys        linguist-language=Tcl
+
+*.hex       linguist-generated=true
+vectors/**  linguist-generated=true
+docs/**     linguist-documentation=true
+results/**  linguist-documentation=true

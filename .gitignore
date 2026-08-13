@@ -1,0 +1,32 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# --- Icarus Verilog / open-source sim ---
+*.vvp
+*.vcd
+*.fst
+*.lxt
+
+# --- ModelSim / Questa ---
+work/
+transcript
+*.wlf
+*.vstf
+wlft*
+scripts/compile_error.txt
+
+# --- Yosys generic-synthesis netlists (regenerate with `make synth`) ---
+results/*.json
+
+# --- Build noise ---
+build_project.log
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

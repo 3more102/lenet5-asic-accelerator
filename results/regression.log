@@ -1,0 +1,49 @@
+PYTHONPATH=. /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest -v golden.test_golden
+test_average_pool_rounding (golden.test_golden.GoldenModelTests.test_average_pool_rounding) ... ok
+test_c3_table_has_60_connections (golden.test_golden.GoldenModelTests.test_c3_table_has_60_connections) ... ok
+test_canonical_shapes_and_parameter_total (golden.test_golden.GoldenModelTests.test_canonical_shapes_and_parameter_total) ... ok
+test_disconnected_channel_is_ignored (golden.test_golden.GoldenModelTests.test_disconnected_channel_is_ignored) ... ok
+test_hand_calculated_convolution (golden.test_golden.GoldenModelTests.test_hand_calculated_convolution) ... ok
+test_requantize_rounding_and_saturation (golden.test_golden.GoldenModelTests.test_requantize_rounding_and_saturation) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.029s
+
+OK
+/tmp/cnn-asic-tools/node_modules/foss-fpga-toolchain/prebuilds/bin/iverilog -g2012 -Wall -tnull -s conv2d_engine rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv
+rtl/conv2d_engine.sv:125: warning: @* is sensitive to all 16384 words in array 'act_mem'.
+rtl/conv2d_engine.sv:127: warning: @* is sensitive to all 48000 words in array 'wgt_mem'.
+rtl/conv2d_engine.sv:132: warning: @* is sensitive to all 1920 words in array 'conn_mem'.
+/tmp/cnn-asic-tools/node_modules/foss-fpga-toolchain/prebuilds/bin/iverilog -g2012 -Wall -tnull -s conv5x5_pe rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv
+/tmp/cnn-asic-tools/node_modules/foss-fpga-toolchain/prebuilds/bin/iverilog -g2012 -Wall -s tb_conv5x5_pe -o results/tb_pe.vvp \
+	rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv \
+	tb/tb_conv5x5_pe.sv
+/tmp/cnn-asic-tools/node_modules/foss-fpga-toolchain/prebuilds/bin/vvp -M /tmp/cnn-asic-tools/node_modules/foss-fpga-toolchain/prebuilds/lib/ivl results/tb_pe.vvp
+PASS tb_conv5x5_pe: accumulation, bias, and backpressure
+/tmp/cnn-asic-tools/node_modules/foss-fpga-toolchain/prebuilds/bin/iverilog -g2012 -Wall -s tb_lenet5_c3_connectivity \
+	-o results/tb_c3.vvp rtl/lenet5_c3_connectivity.sv \
+	tb/tb_lenet5_c3_connectivity.sv
+/tmp/cnn-asic-tools/node_modules/foss-fpga-toolchain/prebuilds/bin/vvp -M /tmp/cnn-asic-tools/node_modules/foss-fpga-toolchain/prebuilds/lib/ivl results/tb_c3.vvp
+PASS tb_lenet5_c3_connectivity: exact 60-connection table
+PYTHONPATH=. /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 golden/generate_vectors.py
+Generated 48 outputs from 3x7x8 -> 4x3x4
+/tmp/cnn-asic-tools/node_modules/foss-fpga-toolchain/prebuilds/bin/iverilog -g2012 -Wall -I. -s tb_conv2d_engine \
+	-o results/tb_engine.vvp rtl/conv5x5_row_mac.sv \
+	rtl/requantize.sv rtl/conv2d_engine.sv tb/tb_conv2d_engine.sv
+rtl/conv2d_engine.sv:125: warning: @* is sensitive to all 168 words in array 'act_mem'.
+rtl/conv2d_engine.sv:127: warning: @* is sensitive to all 300 words in array 'wgt_mem'.
+rtl/conv2d_engine.sv:132: warning: @* is sensitive to all 12 words in array 'conn_mem'.
+/tmp/cnn-asic-tools/node_modules/foss-fpga-toolchain/prebuilds/bin/vvp -M /tmp/cnn-asic-tools/node_modules/foss-fpga-toolchain/prebuilds/lib/ivl results/tb_engine.vvp
+VCD info: dumpfile results/conv2d_engine.vcd opened for output.
+PASS tb_conv2d_engine: 48 outputs matched the Python golden model
+PYTHONPATH=. /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 golden/run_lenet5_demo.py
+Canonical LeNet-5 golden-model shape check
+C1: shape=(6, 28, 28)    parameters=156
+S2: shape=(6, 14, 14)    parameters=12
+C3: shape=(16, 10, 10)   parameters=1516
+S4: shape=(16, 5, 5)     parameters=32
+C5: shape=(120, 1, 1)    parameters=48120
+F6: shape=(84,)          parameters=10164
+RBF scores: [83.5219 88.2647 84.5042 87.2701 83.6658 83.9099 84.4934 85.1584 85.1243
+ 84.6251]
+Demo prediction (untrained weights): 0

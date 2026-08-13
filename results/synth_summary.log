@@ -1,0 +1,1596 @@
+yosys -s synth/yosys.ys
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2025  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)
+
+-- Executing script file `synth/yosys.ys' --
+
+1. Executing Verilog-2005 frontend: rtl/conv5x5_row_mac.sv
+Parsing SystemVerilog input from `rtl/conv5x5_row_mac.sv' to AST representation.
+Generating RTLIL representation for module `\conv5x5_row_mac'.
+Successfully finished Verilog frontend.
+
+2. Executing Verilog-2005 frontend: rtl/requantize.sv
+Parsing SystemVerilog input from `rtl/requantize.sv' to AST representation.
+Generating RTLIL representation for module `\requantize'.
+Successfully finished Verilog frontend.
+
+3. Executing Verilog-2005 frontend: rtl/conv5x5_pe.sv
+Parsing SystemVerilog input from `rtl/conv5x5_pe.sv' to AST representation.
+Generating RTLIL representation for module `\conv5x5_pe'.
+Successfully finished Verilog frontend.
+
+4. Executing HIERARCHY pass (managing design hierarchy).
+
+4.1. Analyzing design hierarchy..
+Top module:  \conv5x5_pe
+Used module:     \requantize
+Used module:     \conv5x5_row_mac
+Parameter \ACC_WIDTH = 32
+Parameter \OUT_WIDTH = 8
+
+4.2. Executing AST frontend in derive mode using pre-parsed AST for module `\requantize'.
+Parameter \ACC_WIDTH = 32
+Parameter \OUT_WIDTH = 8
+Generating RTLIL representation for module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Parameter \DATA_WIDTH = 8
+Parameter \ACC_WIDTH = 32
+
+4.3. Executing AST frontend in derive mode using pre-parsed AST for module `\conv5x5_row_mac'.
+Parameter \DATA_WIDTH = 8
+Parameter \ACC_WIDTH = 32
+Generating RTLIL representation for module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+
+4.4. Analyzing design hierarchy..
+Top module:  \conv5x5_pe
+Used module:     $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+Used module:     $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+
+4.5. Analyzing design hierarchy..
+Top module:  \conv5x5_pe
+Used module:     $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+Used module:     $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+Removing unused module `\requantize'.
+Removing unused module `\conv5x5_row_mac'.
+Removed 2 unused modules.
+
+5. Executing PROC pass (convert processes to netlists).
+
+5.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+5.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 2 switch rules as full_case in process $proc$rtl/conv5x5_pe.sv:62$32 in module conv5x5_pe.
+Marked 5 switch rules as full_case in process $proc$rtl/requantize.sv:0$35 in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Removed a total of 0 dead cases.
+
+5.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 27 assignments to connections.
+
+5.4. Executing PROC_INIT pass (extract init attributes).
+
+5.5. Executing PROC_ARST pass (detect async resets in processes).
+Found async reset \rst_ni in `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+
+5.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~8 debug messages>
+
+5.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+     1/3: $0\accumulator_q[31:0]
+     2/3: $0\out_data_o[7:0]
+     3/3: $0\out_valid_o[0:0]
+Creating decoders for process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:0$26'.
+Creating decoders for process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+Creating decoders for process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:0$35'.
+     1/8: $3\data_o[7:0]
+     2/8: $2\data_o[7:0]
+     3/8: $1\data_o[7:0]
+     4/8: $2\rounded[32:0]
+     5/8: $2\magnitude[32:0]
+     6/8: $1\rounded[32:0]
+     7/8: $1\magnitude[32:0]
+     8/8: $1\rounding_offset[32:0]
+
+5.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+No latch inferred for signal `\conv5x5_pe.\next_acc' from process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:0$26'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\row_sum_o' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\act0' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\act1' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\act2' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\act3' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\act4' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\wgt0' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\wgt1' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\wgt2' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\wgt3' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\wgt4' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\prod0' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\prod1' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\prod2' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\prod3' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\prod4' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\ext0' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\ext1' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\ext2' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\ext3' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\ext4' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+No latch inferred for signal `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.\data_o' from process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:0$35'.
+No latch inferred for signal `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.\acc_ext' from process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:0$35'.
+No latch inferred for signal `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.\magnitude' from process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:0$35'.
+No latch inferred for signal `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.\rounded' from process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:0$35'.
+No latch inferred for signal `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.\rounding_offset' from process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:0$35'.
+
+5.9. Executing PROC_DFF pass (convert process syncs to FFs).
+Creating register for signal `\conv5x5_pe.\out_valid_o' using process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+  created $adff cell `$procdff$120' with positive edge clock and positive level reset.
+Creating register for signal `\conv5x5_pe.\out_data_o' using process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+  created $adff cell `$procdff$125' with positive edge clock and positive level reset.
+Creating register for signal `\conv5x5_pe.\accumulator_q' using process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+  created $adff cell `$procdff$130' with positive edge clock and positive level reset.
+
+5.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+5.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 3 empty switches in `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+Removing empty process `conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+Removing empty process `conv5x5_pe.$proc$rtl/conv5x5_pe.sv:0$26'.
+Removing empty process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:0$50'.
+Found and cleaned up 5 empty switches in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:0$35'.
+Removing empty process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:0$35'.
+Cleaned up 8 empty switches.
+
+5.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+<suppressed ~6 debug messages>
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+<suppressed ~1 debug messages>
+
+6. Executing OPT pass (performing simple optimizations).
+
+6.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+6.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+<suppressed ~6 debug messages>
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 2 cells.
+
+6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 1/2 on $mux $procmux$114.
+    dead port 2/2 on $mux $procmux$114.
+    dead port 1/2 on $mux $procmux$111.
+    dead port 2/2 on $mux $procmux$111.
+    dead port 1/2 on $mux $procmux$105.
+    dead port 2/2 on $mux $procmux$105.
+    dead port 1/2 on $mux $procmux$103.
+    dead port 2/2 on $mux $procmux$103.
+    dead port 2/2 on $mux $procmux$99.
+    dead port 1/2 on $mux $procmux$90.
+    dead port 1/2 on $mux $procmux$84.
+    dead port 1/2 on $mux $procmux$81.
+Removed 12 multiplexer ports.
+<suppressed ~7 debug messages>
+
+6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_pe.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Performed a total of 0 changes.
+
+6.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+6.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding EN signal on $procdff$130 ($adff) from module conv5x5_pe (D = \next_acc, Q = \accumulator_q).
+Adding EN signal on $procdff$125 ($adff) from module conv5x5_pe (D = \quantized, Q = \out_data_o).
+
+6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Removed 6 unused cells and 90 unused wires.
+<suppressed ~11 debug messages>
+
+6.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module conv5x5_pe.
+
+6.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+6.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~5 debug messages>
+
+6.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module \conv5x5_pe.
+Performed a total of 0 changes.
+
+6.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `\conv5x5_pe'.
+Removed a total of 0 cells.
+
+6.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+6.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module \conv5x5_pe..
+
+6.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module conv5x5_pe.
+
+6.16. Finished OPT passes. (There is nothing left to do.)
+
+7. Executing FSM pass (extract and optimize FSM).
+
+7.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+7.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+7.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+7.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module \conv5x5_pe..
+
+7.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+7.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+7.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+7.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+8. Executing OPT pass (performing simple optimizations).
+
+8.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module conv5x5_pe.
+
+8.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `\conv5x5_pe'.
+Removed a total of 0 cells.
+
+8.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~5 debug messages>
+
+8.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module \conv5x5_pe.
+Performed a total of 0 changes.
+
+8.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `\conv5x5_pe'.
+Removed a total of 0 cells.
+
+8.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module \conv5x5_pe..
+
+8.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module conv5x5_pe.
+
+8.9. Finished OPT passes. (There is nothing left to do.)
+
+9. Executing MEMORY pass.
+
+9.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+9.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+9.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+9.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+9.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+9.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module \conv5x5_pe..
+
+9.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+9.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+9.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module \conv5x5_pe..
+
+9.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+9.11. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+
+10. Executing OPT pass (performing simple optimizations).
+
+10.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module conv5x5_pe.
+
+10.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `\conv5x5_pe'.
+Removed a total of 0 cells.
+
+10.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~5 debug messages>
+
+10.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module \conv5x5_pe.
+Performed a total of 0 changes.
+
+10.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `\conv5x5_pe'.
+Removed a total of 0 cells.
+
+10.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+10.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module \conv5x5_pe..
+
+10.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module conv5x5_pe.
+
+10.9. Finished OPT passes. (There is nothing left to do.)
+
+11. Executing TECHMAP pass (map to technology primitives).
+
+11.1. Executing Verilog-2005 frontend: /usr/bin/../share/yosys/techmap.v
+Parsing Verilog input from `/usr/bin/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `\$__div_mod_u'.
+Generating RTLIL representation for module `\$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `\$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_pmux'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Successfully finished Verilog frontend.
+
+11.2. Continuing TECHMAP pass.
+Using extmapper simplemap for cells of type $mux.
+Using extmapper simplemap for cells of type $reduce_and.
+Using extmapper simplemap for cells of type $not.
+Using extmapper simplemap for cells of type $adffe.
+Running "alumacc" on wrapper $extern:wrap:$add:A_SIGNED=1:A_WIDTH=32:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$add:A_SIGNED=1:A_WIDTH=32:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$add:A_SIGNED=1:A_WIDTH=32:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $and.
+Using extmapper simplemap for cells of type $logic_and.
+Using extmapper simplemap for cells of type $adff.
+Using template $paramod$2653f68ddb8eab7b1907b4a20767b72a824a7a36\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $xor.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000100000 for cells of type $lcu.
+Using extmapper simplemap for cells of type $pos.
+Running "alumacc" on wrapper $extern:wrap:$mul:A_SIGNED=1:A_WIDTH=8:B_SIGNED=1:B_WIDTH=8:Y_WIDTH=16:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$mul:A_SIGNED=1:A_WIDTH=8:B_SIGNED=1:B_WIDTH=8:Y_WIDTH=16:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$mul:A_SIGNED=1:A_WIDTH=8:B_SIGNED=1:B_WIDTH=8:Y_WIDTH=16:394426c56d1a028ba8fdd5469b163e04011def47.
+Using extmapper maccmap for cells of type $macc_v2.
+  add \act_row_i [7:0] * \wgt_row_i [7:0] (8x8 bits, signed)
+  add \act_row_i [15:8] * \wgt_row_i [15:8] (8x8 bits, signed)
+  add \act_row_i [23:16] * \wgt_row_i [23:16] (8x8 bits, signed)
+  add \act_row_i [31:24] * \wgt_row_i [31:24] (8x8 bits, signed)
+  add \act_row_i [39:32] * \wgt_row_i [39:32] (8x8 bits, signed)
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000010000 for cells of type $fa.
+Using template $paramod$6df0329addda9228fcc2546de2aaf14ad26c98e1\_90_alu for cells of type $alu.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000010000 for cells of type $lcu.
+Using extmapper simplemap for cells of type $reduce_bool.
+Running "alumacc" on wrapper $extern:wrap:$sub:A_SIGNED=0:A_WIDTH=6:B_SIGNED=0:B_WIDTH=1:Y_WIDTH=6:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$sub:A_SIGNED=0:A_WIDTH=6:B_SIGNED=0:B_WIDTH=1:Y_WIDTH=6:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$sub:A_SIGNED=0:A_WIDTH=6:B_SIGNED=0:B_WIDTH=1:Y_WIDTH=6:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $paramod$constmap:92de45facabd9ccf6d578df1585fb2fb69ee1da5$paramod$88d1f5cb5d04b420a6acf3529412b9aa8546511a\_90_shift_ops_shr_shl_sshl_sshr for cells of type $sshl.
+Running "alumacc" on wrapper $extern:wrap:$ge:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$ge:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$ge:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Running "alumacc" on wrapper $extern:wrap:$add:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=33:Y_WIDTH=33:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$add:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=33:Y_WIDTH=33:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$add:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=33:Y_WIDTH=33:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $paramod$constmap:e2c7d1fb3827134d34cd6d2c9f84b34646771451$paramod$7bfa82651918cc5a58b5a53cb647200f895a1b37\_90_shift_ops_shr_shl_sshl_sshr for cells of type $sshr.
+Running "alumacc" on wrapper $extern:wrap:$neg:A_SIGNED=1:A_WIDTH=33:Y_WIDTH=33:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$neg:A_SIGNED=1:A_WIDTH=33:Y_WIDTH=33:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$neg:A_SIGNED=1:A_WIDTH=33:Y_WIDTH=33:394426c56d1a028ba8fdd5469b163e04011def47.
+Running "alumacc" on wrapper $extern:wrap:$lt:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$lt:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$lt:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Running "alumacc" on wrapper $extern:wrap:$gt:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=33:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$gt:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=33:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$gt:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=33:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Running "alumacc" on wrapper $extern:wrap:$lt:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=33:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$lt:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=33:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$lt:A_SIGNED=1:A_WIDTH=33:B_SIGNED=1:B_WIDTH=33:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $paramod$a04dd9d4d8b430140c4ff94b50470fb380fda2a0\_90_alu for cells of type $alu.
+Using template $paramod$fae50f3214d74ad6c84a3812df83ff98abe07aa3\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $reduce_or.
+Using template $paramod$c919145689889b3071b5e9ebc7976635b658110f\_90_alu for cells of type $alu.
+Using template $paramod$e3e2a2ae1e4d598b5e0e0be67cc1104653ecf8c1\_90_alu for cells of type $alu.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000000110 for cells of type $lcu.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000100001 for cells of type $lcu.
+No more expansions possible.
+<suppressed ~4552 debug messages>
+
+12. Executing OPT pass (performing simple optimizations).
+
+12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+<suppressed ~1151 debug messages>
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+<suppressed ~1509 debug messages>
+Optimizing module conv5x5_pe.
+<suppressed ~36 debug messages>
+
+12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+<suppressed ~819 debug messages>
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+<suppressed ~2229 debug messages>
+Finding identical cells in module `\conv5x5_pe'.
+Removed a total of 1016 cells.
+
+12.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+12.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module \conv5x5_pe.
+Performed a total of 0 changes.
+
+12.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `\conv5x5_pe'.
+Removed a total of 0 cells.
+
+12.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+12.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module \conv5x5_pe..
+Removed 662 unused cells and 1765 unused wires.
+<suppressed ~665 debug messages>
+
+12.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+<suppressed ~6 debug messages>
+Optimizing module conv5x5_pe.
+
+12.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+12.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+12.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module \conv5x5_pe.
+Performed a total of 0 changes.
+
+12.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+<suppressed ~42 debug messages>
+Finding identical cells in module `\conv5x5_pe'.
+Removed a total of 14 cells.
+
+12.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+12.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module \conv5x5_pe..
+Removed 0 unused cells and 20 unused wires.
+<suppressed ~1 debug messages>
+
+12.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module conv5x5_pe.
+
+12.16. Rerunning OPT passes. (Maybe there is more to do..)
+
+12.17. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+12.18. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module \conv5x5_pe.
+Performed a total of 0 changes.
+
+12.19. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `\conv5x5_pe'.
+Removed a total of 0 cells.
+
+12.20. Executing OPT_DFF pass (perform DFF optimizations).
+
+12.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module \conv5x5_pe..
+
+12.22. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module conv5x5_pe.
+
+12.23. Finished OPT passes. (There is nothing left to do.)
+
+13. Printing statistics.
+
+=== $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize ===
+
+   Number of wires:                479
+   Number of wire bits:           2109
+   Number of public wires:           6
+   Number of public wire bits:     113
+   Number of ports:                  4
+   Number of port bits:             47
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               1554
+     $_AND_                        479
+     $_MUX_                        567
+     $_NOT_                        103
+     $_OR_                         195
+     $_XOR_                        210
+
+=== $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac ===
+
+   Number of wires:                714
+   Number of wire bits:           5153
+   Number of public wires:          23
+   Number of public wire bits:     432
+   Number of ports:                  3
+   Number of port bits:            112
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               2870
+     $_AND_                       1383
+     $_NOT_                         40
+     $_OR_                         522
+     $_XOR_                        925
+
+=== conv5x5_pe ===
+
+   Number of wires:                127
+   Number of wire bits:            472
+   Number of public wires:          19
+   Number of public wire bits:     240
+   Number of ports:                 14
+   Number of port bits:            135
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:                305
+     $_AND_                        109
+     $_DFFE_PN0P_                   40
+     $_DFF_PN0_                      1
+     $_MUX_                         35
+     $_NOT_                          2
+     $_OR_                          53
+     $_XOR_                         63
+     $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize      1
+     $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac      1
+
+=== design hierarchy ===
+
+   conv5x5_pe                        1
+     $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize      1
+     $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac      1
+
+   Number of wires:               1320
+   Number of wire bits:           7734
+   Number of public wires:          48
+   Number of public wire bits:     785
+   Number of ports:                 21
+   Number of port bits:            294
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               4727
+     $_AND_                       1971
+     $_DFFE_PN0P_                   40
+     $_DFF_PN0_                      1
+     $_MUX_                        602
+     $_NOT_                        145
+     $_OR_                         770
+     $_XOR_                       1198
+
+14. Executing JSON backend.
+
+End of script. Logfile hash: cd4c2e73fd, CPU: user 0.83s system 0.05s, MEM: 39.11 MB peak
+Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)
+Time spent: 24% 24x opt_expr (0 sec), 18% 14x opt_clean (0 sec), ...
+yosys -s synth/avg_pool2x2_int8.ys
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2025  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)
+
+-- Executing script file `synth/avg_pool2x2_int8.ys' --
+
+1. Executing Verilog-2005 frontend: rtl/avg_pool2x2_int8.sv
+Parsing SystemVerilog input from `rtl/avg_pool2x2_int8.sv' to AST representation.
+Generating RTLIL representation for module `\avg_pool2x2_int8'.
+Warning: Replacing memory \sample_ext with list of registers. See rtl/avg_pool2x2_int8.sv:26, rtl/avg_pool2x2_int8.sv:23
+Warning: Replacing memory \sample with list of registers. See rtl/avg_pool2x2_int8.sv:23, rtl/avg_pool2x2_int8.sv:22
+Successfully finished Verilog frontend.
+
+2. Executing HIERARCHY pass (managing design hierarchy).
+
+2.1. Analyzing design hierarchy..
+Top module:  \avg_pool2x2_int8
+
+2.2. Analyzing design hierarchy..
+Top module:  \avg_pool2x2_int8
+Removed 0 unused modules.
+
+3. Executing PROC pass (convert processes to netlists).
+
+3.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+3.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $proc$rtl/avg_pool2x2_int8.sv:0$2 in module avg_pool2x2_int8.
+Removed a total of 0 dead cases.
+
+3.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 13 assignments to connections.
+
+3.4. Executing PROC_INIT pass (extract init attributes).
+
+3.5. Executing PROC_ARST pass (detect async resets in processes).
+
+3.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~1 debug messages>
+
+3.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+     1/2: $1\rounded[9:0]
+     2/2: $1\magnitude[9:0]
+
+3.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+No latch inferred for signal `\avg_pool2x2_int8.\average_o' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\sum' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\magnitude' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\rounded' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\idx' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\sample[0]' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\sample[1]' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\sample[2]' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\sample[3]' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\sample_ext[0]' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\sample_ext[1]' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\sample_ext[2]' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+No latch inferred for signal `\avg_pool2x2_int8.\sample_ext[3]' from process `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+
+3.9. Executing PROC_DFF pass (convert process syncs to FFs).
+
+3.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+3.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 1 empty switch in `\avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+Removing empty process `avg_pool2x2_int8.$proc$rtl/avg_pool2x2_int8.sv:0$2'.
+Cleaned up 1 empty switch.
+
+3.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+<suppressed ~2 debug messages>
+
+4. Executing OPT pass (performing simple optimizations).
+
+4.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+
+4.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\avg_pool2x2_int8'.
+Removed a total of 0 cells.
+
+4.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \avg_pool2x2_int8..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 1/2 on $mux $procmux$17.
+    dead port 2/2 on $mux $procmux$17.
+Removed 2 multiplexer ports.
+<suppressed ~1 debug messages>
+
+4.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \avg_pool2x2_int8.
+Performed a total of 0 changes.
+
+4.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\avg_pool2x2_int8'.
+Removed a total of 0 cells.
+
+4.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \avg_pool2x2_int8..
+Removed 0 unused cells and 23 unused wires.
+<suppressed ~2 debug messages>
+
+4.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+
+4.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+4.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \avg_pool2x2_int8..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~1 debug messages>
+
+4.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \avg_pool2x2_int8.
+Performed a total of 0 changes.
+
+4.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\avg_pool2x2_int8'.
+Removed a total of 0 cells.
+
+4.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \avg_pool2x2_int8..
+
+4.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+
+4.16. Finished OPT passes. (There is nothing left to do.)
+
+5. Executing FSM pass (extract and optimize FSM).
+
+5.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+5.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+5.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+5.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \avg_pool2x2_int8..
+
+5.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+5.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+5.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+5.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+6. Executing OPT pass (performing simple optimizations).
+
+6.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+
+6.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\avg_pool2x2_int8'.
+Removed a total of 0 cells.
+
+6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \avg_pool2x2_int8..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~1 debug messages>
+
+6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \avg_pool2x2_int8.
+Performed a total of 0 changes.
+
+6.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\avg_pool2x2_int8'.
+Removed a total of 0 cells.
+
+6.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \avg_pool2x2_int8..
+
+6.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+
+6.9. Finished OPT passes. (There is nothing left to do.)
+
+7. Executing MEMORY pass.
+
+7.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+7.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+7.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+7.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+7.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+7.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \avg_pool2x2_int8..
+
+7.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+7.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+7.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \avg_pool2x2_int8..
+
+7.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+7.11. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+
+8. Executing OPT pass (performing simple optimizations).
+
+8.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+
+8.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\avg_pool2x2_int8'.
+Removed a total of 0 cells.
+
+8.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \avg_pool2x2_int8..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~1 debug messages>
+
+8.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \avg_pool2x2_int8.
+Performed a total of 0 changes.
+
+8.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\avg_pool2x2_int8'.
+Removed a total of 0 cells.
+
+8.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \avg_pool2x2_int8..
+
+8.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+
+8.9. Finished OPT passes. (There is nothing left to do.)
+
+9. Executing TECHMAP pass (map to technology primitives).
+
+9.1. Executing Verilog-2005 frontend: /usr/bin/../share/yosys/techmap.v
+Parsing Verilog input from `/usr/bin/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `\$__div_mod_u'.
+Generating RTLIL representation for module `\$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `\$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_pmux'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Successfully finished Verilog frontend.
+
+9.2. Continuing TECHMAP pass.
+Running "alumacc" on wrapper $extern:wrap:$add:A_SIGNED=1:A_WIDTH=10:B_SIGNED=1:B_WIDTH=10:Y_WIDTH=10:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$add:A_SIGNED=1:A_WIDTH=10:B_SIGNED=1:B_WIDTH=10:Y_WIDTH=10:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$add:A_SIGNED=1:A_WIDTH=10:B_SIGNED=1:B_WIDTH=10:Y_WIDTH=10:394426c56d1a028ba8fdd5469b163e04011def47.
+Running "alumacc" on wrapper $extern:wrap:$ge:A_SIGNED=1:A_WIDTH=10:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$ge:A_SIGNED=1:A_WIDTH=10:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$ge:A_SIGNED=1:A_WIDTH=10:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Running "alumacc" on wrapper $extern:wrap:$add:A_SIGNED=1:A_WIDTH=10:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$add:A_SIGNED=1:A_WIDTH=10:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$add:A_SIGNED=1:A_WIDTH=10:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47.
+Running "alumacc" on wrapper $extern:wrap:$neg:A_SIGNED=1:A_WIDTH=10:Y_WIDTH=10:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$neg:A_SIGNED=1:A_WIDTH=10:Y_WIDTH=10:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$neg:A_SIGNED=1:A_WIDTH=10:Y_WIDTH=10:394426c56d1a028ba8fdd5469b163e04011def47.
+Running "alumacc" on wrapper $extern:wrap:$neg:A_SIGNED=1:A_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$neg:A_SIGNED=1:A_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$neg:A_SIGNED=1:A_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47.
+Using extmapper simplemap for cells of type $mux.
+Using template $paramod$3d4d857737ce5ee764ebe220e87ff73b66d6d0ad\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $not.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $reduce_and.
+Using extmapper simplemap for cells of type $xor.
+Using template $paramod$a77d4b6fbb68fb20c1bf15b8d79b6db75c48b7c2\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $reduce_or.
+Using template $paramod$bd91b1311a7e26328ec7b35acb363a89aa87e033\_90_alu for cells of type $alu.
+Using template $paramod$c6baa65225090ac0a120feab1b920965244aa496\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $and.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000001010 for cells of type $lcu.
+Using extmapper simplemap for cells of type $pos.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000100000 for cells of type $lcu.
+No more expansions possible.
+<suppressed ~1273 debug messages>
+
+10. Executing OPT pass (performing simple optimizations).
+
+10.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+<suppressed ~918 debug messages>
+
+10.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\avg_pool2x2_int8'.
+<suppressed ~510 debug messages>
+Removed a total of 170 cells.
+
+10.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \avg_pool2x2_int8..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+10.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \avg_pool2x2_int8.
+Performed a total of 0 changes.
+
+10.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\avg_pool2x2_int8'.
+Removed a total of 0 cells.
+
+10.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+10.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \avg_pool2x2_int8..
+Removed 239 unused cells and 707 unused wires.
+<suppressed ~240 debug messages>
+
+10.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+<suppressed ~10 debug messages>
+
+10.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+10.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \avg_pool2x2_int8..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+10.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \avg_pool2x2_int8.
+Performed a total of 0 changes.
+
+10.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\avg_pool2x2_int8'.
+<suppressed ~6 debug messages>
+Removed a total of 2 cells.
+
+10.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+10.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \avg_pool2x2_int8..
+Removed 0 unused cells and 7 unused wires.
+<suppressed ~1 debug messages>
+
+10.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+
+10.16. Rerunning OPT passes. (Maybe there is more to do..)
+
+10.17. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \avg_pool2x2_int8..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+10.18. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \avg_pool2x2_int8.
+Performed a total of 0 changes.
+
+10.19. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\avg_pool2x2_int8'.
+Removed a total of 0 cells.
+
+10.20. Executing OPT_DFF pass (perform DFF optimizations).
+
+10.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \avg_pool2x2_int8..
+
+10.22. Executing OPT_EXPR pass (perform const folding).
+Optimizing module avg_pool2x2_int8.
+
+10.23. Finished OPT passes. (There is nothing left to do.)
+
+11. Printing statistics.
+
+=== avg_pool2x2_int8 ===
+
+   Number of wires:                137
+   Number of wire bits:            772
+   Number of public wires:          13
+   Number of public wire bits:     164
+   Number of ports:                  2
+   Number of port bits:             40
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:                303
+     $_AND_                        134
+     $_MUX_                          8
+     $_NOT_                         19
+     $_OR_                          52
+     $_XOR_                         90
+
+12. Executing JSON backend.
+
+Warnings: 2 unique messages, 2 total
+End of script. Logfile hash: c244c3728a, CPU: user 0.16s system 0.00s, MEM: 21.52 MB peak
+Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)
+Time spent: 21% 16x opt_expr (0 sec), 21% 1x techmap (0 sec), ...
+yosys -s synth/dense_row_mac.ys
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2025  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)
+
+-- Executing script file `synth/dense_row_mac.ys' --
+
+1. Executing Verilog-2005 frontend: rtl/dense_row_mac.sv
+Parsing SystemVerilog input from `rtl/dense_row_mac.sv' to AST representation.
+Generating RTLIL representation for module `\dense_row_mac'.
+Warning: Replacing memory \level with list of registers. See rtl/dense_row_mac.sv:40
+Successfully finished Verilog frontend.
+
+2. Executing HIERARCHY pass (managing design hierarchy).
+
+2.1. Analyzing design hierarchy..
+Top module:  \dense_row_mac
+
+2.2. Analyzing design hierarchy..
+Top module:  \dense_row_mac
+Removed 0 unused modules.
+
+3. Executing PROC pass (convert processes to netlists).
+
+3.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+3.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Removed a total of 0 dead cases.
+
+3.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 15 assignments to connections.
+
+3.4. Executing PROC_INIT pass (extract init attributes).
+
+3.5. Executing PROC_ARST pass (detect async resets in processes).
+
+3.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+
+3.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+
+3.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+No latch inferred for signal `\dense_row_mac.\level[0]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[1]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[2]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[3]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[4]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[5]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[6]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[7]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[8]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[9]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[10]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[11]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[16]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[17]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+No latch inferred for signal `\dense_row_mac.\level[24]' from process `\dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+
+3.9. Executing PROC_DFF pass (convert process syncs to FFs).
+
+3.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+3.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Removing empty process `dense_row_mac.$proc$rtl/dense_row_mac.sv:0$9'.
+Cleaned up 0 empty switches.
+
+3.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+
+4. Executing OPT pass (performing simple optimizations).
+
+4.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+
+4.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dense_row_mac'.
+Removed a total of 0 cells.
+
+4.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dense_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+4.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dense_row_mac.
+Performed a total of 0 changes.
+
+4.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dense_row_mac'.
+Removed a total of 0 cells.
+
+4.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dense_row_mac..
+Removed 0 unused cells and 47 unused wires.
+<suppressed ~18 debug messages>
+
+4.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+
+4.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+4.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dense_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+4.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dense_row_mac.
+Performed a total of 0 changes.
+
+4.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dense_row_mac'.
+Removed a total of 0 cells.
+
+4.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dense_row_mac..
+
+4.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+
+4.16. Finished OPT passes. (There is nothing left to do.)
+
+5. Executing FSM pass (extract and optimize FSM).
+
+5.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+5.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+5.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+5.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dense_row_mac..
+
+5.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+5.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+5.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+5.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+6. Executing OPT pass (performing simple optimizations).
+
+6.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+
+6.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dense_row_mac'.
+Removed a total of 0 cells.
+
+6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dense_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dense_row_mac.
+Performed a total of 0 changes.
+
+6.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dense_row_mac'.
+Removed a total of 0 cells.
+
+6.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dense_row_mac..
+
+6.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+
+6.9. Finished OPT passes. (There is nothing left to do.)
+
+7. Executing MEMORY pass.
+
+7.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+7.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+7.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+7.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+7.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+7.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dense_row_mac..
+
+7.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+7.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+7.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dense_row_mac..
+
+7.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+7.11. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+
+8. Executing OPT pass (performing simple optimizations).
+
+8.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+
+8.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dense_row_mac'.
+Removed a total of 0 cells.
+
+8.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dense_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+8.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dense_row_mac.
+Performed a total of 0 changes.
+
+8.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dense_row_mac'.
+Removed a total of 0 cells.
+
+8.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dense_row_mac..
+
+8.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+
+8.9. Finished OPT passes. (There is nothing left to do.)
+
+9. Executing TECHMAP pass (map to technology primitives).
+
+9.1. Executing Verilog-2005 frontend: /usr/bin/../share/yosys/techmap.v
+Parsing Verilog input from `/usr/bin/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `\$__div_mod_u'.
+Generating RTLIL representation for module `\$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `\$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_pmux'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Successfully finished Verilog frontend.
+
+9.2. Continuing TECHMAP pass.
+Running "alumacc" on wrapper $extern:wrap:$mul:A_SIGNED=1:A_WIDTH=8:B_SIGNED=1:B_WIDTH=8:Y_WIDTH=16:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$mul:A_SIGNED=1:A_WIDTH=8:B_SIGNED=1:B_WIDTH=8:Y_WIDTH=16:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$mul:A_SIGNED=1:A_WIDTH=8:B_SIGNED=1:B_WIDTH=8:Y_WIDTH=16:394426c56d1a028ba8fdd5469b163e04011def47.
+Running "alumacc" on wrapper $extern:wrap:$add:A_SIGNED=1:A_WIDTH=32:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$add:A_SIGNED=1:A_WIDTH=32:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$add:A_SIGNED=1:A_WIDTH=32:B_SIGNED=1:B_WIDTH=32:Y_WIDTH=32:394426c56d1a028ba8fdd5469b163e04011def47.
+Using extmapper maccmap for cells of type $macc_v2.
+  add \act_lane_i [7:0] * \wgt_lane_i [7:0] (8x8 bits, signed)
+  add \act_lane_i [15:8] * \wgt_lane_i [15:8] (8x8 bits, signed)
+  add \act_lane_i [23:16] * \wgt_lane_i [23:16] (8x8 bits, signed)
+  add \act_lane_i [31:24] * \wgt_lane_i [31:24] (8x8 bits, signed)
+  add \act_lane_i [39:32] * \wgt_lane_i [39:32] (8x8 bits, signed)
+  add \act_lane_i [47:40] * \wgt_lane_i [47:40] (8x8 bits, signed)
+  add \act_lane_i [55:48] * \wgt_lane_i [55:48] (8x8 bits, signed)
+  add \act_lane_i [63:56] * \wgt_lane_i [63:56] (8x8 bits, signed)
+Using template $paramod$2653f68ddb8eab7b1907b4a20767b72a824a7a36\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $and.
+Using extmapper simplemap for cells of type $not.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000010000 for cells of type $fa.
+Using template $paramod$6df0329addda9228fcc2546de2aaf14ad26c98e1\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $xor.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000100000 for cells of type $lcu.
+Using extmapper simplemap for cells of type $pos.
+Using extmapper simplemap for cells of type $mux.
+Using extmapper simplemap for cells of type $or.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000010000 for cells of type $lcu.
+No more expansions possible.
+<suppressed ~2489 debug messages>
+
+10. Executing OPT pass (performing simple optimizations).
+
+10.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+<suppressed ~2436 debug messages>
+
+10.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dense_row_mac'.
+<suppressed ~3684 debug messages>
+Removed a total of 1228 cells.
+
+10.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dense_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+10.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dense_row_mac.
+Performed a total of 0 changes.
+
+10.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dense_row_mac'.
+Removed a total of 0 cells.
+
+10.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+10.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dense_row_mac..
+Removed 489 unused cells and 1359 unused wires.
+<suppressed ~490 debug messages>
+
+10.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+<suppressed ~12 debug messages>
+
+10.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+10.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dense_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+10.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dense_row_mac.
+Performed a total of 0 changes.
+
+10.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dense_row_mac'.
+<suppressed ~84 debug messages>
+Removed a total of 28 cells.
+
+10.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+10.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dense_row_mac..
+Removed 0 unused cells and 40 unused wires.
+<suppressed ~1 debug messages>
+
+10.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+
+10.16. Rerunning OPT passes. (Maybe there is more to do..)
+
+10.17. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dense_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+10.18. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dense_row_mac.
+Performed a total of 0 changes.
+
+10.19. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dense_row_mac'.
+Removed a total of 0 cells.
+
+10.20. Executing OPT_DFF pass (perform DFF optimizations).
+
+10.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dense_row_mac..
+
+10.22. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dense_row_mac.
+
+10.23. Finished OPT passes. (There is nothing left to do.)
+
+11. Printing statistics.
+
+=== dense_row_mac ===
+
+   Number of wires:               1175
+   Number of wire bits:           8384
+   Number of public wires:          42
+   Number of public wire bits:     896
+   Number of ports:                  3
+   Number of port bits:            160
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               4672
+     $_AND_                       2243
+     $_NOT_                         64
+     $_OR_                         860
+     $_XOR_                       1505
+
+12. Executing JSON backend.
+
+Warnings: 1 unique messages, 1 total
+End of script. Logfile hash: a3e80e918b, CPU: user 0.66s system 0.05s, MEM: 37.83 MB peak
+Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)
+Time spent: 31% 16x opt_expr (0 sec), 21% 12x opt_clean (0 sec), ...

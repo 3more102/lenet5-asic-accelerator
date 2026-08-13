@@ -1,0 +1,108 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260805155252
+Username: MSI\omar
+RunAs User: MSI\omar
+Configuration Name: 
+Machine: MSI (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Windows\system32\WindowsPowerShell\v1.0\PowerShell.exe
+Process ID: 8828
+PSVersion: 5.1.26100.8972
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8972
+BuildVersion: 10.0.26100.8972
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
+==============================================================================
+1/7 - Checking Python
+==============================================================================
+Python 3.12.10
+
+==============================================================================
+2/7 - Installing Python requirements
+==============================================================================
+Requirement already satisfied: numpy>=1.26 in c:\users\omar\appdata\local\programs\python\python312\lib\site-packages (f
+rom -r .\requirements.txt (line 1)) (2.5.1)
+
+[notice] A new release of pip is available: 25.0.1 -> 26.2.1
+[notice] To update, run: python.exe -m pip install --upgrade pip
+NumPy: 2.5.1
+
+==============================================================================
+3/7 - Generating Python golden vectors
+==============================================================================
+
+Generated/found 7 vector files.
+
+==============================================================================
+4/7 - Locating ModelSim/Questa
+==============================================================================
+Using: C:\intelFPGA\18.1\modelsim_ase\win32aloem\vsim.exe
+
+==============================================================================
+5/7 - Cleaning previous compiled library
+==============================================================================
+Removed old work library.
+Archived old transcript to .\results\transcript_before_20260805_155252.txt
+
+==============================================================================
+6/7 - Running ModelSim regression
+==============================================================================
+Reading C:/intelFPGA/18.1/modelsim_ase/tcl/vsim/pref.tcl
+
+# 10.5b
+
+# do C:/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/scripts/modelsim.do
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 15:52:55 on Aug 05,2026
+# vlog -sv "+incdir+." rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/lenet5_c3_connectivity.sv rtl/conv2d_engine.sv tb/tb_conv5x5_pe.sv tb/tb_lenet5_c3_connectivity.sv tb/tb_conv2d_engine.sv
+# -- Compiling module conv5x5_row_mac
+# -- Compiling module requantize
+# -- Compiling module conv5x5_pe
+# -- Compiling module lenet5_c3_connectivity
+# -- Compiling module conv2d_engine
+# -- Compiling module tb_conv5x5_pe
+# -- Compiling module tb_lenet5_c3_connectivity
+# -- Compiling module tb_conv2d_engine
+#
+# Top level modules:
+# 	tb_conv5x5_pe
+# 	tb_lenet5_c3_connectivity
+# 	tb_conv2d_engine
+# End time: 15:52:55 on Aug 05,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -c work.tb_conv5x5_pe
+# Start time: 15:52:55 on Aug 05,2026
+# Loading sv_std.std
+# Loading work.tb_conv5x5_pe
+# Loading work.conv5x5_pe
+# Loading work.conv5x5_row_mac
+# Loading work.requantize
+# PASS tb_conv5x5_pe: accumulation, bias, and backpressure
+# ** Note: $finish    : tb/tb_conv5x5_pe.sv(88)
+#    Time: 130 ns  Iteration: 1  Instance: /tb_conv5x5_pe
+# End time: 15:52:56 on Aug 05,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+ModelSim exit code: 0
+ModelSim log: C:\Users\omar\Downloads\DR.Rania\LeNet5_ASIC_Project\results\modelsim_regression_20260805_155252.log
+
+PASS lines found: 2
+# PASS tb_conv5x5_pe: accumulation, bias, and backpressure
+# PASS tb_conv5x5_pe: accumulation, bias, and backpressure
+
+==============================================================================
+7/7 - Opening the newest waveform
+==============================================================================
+Waveform: C:\Users\omar\Downloads\DR.Rania\LeNet5_ASIC_Project\vsim.wlf
+
+BULK RUN COMPLETED SUCCESSFULLY
+Full log: C:\Users\omar\Downloads\DR.Rania\LeNet5_ASIC_Project\results\bulk_run_20260805_155252.log
+ModelSim log: C:\Users\omar\Downloads\DR.Rania\LeNet5_ASIC_Project\results\modelsim_regression_20260805_155252.log
+**********************
+Windows PowerShell transcript end
+End time: 20260805155256
+**********************

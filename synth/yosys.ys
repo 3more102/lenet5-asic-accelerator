@@ -1,0 +1,15 @@
+read_verilog -sv rtl/conv5x5_row_mac.sv
+read_verilog -sv rtl/requantize.sv
+read_verilog -sv rtl/conv5x5_pe.sv
+hierarchy -check -top conv5x5_pe
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt
+stat
+write_json results/conv5x5_pe_generic.json
+

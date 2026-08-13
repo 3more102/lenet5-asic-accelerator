@@ -1,0 +1,1563 @@
+yowasp-yosys: fetched 0% (0 / 53963000)
+yowasp-yosys: fetched 20% (10618880 / 53963000)
+yowasp-yosys: fetched 100% (53926307 / 53963000)
+yowasp-yosys: fetched 100% (53960988 / 53963000)
+yowasp-yosys: fetched 100% (53962370 / 53963000)
+yowasp-yosys: fetched 100% (53963000 / 53963000)
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.64 (git sha1 ca8886890, ccache clang++  -O3 -fwasm-exceptions -mllvm) [yowasp/yosys at release]
+
+-- Running command `read_verilog -sv rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv; hierarchy -check -top conv5x5_pe; proc; opt; check; synth -top conv5x5_pe; check; stat' --
+
+1. Executing Verilog-2005 frontend: rtl/conv5x5_row_mac.sv
+Parsing SystemVerilog input from `rtl/conv5x5_row_mac.sv' to AST representation.
+Generating RTLIL representation for module `\conv5x5_row_mac'.
+Successfully finished Verilog frontend.
+
+2. Executing Verilog-2005 frontend: rtl/requantize.sv
+Parsing SystemVerilog input from `rtl/requantize.sv' to AST representation.
+Generating RTLIL representation for module `\requantize'.
+Successfully finished Verilog frontend.
+
+3. Executing Verilog-2005 frontend: rtl/conv5x5_pe.sv
+Parsing SystemVerilog input from `rtl/conv5x5_pe.sv' to AST representation.
+Generating RTLIL representation for module `\conv5x5_pe'.
+Successfully finished Verilog frontend.
+
+4. Executing HIERARCHY pass (managing design hierarchy).
+
+4.1. Analyzing design hierarchy..
+Top module:  \conv5x5_pe
+Used module:     \requantize
+Used module:     \conv5x5_row_mac
+Parameter \ACC_WIDTH = 32
+Parameter \OUT_WIDTH = 8
+
+4.2. Executing AST frontend in derive mode using pre-parsed AST for module `\requantize'.
+Parameter \ACC_WIDTH = 32
+Parameter \OUT_WIDTH = 8
+Generating RTLIL representation for module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Parameter \DATA_WIDTH = 8
+Parameter \ACC_WIDTH = 32
+
+4.3. Executing AST frontend in derive mode using pre-parsed AST for module `\conv5x5_row_mac'.
+Parameter \DATA_WIDTH = 8
+Parameter \ACC_WIDTH = 32
+Generating RTLIL representation for module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+
+4.4. Analyzing design hierarchy..
+Top module:  \conv5x5_pe
+Used module:     $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+Used module:     $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+
+4.5. Analyzing design hierarchy..
+Top module:  \conv5x5_pe
+Used module:     $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+Used module:     $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+Removing unused module `\requantize'.
+Removing unused module `\conv5x5_row_mac'.
+Removed 2 unused modules.
+
+5. Executing PROC pass (convert processes to netlists).
+
+5.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+5.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 2 switch rules as full_case in process $proc$rtl/conv5x5_pe.sv:62$32 in module conv5x5_pe.
+Marked 5 switch rules as full_case in process $proc$rtl/requantize.sv:25$35 in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Removed a total of 0 dead cases.
+
+5.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 27 assignments to connections.
+
+5.4. Executing PROC_INIT pass (extract init attributes).
+
+5.5. Executing PROC_ARST pass (detect async resets in processes).
+Found async reset \rst_ni in `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+
+5.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~8 debug messages>
+
+5.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+     1/3: $0\accumulator_q[31:0]
+     2/3: $0\out_data_o[7:0]
+     3/3: $0\out_valid_o[0:0]
+Creating decoders for process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:45$26'.
+Creating decoders for process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+Creating decoders for process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:25$35'.
+     1/8: $3\data_o[7:0]
+     2/8: $2\data_o[7:0]
+     3/8: $1\data_o[7:0]
+     4/8: $2\rounded[32:0]
+     5/8: $2\magnitude[32:0]
+     6/8: $1\rounded[32:0]
+     7/8: $1\magnitude[32:0]
+     8/8: $1\rounding_offset[32:0]
+
+5.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+No latch inferred for signal `\conv5x5_pe.\next_acc' from process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:45$26'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\row_sum_o' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\act0' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\act1' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\act2' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\act3' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\act4' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\wgt0' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\wgt1' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\wgt2' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\wgt3' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\wgt4' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\prod0' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\prod1' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\prod2' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\prod3' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\prod4' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\ext0' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\ext1' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\ext2' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\ext3' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.\ext4' from process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+No latch inferred for signal `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.\data_o' from process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:25$35'.
+No latch inferred for signal `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.\acc_ext' from process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:25$35'.
+No latch inferred for signal `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.\magnitude' from process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:25$35'.
+No latch inferred for signal `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.\rounded' from process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:25$35'.
+No latch inferred for signal `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.\rounding_offset' from process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:25$35'.
+
+5.9. Executing PROC_DFF pass (convert process syncs to FFs).
+Creating register for signal `\conv5x5_pe.\out_valid_o' using process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+  created $adff cell `$procdff$120' with positive edge clock and positive level reset.
+Creating register for signal `\conv5x5_pe.\out_data_o' using process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+  created $adff cell `$procdff$125' with positive edge clock and positive level reset.
+Creating register for signal `\conv5x5_pe.\accumulator_q' using process `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+  created $adff cell `$procdff$130' with positive edge clock and positive level reset.
+
+5.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+5.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 3 empty switches in `\conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+Removing empty process `conv5x5_pe.$proc$rtl/conv5x5_pe.sv:62$32'.
+Removing empty process `conv5x5_pe.$proc$rtl/conv5x5_pe.sv:45$26'.
+Removing empty process `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$proc$rtl/conv5x5_row_mac.sv:22$50'.
+Found and cleaned up 5 empty switches in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:25$35'.
+Removing empty process `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$proc$rtl/requantize.sv:25$35'.
+Cleaned up 8 empty switches.
+
+5.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+<suppressed ~6 debug messages>
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+<suppressed ~1 debug messages>
+
+6. Executing OPT pass (performing simple optimizations).
+
+6.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+6.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 22 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Computing hashes of 20 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+<suppressed ~6 debug messages>
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 9 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 27 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 2 cells.
+
+6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 1/2 on $mux $procmux$114.
+    dead port 2/2 on $mux $procmux$114.
+    dead port 1/2 on $mux $procmux$111.
+    dead port 2/2 on $mux $procmux$111.
+    dead port 1/2 on $mux $procmux$105.
+    dead port 2/2 on $mux $procmux$105.
+    dead port 1/2 on $mux $procmux$103.
+    dead port 2/2 on $mux $procmux$103.
+    dead port 2/2 on $mux $procmux$99.
+    dead port 1/2 on $mux $procmux$90.
+    dead port 1/2 on $mux $procmux$84.
+    dead port 1/2 on $mux $procmux$81.
+Removed 12 multiplexer ports.
+<suppressed ~26 debug messages>
+
+6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_pe.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Performed a total of 0 changes.
+
+6.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 20 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 9 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 19 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+6.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding EN signal on $procdff$130 ($adff) from module conv5x5_pe (D = \next_acc, Q = \accumulator_q).
+Adding EN signal on $procdff$125 ($adff) from module conv5x5_pe (D = \quantized, Q = \out_data_o).
+
+6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Removed 6 unused cells and 90 unused wires.
+<suppressed ~11 debug messages>
+
+6.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+6.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+6.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~16 debug messages>
+
+6.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_pe.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Performed a total of 0 changes.
+
+6.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 9 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 19 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+6.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+6.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+
+6.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+6.16. Finished fast OPT passes. (There is nothing left to do.)
+
+7. Executing CHECK pass (checking for obvious problems).
+Checking module conv5x5_pe...
+Checking module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac...
+Checking module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize...
+Found and reported 0 problems.
+
+8. Executing SYNTH pass.
+
+8.1. Executing HIERARCHY pass (managing design hierarchy).
+
+8.1.1. Analyzing design hierarchy..
+Top module:  \conv5x5_pe
+Used module:     $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+Used module:     $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+
+8.1.2. Analyzing design hierarchy..
+Top module:  \conv5x5_pe
+Used module:     $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+Used module:     $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+Removed 0 unused modules.
+
+8.2. Executing PROC pass (convert processes to netlists).
+
+8.2.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+8.2.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Removed a total of 0 dead cases.
+
+8.2.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 0 assignments to connections.
+
+8.2.4. Executing PROC_INIT pass (extract init attributes).
+
+8.2.5. Executing PROC_ARST pass (detect async resets in processes).
+
+8.2.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+
+8.2.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+
+8.2.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+8.2.9. Executing PROC_DFF pass (convert process syncs to FFs).
+
+8.2.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+8.2.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+8.2.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+8.3. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+8.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+
+8.5. Executing CHECK pass (checking for obvious problems).
+Checking module conv5x5_pe...
+Checking module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac...
+Checking module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize...
+Found and reported 0 problems.
+
+8.6. Executing OPT pass (performing simple optimizations).
+
+8.6.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+8.6.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 9 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 19 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+8.6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~16 debug messages>
+
+8.6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_pe.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Performed a total of 0 changes.
+
+8.6.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 9 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 19 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+8.6.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+
+8.6.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+8.6.9. Finished fast OPT passes. (There is nothing left to do.)
+
+8.7. Executing FSM pass (extract and optimize FSM).
+
+8.7.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+8.7.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+8.7.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+8.7.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+
+8.7.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+8.7.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+8.7.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+8.7.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+8.8. Executing OPT pass (performing simple optimizations).
+
+8.8.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+8.8.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 9 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 19 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+8.8.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~16 debug messages>
+
+8.8.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_pe.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Performed a total of 0 changes.
+
+8.8.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 9 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 19 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+8.8.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.8.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+
+8.8.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+8.8.9. Finished fast OPT passes. (There is nothing left to do.)
+
+8.9. Executing WREDUCE pass (reducing word size of cells).
+Converting cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$56 ($add) from unsigned to signed.
+Removed top 16 bits (of 32) from port A of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$56 ($add).
+Removed top 16 bits (of 32) from port B of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$56 ($add).
+Removed top 15 bits (of 32) from port Y of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$56 ($add).
+Converting cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$57 ($add) from unsigned to signed.
+Removed top 16 bits (of 32) from port A of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$57 ($add).
+Removed top 16 bits (of 32) from port B of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$57 ($add).
+Removed top 15 bits (of 32) from port Y of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$57 ($add).
+Converting cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$58 ($add) from unsigned to signed.
+Removed top 15 bits (of 32) from port A of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$58 ($add).
+Removed top 15 bits (of 32) from port B of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$58 ($add).
+Removed top 14 bits (of 32) from port Y of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$58 ($add).
+Converting cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$59 ($add) from unsigned to signed.
+Removed top 14 bits (of 32) from port A of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$59 ($add).
+Removed top 16 bits (of 32) from port B of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$59 ($add).
+Removed top 13 bits (of 32) from port Y of cell $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.$add$rtl/conv5x5_row_mac.sv:48$59 ($add).
+Removed top 32 bits (of 33) from port A of cell $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$sshl$rtl/requantize.sv:32$38 ($sshl).
+Removed top 1 bits (of 33) from port A of cell $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$ge$rtl/requantize.sv:33$39 ($ge).
+Removed top 31 bits (of 32) from port B of cell $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$ge$rtl/requantize.sv:33$39 ($ge).
+Removed top 1 bits (of 33) from port A of cell $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$add$rtl/requantize.sv:34$40 ($add).
+Removed top 1 bits (of 33) from port A of cell $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$neg$rtl/requantize.sv:36$42 ($neg).
+Removed top 31 bits (of 32) from port B of cell $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$lt$rtl/requantize.sv:41$46 ($lt).
+Removed top 25 bits (of 33) from port B of cell $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$gt$rtl/requantize.sv:43$48 ($gt).
+Removed top 25 bits (of 33) from port B of cell $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.$lt$rtl/requantize.sv:45$49 ($lt).
+
+8.10. Executing PEEPOPT pass (run peephole optimizers).
+
+8.11. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+
+8.12. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module conv5x5_pe:
+  creating $macc model for $add$rtl/conv5x5_pe.sv:46$28 ($add).
+  creating $alu model for $macc $add$rtl/conv5x5_pe.sv:46$28.
+  creating $alu cell for $add$rtl/conv5x5_pe.sv:46$28: $auto$alumacc.cc:512:replace_alu$139
+  created 1 $alu and 0 $macc cells.
+Extracting $alu and $macc cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac:
+  creating $macc model for $add$rtl/conv5x5_row_mac.sv:48$59 ($add).
+  creating $macc model for $add$rtl/conv5x5_row_mac.sv:48$58 ($add).
+  creating $macc model for $add$rtl/conv5x5_row_mac.sv:48$57 ($add).
+  creating $macc model for $add$rtl/conv5x5_row_mac.sv:48$56 ($add).
+  creating $macc model for $mul$rtl/conv5x5_row_mac.sv:39$55 ($mul).
+  creating $macc model for $mul$rtl/conv5x5_row_mac.sv:38$54 ($mul).
+  creating $macc model for $mul$rtl/conv5x5_row_mac.sv:37$53 ($mul).
+  creating $macc model for $mul$rtl/conv5x5_row_mac.sv:36$52 ($mul).
+  creating $macc model for $mul$rtl/conv5x5_row_mac.sv:35$51 ($mul).
+  merging $macc model for $mul$rtl/conv5x5_row_mac.sv:35$51 into $add$rtl/conv5x5_row_mac.sv:48$56.
+  merging $macc model for $mul$rtl/conv5x5_row_mac.sv:36$52 into $add$rtl/conv5x5_row_mac.sv:48$56.
+  merging $macc model for $mul$rtl/conv5x5_row_mac.sv:37$53 into $add$rtl/conv5x5_row_mac.sv:48$57.
+  merging $macc model for $mul$rtl/conv5x5_row_mac.sv:38$54 into $add$rtl/conv5x5_row_mac.sv:48$57.
+  merging $macc model for $add$rtl/conv5x5_row_mac.sv:48$56 into $add$rtl/conv5x5_row_mac.sv:48$58.
+  merging $macc model for $add$rtl/conv5x5_row_mac.sv:48$57 into $add$rtl/conv5x5_row_mac.sv:48$58.
+  merging $macc model for $add$rtl/conv5x5_row_mac.sv:48$58 into $add$rtl/conv5x5_row_mac.sv:48$59.
+  merging $macc model for $mul$rtl/conv5x5_row_mac.sv:39$55 into $add$rtl/conv5x5_row_mac.sv:48$59.
+  creating $macc cell for $add$rtl/conv5x5_row_mac.sv:48$59: $auto$alumacc.cc:382:replace_macc$142
+  created 0 $alu and 1 $macc cells.
+Extracting $alu and $macc cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize:
+  creating $macc model for $neg$rtl/requantize.sv:37$45 ($neg).
+  creating $macc model for $add$rtl/requantize.sv:37$43 ($add).
+  creating $macc model for $neg$rtl/requantize.sv:36$42 ($neg).
+  creating $macc model for $add$rtl/requantize.sv:34$40 ($add).
+  creating $macc model for $sub$rtl/requantize.sv:32$37 ($sub).
+  merging $macc model for $neg$rtl/requantize.sv:36$42 into $add$rtl/requantize.sv:37$43.
+  creating $alu model for $macc $add$rtl/requantize.sv:34$40.
+  creating $alu model for $macc $sub$rtl/requantize.sv:32$37.
+  creating $alu model for $macc $add$rtl/requantize.sv:37$43.
+  creating $alu model for $macc $neg$rtl/requantize.sv:37$45.
+  creating $alu model for $lt$rtl/requantize.sv:45$49 ($lt): new $alu
+  creating $alu model for $gt$rtl/requantize.sv:43$48 ($gt): new $alu
+  creating $alu model for $lt$rtl/requantize.sv:41$46 ($lt): new $alu
+  creating $alu model for $ge$rtl/requantize.sv:33$39 ($ge): new $alu
+  creating $alu cell for $ge$rtl/requantize.sv:33$39: $auto$alumacc.cc:512:replace_alu$147
+  creating $alu cell for $lt$rtl/requantize.sv:41$46: $auto$alumacc.cc:512:replace_alu$162
+  creating $alu cell for $gt$rtl/requantize.sv:43$48: $auto$alumacc.cc:512:replace_alu$169
+  creating $alu cell for $lt$rtl/requantize.sv:45$49: $auto$alumacc.cc:512:replace_alu$182
+  creating $alu cell for $neg$rtl/requantize.sv:37$45: $auto$alumacc.cc:512:replace_alu$189
+  creating $alu cell for $add$rtl/requantize.sv:37$43: $auto$alumacc.cc:512:replace_alu$192
+  creating $alu cell for $sub$rtl/requantize.sv:32$37: $auto$alumacc.cc:512:replace_alu$195
+  creating $alu cell for $add$rtl/requantize.sv:34$40: $auto$alumacc.cc:512:replace_alu$198
+  created 8 $alu and 0 $macc cells.
+
+8.13. Executing SHARE pass (SAT-based resource sharing).
+Found 5 cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac that may be considered for resource sharing.
+  Analyzing resource sharing options for $mul$rtl/conv5x5_row_mac.sv:35$51 ($mul):
+    Found cell that is never activated: $add$rtl/conv5x5_row_mac.sv:48$58
+    Found cell that is never activated: $add$rtl/conv5x5_row_mac.sv:48$56
+    Found cell that is never activated: $mul$rtl/conv5x5_row_mac.sv:35$51
+    Cell is never active. Sharing is pointless, we simply remove it.
+  Analyzing resource sharing options for $mul$rtl/conv5x5_row_mac.sv:36$52 ($mul):
+    Found cell that is never activated: $mul$rtl/conv5x5_row_mac.sv:36$52
+    Cell is never active. Sharing is pointless, we simply remove it.
+  Analyzing resource sharing options for $mul$rtl/conv5x5_row_mac.sv:37$53 ($mul):
+    Found cell that is never activated: $add$rtl/conv5x5_row_mac.sv:48$57
+    Found cell that is never activated: $mul$rtl/conv5x5_row_mac.sv:37$53
+    Cell is never active. Sharing is pointless, we simply remove it.
+  Analyzing resource sharing options for $mul$rtl/conv5x5_row_mac.sv:38$54 ($mul):
+    Found cell that is never activated: $mul$rtl/conv5x5_row_mac.sv:38$54
+    Cell is never active. Sharing is pointless, we simply remove it.
+  Analyzing resource sharing options for $mul$rtl/conv5x5_row_mac.sv:39$55 ($mul):
+    Found cell that is never activated: $mul$rtl/conv5x5_row_mac.sv:39$55
+    Cell is never active. Sharing is pointless, we simply remove it.
+Removing 8 cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac:
+  Removing cell $mul$rtl/conv5x5_row_mac.sv:39$55 ($mul).
+  Removing cell $mul$rtl/conv5x5_row_mac.sv:38$54 ($mul).
+  Removing cell $mul$rtl/conv5x5_row_mac.sv:37$53 ($mul).
+  Removing cell $add$rtl/conv5x5_row_mac.sv:48$57 ($add).
+  Removing cell $mul$rtl/conv5x5_row_mac.sv:36$52 ($mul).
+  Removing cell $mul$rtl/conv5x5_row_mac.sv:35$51 ($mul).
+  Removing cell $add$rtl/conv5x5_row_mac.sv:48$56 ($add).
+  Removing cell $add$rtl/conv5x5_row_mac.sv:48$58 ($add).
+Found 3 cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize that may be considered for resource sharing.
+  Analyzing resource sharing options for $sshl$rtl/requantize.sv:32$38 ($sshl):
+    Found 1 activation_patterns using ctrl signal $ne$rtl/requantize.sv:31$36_Y.
+    No candidates found.
+  Analyzing resource sharing options for $sshr$rtl/requantize.sv:34$41 ($sshr):
+    Found 1 activation_patterns using ctrl signal { $ne$rtl/requantize.sv:31$36_Y $auto$rtlil.cc:3259:ReduceOr$161 }.
+    Found 1 candidates: $sshr$rtl/requantize.sv:37$44
+    Analyzing resource sharing with $sshr$rtl/requantize.sv:37$44 ($sshr):
+      Found 1 activation_patterns using ctrl signal { $ne$rtl/requantize.sv:31$36_Y $auto$rtlil.cc:3259:ReduceOr$161 }.
+      Forbidden control signals for this pair of cells: { $lt$rtl/requantize.sv:45$49_Y $gt$rtl/requantize.sv:43$48_Y $logic_and$rtl/requantize.sv:41$47_Y }
+      Activation pattern for cell $sshr$rtl/requantize.sv:34$41: { $ne$rtl/requantize.sv:31$36_Y $auto$rtlil.cc:3259:ReduceOr$161 } = 2'11
+      Activation pattern for cell $sshr$rtl/requantize.sv:37$44: { $ne$rtl/requantize.sv:31$36_Y $auto$rtlil.cc:3259:ReduceOr$161 } = 2'10
+      According to the SAT solver this pair of cells can be shared. (Pattern only case)
+      Simplified activation pattern for cell $sshr$rtl/requantize.sv:34$41: $auto$rtlil.cc:3259:ReduceOr$161 = 1'1
+      Simplified activation pattern for cell $sshr$rtl/requantize.sv:37$44: $auto$rtlil.cc:3259:ReduceOr$161 = 1'0
+      Activation signal for $sshr$rtl/requantize.sv:34$41: $auto$share.cc:1068:make_cell_activation_logic$201
+      New cell: $auto$share.cc:669:make_supercell$208 ($sshr)
+  Analyzing resource sharing options for $auto$share.cc:669:make_supercell$208 ($sshr):
+    Found 1 activation_patterns using ctrl signal $ne$rtl/requantize.sv:31$36_Y.
+    No candidates found.
+Removing 2 cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize:
+  Removing cell $sshr$rtl/requantize.sv:37$44 ($sshr).
+  Removing cell $sshr$rtl/requantize.sv:34$41 ($sshr).
+
+8.14. Executing OPT pass (performing simple optimizations).
+
+8.14.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+<suppressed ~9 debug messages>
+
+8.14.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 1 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 34 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 33 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+<suppressed ~3 debug messages>
+Removed a total of 1 cells.
+
+8.14.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~18 debug messages>
+
+8.14.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_pe.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Performed a total of 0 changes.
+
+8.14.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 1 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 33 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+8.14.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.14.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Removed 3 unused cells and 24 unused wires.
+<suppressed ~8 debug messages>
+
+8.14.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+8.14.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+8.14.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~18 debug messages>
+
+8.14.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_pe.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Performed a total of 0 changes.
+
+8.14.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 1 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 27 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+8.14.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.14.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+
+8.14.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+8.14.16. Finished fast OPT passes. (There is nothing left to do.)
+
+8.15. Executing MEMORY pass.
+
+8.15.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+8.15.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+8.15.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+8.15.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+8.15.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+8.15.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+
+8.15.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+8.15.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+8.15.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+
+8.15.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+8.16. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+
+8.17. Executing OPT pass (performing simple optimizations).
+
+8.17.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+<suppressed ~1 debug messages>
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+<suppressed ~1 debug messages>
+
+8.17.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 1 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 34 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+8.17.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.17.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Removed 7 unused cells and 7 unused wires.
+<suppressed ~8 debug messages>
+
+8.17.5. Finished fast OPT passes.
+
+8.18. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+
+8.19. Executing OPT pass (performing simple optimizations).
+
+8.19.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+8.19.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 1 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 27 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+8.19.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~15 debug messages>
+
+8.19.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_pe.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Performed a total of 0 changes.
+
+8.19.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 1 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 27 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+8.19.6. Executing OPT_SHARE pass.
+    Found cells that share an operand and can be merged by moving the $mux $auto$share.cc:662:make_supercell$205 in front of them:
+        $auto$alumacc.cc:512:replace_alu$198
+        $auto$alumacc.cc:512:replace_alu$192
+
+8.19.7. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.19.8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Removed 0 unused cells and 6 unused wires.
+<suppressed ~1 debug messages>
+
+8.19.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+<suppressed ~1 debug messages>
+
+8.19.10. Rerunning OPT passes. (Maybe there is more to do..)
+
+8.19.11. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~15 debug messages>
+
+8.19.12. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_pe.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Performed a total of 0 changes.
+
+8.19.13. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 1 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 27 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+8.19.14. Executing OPT_SHARE pass.
+
+8.19.15. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.19.16. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Removed 0 unused cells and 1 unused wires.
+<suppressed ~1 debug messages>
+
+8.19.17. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+8.19.18. Rerunning OPT passes. (Maybe there is more to do..)
+
+8.19.19. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_pe..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Running muxtree optimizer on module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~15 debug messages>
+
+8.19.20. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_pe.
+  Optimizing cells in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+  Optimizing cells in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+Performed a total of 0 changes.
+
+8.19.21. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 17 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 1 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 27 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 0 cells.
+
+8.19.22. Executing OPT_SHARE pass.
+
+8.19.23. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.19.24. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+
+8.19.25. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+
+8.19.26. Finished fast OPT passes. (There is nothing left to do.)
+
+8.20. Executing TECHMAP pass (map to technology primitives).
+
+8.20.1. Executing Verilog-2005 frontend: /share/techmap.v
+Parsing Verilog input from `/share/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+8.20.2. Continuing TECHMAP pass.
+Using extmapper simplemap for cells of type $mux.
+Running "alumacc" on wrapper $extern:wrap:$neg:Y_WIDTH=33:A_WIDTH=33:A_SIGNED=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Using template $extern:wrap:$neg:Y_WIDTH=33:A_WIDTH=33:A_SIGNED=1:394426c56d1a028ba8fdd5469b163e04011def47 for cells of type $extern:wrap:$neg:Y_WIDTH=33:A_WIDTH=33:A_SIGNED=1:394426c56d1a028ba8fdd5469b163e04011def47.
+Using extmapper simplemap for cells of type $not.
+Using template $paramod$a04dd9d4d8b430140c4ff94b50470fb380fda2a0\_90_alu for cells of type $alu.
+Using template $paramod$constmap:e6008b4c5692f056c0929577627a795c5855f193$paramod$6bf2af93bf7e0874459c17a56e24f7113abf01aa\_90_shift_ops_shr_shl_sshl_sshr for cells of type $sshl.
+Using template $paramod$c919145689889b3071b5e9ebc7976635b658110f\_90_alu for cells of type $alu.
+Using template $paramod$constmap:d02031a16a9ec5e10883408809cabd6beb1bf329$paramod$7bfa82651918cc5a58b5a53cb647200f895a1b37\_90_shift_ops_shr_shl_sshl_sshr for cells of type $sshr.
+Using template $paramod$e3e2a2ae1e4d598b5e0e0be67cc1104653ecf8c1\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $xor.
+Using template $paramod$1db4e945b9d337f0bd14f3c4dfec9c45f065bd22\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $reduce_and.
+Using template $paramod$83cdc6d118f196c3d1a5d0f8674838af9a15197e\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $reduce_or.
+Using extmapper simplemap for cells of type $reduce_bool.
+Using extmapper simplemap for cells of type $logic_and.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000000110 for cells of type $fa.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000000110 for cells of type $lcu.
+Using extmapper simplemap for cells of type $pos.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000100001 for cells of type $fa.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000100001 for cells of type $lcu.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000011010 for cells of type $fa.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000011010 for cells of type $lcu.
+Using extmapper simplemap for cells of type $and.
+Using extmapper maccmap for cells of type $macc_v2.
+  add \act_row_i [7:0] * \wgt_row_i [7:0] (8x8 bits, signed)
+  add \act_row_i [39:32] * \wgt_row_i [39:32] (8x8 bits, signed)
+  add \act_row_i [23:16] * \wgt_row_i [23:16] (8x8 bits, signed)
+  add \act_row_i [15:8] * \wgt_row_i [15:8] (8x8 bits, signed)
+  add \act_row_i [31:24] * \wgt_row_i [31:24] (8x8 bits, signed)
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000010011 for cells of type $fa.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000000001 for cells of type $fa.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000010010 for cells of type $fa.
+Using template $paramod$4e6ee5eb737cf7428f8e246e911ae1dac9ae2979\_90_alu for cells of type $alu.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000010011 for cells of type $lcu.
+Using template $paramod$2653f68ddb8eab7b1907b4a20767b72a824a7a36\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $adffe.
+Using extmapper simplemap for cells of type $adff.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000100000 for cells of type $fa.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000100000 for cells of type $lcu.
+No more expansions possible.
+<suppressed ~3303 debug messages>
+
+8.21. Executing OPT pass (performing simple optimizations).
+
+8.21.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+<suppressed ~132 debug messages>
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+<suppressed ~1266 debug messages>
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+<suppressed ~1257 debug messages>
+
+8.21.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 352 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 3771 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 3471 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 3301 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 3151 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 3064 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2978 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2908 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2870 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2843 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2817 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2802 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2792 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2784 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2779 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2778 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+<suppressed ~2979 debug messages>
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 1318 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 1268 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 1244 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 1232 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 1227 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 1225 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 1224 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+<suppressed ~282 debug messages>
+Removed a total of 1087 cells.
+
+8.21.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.21.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Removed 252 unused cells and 1154 unused wires.
+<suppressed ~255 debug messages>
+
+8.21.5. Finished fast OPT passes.
+
+8.22. Executing ABC pass (technology mapping using ABC).
+
+8.22.1. Extracting gate netlist of module `\conv5x5_pe' to `<abc-temp-dir>/input.blif'..
+
+8.22.1.1. Executed ABC.
+Extracted 262 gates and 364 wires to a netlist network with 101 inputs and 36 outputs.
+Running ABC script: <abc-temp-dir>/abc.script
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_library <abc-temp-dir>/stdcells.genlib 
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &fraig -x 
+ABC: + &put 
+ABC: + scorr 
+ABC: Warning: The network is combinational (run "fraig" or "fraig_sweep").
+ABC: + dc2 
+ABC: + dretime 
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &dch -f 
+ABC: + &nf 
+ABC: + &put 
+ABC: + write_blif <abc-temp-dir>/output.blif 
+
+8.22.1.2. Re-integrating ABC results.
+ABC RESULTS:               AND cells:       20
+ABC RESULTS:            ANDNOT cells:        1
+ABC RESULTS:               MUX cells:       32
+ABC RESULTS:              NAND cells:       66
+ABC RESULTS:               NOT cells:        1
+ABC RESULTS:                OR cells:       30
+ABC RESULTS:             ORNOT cells:        1
+ABC RESULTS:              XNOR cells:       32
+ABC RESULTS:               XOR cells:       20
+ABC RESULTS:        internal signals:      227
+ABC RESULTS:           input signals:      101
+ABC RESULTS:          output signals:       36
+Removing temp directory.
+
+8.22.2. Extracting gate netlist of module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac' to `<abc-temp-dir>/input.blif'..
+
+8.22.2.1. Executed ABC.
+Extracted 2738 gates and 2818 wires to a netlist network with 80 inputs and 19 outputs.
+Running ABC script: <abc-temp-dir>/abc.script
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_library <abc-temp-dir>/stdcells.genlib 
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &fraig -x 
+ABC: + &put 
+ABC: + scorr 
+ABC: Warning: The network is combinational (run "fraig" or "fraig_sweep").
+ABC: + dc2 
+ABC: + dretime 
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &dch -f 
+ABC: + &nf 
+ABC: + &put 
+ABC: + write_blif <abc-temp-dir>/output.blif 
+
+8.22.2.2. Re-integrating ABC results.
+ABC RESULTS:               AND cells:      372
+ABC RESULTS:            ANDNOT cells:       28
+ABC RESULTS:               MUX cells:       19
+ABC RESULTS:              NAND cells:     1202
+ABC RESULTS:               NOT cells:        4
+ABC RESULTS:                OR cells:       43
+ABC RESULTS:             ORNOT cells:       48
+ABC RESULTS:              XNOR cells:      115
+ABC RESULTS:               XOR cells:      791
+ABC RESULTS:        internal signals:     2719
+ABC RESULTS:           input signals:       80
+ABC RESULTS:          output signals:       19
+Removing temp directory.
+
+8.22.3. Extracting gate netlist of module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize' to `<abc-temp-dir>/input.blif'..
+
+8.22.3.1. Executed ABC.
+Extracted 1059 gates and 1100 wires to a netlist network with 39 inputs and 8 outputs.
+Running ABC script: <abc-temp-dir>/abc.script
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_library <abc-temp-dir>/stdcells.genlib 
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &fraig -x 
+ABC: + &put 
+ABC: + scorr 
+ABC: Warning: The network is combinational (run "fraig" or "fraig_sweep").
+ABC: + dc2 
+ABC: + dretime 
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &dch -f 
+ABC: + &nf 
+ABC: + &put 
+ABC: + write_blif <abc-temp-dir>/output.blif 
+
+8.22.3.2. Re-integrating ABC results.
+ABC RESULTS:               AND cells:      215
+ABC RESULTS:            ANDNOT cells:       30
+ABC RESULTS:               MUX cells:       93
+ABC RESULTS:              NAND cells:      138
+ABC RESULTS:               NOR cells:        6
+ABC RESULTS:               NOT cells:        8
+ABC RESULTS:                OR cells:      117
+ABC RESULTS:             ORNOT cells:       37
+ABC RESULTS:              XNOR cells:       82
+ABC RESULTS:               XOR cells:       38
+ABC RESULTS:        internal signals:     1053
+ABC RESULTS:           input signals:       39
+ABC RESULTS:          output signals:        8
+Removing temp directory.
+Removing global temp directory.
+
+8.23. Executing OPT pass (performing simple optimizations).
+
+8.23.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_pe.
+Optimizing module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac.
+Optimizing module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize.
+<suppressed ~57 debug messages>
+
+8.23.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_pe'.
+Computing hashes of 246 cells of `\conv5x5_pe'.
+Finding duplicate cells in `\conv5x5_pe'.
+Finding identical cells in module `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2622 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Computing hashes of 2621 cells of `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+Finding duplicate cells in `$paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac'.
+<suppressed ~3 debug messages>
+Finding identical cells in module `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Computing hashes of 764 cells of `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Finding duplicate cells in `$paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize'.
+Removed a total of 1 cells.
+
+8.23.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+8.23.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_pe..
+Finding unused cells or wires in module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac..
+Finding unused cells or wires in module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize..
+Removed 0 unused cells and 962 unused wires.
+<suppressed ~5 debug messages>
+
+8.23.5. Finished fast OPT passes.
+
+8.24. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `conv5x5_pe'. Setting top module to conv5x5_pe.
+
+8.24.1. Analyzing design hierarchy..
+Top module:  \conv5x5_pe
+Used module:     $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+Used module:     $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+
+8.24.2. Analyzing design hierarchy..
+Top module:  \conv5x5_pe
+Used module:     $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+Used module:     $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+Removed 0 unused modules.
+
+8.25. Printing statistics.
+
+=== conv5x5_pe ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      188 wires
+      409 wire bits
+       18 public wires
+      239 public wire bits
+       14 ports
+      135 port bits
+      244 cells
+        1   $_ANDNOT_
+       20   $_AND_
+       40   $_DFFE_PN0P_
+        1   $_DFF_PN0_
+       32   $_MUX_
+       66   $_NAND_
+        1   $_NOT_
+        1   $_ORNOT_
+       30   $_OR_
+       32   $_XNOR_
+       20   $_XOR_
+        2 submodules
+        1   $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+        1   $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+
+=== $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac ===
+
+        +----------Local Count, excluding submodules.
+        | 
+     2626 wires
+     3035 wire bits
+       23 public wires
+      432 public wire bits
+        3 ports
+      112 port bits
+     2621 cells
+       28   $_ANDNOT_
+      371   $_AND_
+       19   $_MUX_
+     1202   $_NAND_
+        4   $_NOT_
+       48   $_ORNOT_
+       43   $_OR_
+      115   $_XNOR_
+      791   $_XOR_
+
+=== $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      761 wires
+      836 wire bits
+        5 public wires
+       80 public wire bits
+        4 ports
+       47 port bits
+      764 cells
+       30   $_ANDNOT_
+      215   $_AND_
+       93   $_MUX_
+      138   $_NAND_
+        6   $_NOR_
+        8   $_NOT_
+       37   $_ORNOT_
+      117   $_OR_
+       82   $_XNOR_
+       38   $_XOR_
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+     3629 conv5x5_pe
+      764 $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+     2621 $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+
+        +----------Count including submodules.
+        | 
+     3575 wires
+     4280 wire bits
+       46 public wires
+      751 public wire bits
+       21 ports
+      294 port bits
+        - memories
+        - memory bits
+        - processes
+     3629 cells
+       59   $_ANDNOT_
+      606   $_AND_
+       40   $_DFFE_PN0P_
+        1   $_DFF_PN0_
+      144   $_MUX_
+     1406   $_NAND_
+        6   $_NOR_
+       13   $_NOT_
+       86   $_ORNOT_
+      190   $_OR_
+      229   $_XNOR_
+      849   $_XOR_
+        2 submodules
+        1   $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+        1   $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+
+8.26. Executing CHECK pass (checking for obvious problems).
+Checking module conv5x5_pe...
+Checking module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac...
+Checking module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize...
+Found and reported 0 problems.
+
+9. Executing CHECK pass (checking for obvious problems).
+Checking module conv5x5_pe...
+Checking module $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac...
+Checking module $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize...
+Found and reported 0 problems.
+
+10. Printing statistics.
+
+=== conv5x5_pe ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      188 wires
+      409 wire bits
+       18 public wires
+      239 public wire bits
+       14 ports
+      135 port bits
+      244 cells
+        1   $_ANDNOT_
+       20   $_AND_
+       40   $_DFFE_PN0P_
+        1   $_DFF_PN0_
+       32   $_MUX_
+       66   $_NAND_
+        1   $_NOT_
+        1   $_ORNOT_
+       30   $_OR_
+       32   $_XNOR_
+       20   $_XOR_
+        2 submodules
+        1   $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+        1   $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+
+=== $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac ===
+
+        +----------Local Count, excluding submodules.
+        | 
+     2626 wires
+     3035 wire bits
+       23 public wires
+      432 public wire bits
+        3 ports
+      112 port bits
+     2621 cells
+       28   $_ANDNOT_
+      371   $_AND_
+       19   $_MUX_
+     1202   $_NAND_
+        4   $_NOT_
+       48   $_ORNOT_
+       43   $_OR_
+      115   $_XNOR_
+      791   $_XOR_
+
+=== $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      761 wires
+      836 wire bits
+        5 public wires
+       80 public wire bits
+        4 ports
+       47 port bits
+      764 cells
+       30   $_ANDNOT_
+      215   $_AND_
+       93   $_MUX_
+      138   $_NAND_
+        6   $_NOR_
+        8   $_NOT_
+       37   $_ORNOT_
+      117   $_OR_
+       82   $_XNOR_
+       38   $_XOR_
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+     3629 conv5x5_pe
+      764 $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+     2621 $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+
+        +----------Count including submodules.
+        | 
+     3575 wires
+     4280 wire bits
+       46 public wires
+      751 public wire bits
+       21 ports
+      294 port bits
+        - memories
+        - memory bits
+        - processes
+     3629 cells
+       59   $_ANDNOT_
+      606   $_AND_
+       40   $_DFFE_PN0P_
+        1   $_DFF_PN0_
+      144   $_MUX_
+     1406   $_NAND_
+        6   $_NOR_
+       13   $_NOT_
+       86   $_ORNOT_
+      190   $_OR_
+      229   $_XNOR_
+      849   $_XOR_
+        2 submodules
+        1   $paramod$26cc65167d4690ab2f8488dc6b8ea771ce9f0b3d\requantize
+        1   $paramod$8392c0aee371eac30cfcd917af9a6c37ac869d3e\conv5x5_row_mac
+
+End of script. Logfile hash: b644c01b3e, time: 6.88s, user: 6.91s, system: 0.00s
+Yosys 0.64 (git sha1 ca8886890, ccache clang++  -O3 -fwasm-exceptions -mllvm) [yowasp/yosys at release]
+Time spent: 89% 1x abc (6 sec), 2% 34x opt_expr (0 sec), ...

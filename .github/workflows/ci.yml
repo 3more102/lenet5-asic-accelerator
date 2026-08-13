@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A push that lands while an older run is still going cancels the older run;
+# the RTL regression takes a few minutes and only the newest commit matters.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    name: Golden model + RTL regression (Icarus Verilog)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Icarus Verilog
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends iverilog
+          iverilog -V | head -1
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create results directory
+        run: mkdir -p results
+
+      # Regenerates vectors/, so the committed vectors can never silently
+      # drift away from golden/. `regression` runs, in order: the golden-model
+      # unit tests, SystemVerilog elaboration/lint, all eight self-checking
+      # testbenches, and the end-to-end LeNet-5 demo.
+      - name: Regenerate golden vectors
+        run: make vectors
+
+      - name: Run regression
+        run: make regression
+
+      - name: Fail if regenerated vectors differ from the committed ones
+        run: git diff --exit-code -- vectors/
+
+      - name: Upload waveforms and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-waveforms
+          path: |
+            results/*.vcd
+            results/*.log
+          if-no-files-found: ignore
+
+  synth:
+    name: Generic synthesis (Yosys)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Yosys
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends yosys
+          yosys -V
+
+      - name: Create results directory
+        run: mkdir -p results
+
+      # Arithmetic-tier leaf blocks only (conv5x5_pe, avg_pool2x2_int8,
+      # dense_row_mac). The engines instantiate behavioural ROM/SRAM arrays
+      # that need a real memory compiler -- see docs/SEMICUSTOM_FLOW.md.
+      - name: Synthesize leaf blocks
+        run: make synth
+
+      # Yosys already prints `stat` to the log; this repeats the totals as a
+      # job summary so cell-count regressions are visible without opening logs.
+      - name: Report cell counts
+        run: python3 scripts/report_cells.py results/*_generic.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload generic netlists
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yosys-generic-netlists
+          path: results/*_generic.json
+          if-no-files-found: ignore

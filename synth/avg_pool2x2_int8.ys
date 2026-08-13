@@ -1,0 +1,12 @@
+read_verilog -sv rtl/avg_pool2x2_int8.sv
+hierarchy -check -top avg_pool2x2_int8
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt
+stat
+write_json results/avg_pool2x2_int8_generic.json

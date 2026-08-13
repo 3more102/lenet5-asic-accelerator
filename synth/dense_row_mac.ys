@@ -1,0 +1,12 @@
+read_verilog -sv rtl/dense_row_mac.sv
+hierarchy -check -top dense_row_mac
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt
+stat
+write_json results/dense_row_mac_generic.json
