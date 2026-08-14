@@ -72,7 +72,7 @@ clocked wrapper around it.
 | `requantize` | 687 | 0 | 4,310.384 | 18.544 ns | 53.9 MHz | **no** (WNS −8.544 ns) | +1.875 ns | 120.5 µW |
 | `avg_pool2x2_int8` | 128 | 0 | 1,057.264 | 5.841 ns | 171.2 MHz | yes (WNS +4.159 ns) | +2.229 ns | 28.3 µW |
 | `dense_row_mac` | 2,836 | 0 | 25,719.667 | 10.664 ns | 93.8 MHz | **no** (WNS −0.664 ns) | +2.063 ns | 655.1 µW |
-| `conv5x5_pe` (full PE: row-mac + requantize + accumulator) | 3,015 | 41 | 24,074.339 | 26.759 ns | 37.4 MHz | **no** (WNS −16.759 ns) | +0.232 ns | 794.9 µW |
+| `conv5x5_pe` (full PE: row-mac + requantize + accumulator) | 3,094 | 74 | 24,993.971 | 16.007 ns | 62.5 MHz | **no** (WNS −6.007 ns) | +0.238 ns | 943.4 µW |
 
 \* "Min. period" is the clock period at which setup WNS = 0 under the stated
 I/O delay budget above — i.e. the real achievable period, not a bare gate
@@ -139,7 +139,7 @@ arbitrary frequency, if quoting one number:
 | `requantize` (one output requantization) | 1.205 pJ |
 | `avg_pool2x2_int8` (one 2×2 pooling window) | 0.283 pJ |
 | `dense_row_mac` (one dense-layer row MAC) | 6.551 pJ |
-| `conv5x5_pe` (one full PE cycle: MAC + requantize) | 7.949 pJ |
+| `conv5x5_pe` (one full PE cycle: MAC + requantize) | 9.434 pJ |
 
 Full 9-point sweep data for the three fast blocks:
 `asic/sta/results/ppa_period_sweep_3blocks.csv`.
@@ -160,28 +160,64 @@ shift = 7, [`golden/deploy.py:28`](../golden/deploy.py#L28)) would shrink
 area; a pipelined or carry-select adder would fix timing. Neither has been
 implemented — this is a measured diagnosis, not yet an optimization.
 
-## `conv5x5_pe`'s critical path: two adders back to back, not pipelined
+## `conv5x5_pe`: a measured bottleneck, fixed and re-measured
 
-`conv5x5_pe` fails the 100 MHz reference clock by far more than either of its
-sub-blocks alone (needs 37.4 MHz, vs. 102.0 MHz for `conv5x5_row_mac` and
-53.9 MHz for `requantize` individually) — because it doesn't register the
-boundary between them. Its setup path
-(`asic/sta/results/conv5x5_pe_10ns.sta.log`) starts at a weight input
-(`wgt_row_i[16]`), runs through a `maj3_1`/`xor3_1` carry-chain stretch
-matching `conv5x5_row_mac`'s own adder tree, crosses a single 2.35 ns gate
-(`sky130_fd_sc_hd__o21ai_0`, on a high-fanout net — the one clear outlier
-delay on the whole path), then runs through a second, longer `maj3_1`
-stretch matching the shape of `requantize`'s carry chain (see the section
-above), before finally reaching the accumulator flip-flop. Roughly:
-**`conv5x5_pe`'s critical path (26.76 ns) ≈ `conv5x5_row_mac`'s (9.80 ns) +
-`requantize`'s (18.54 ns)**, because both adders sit in the same
-combinational cycle with no pipeline register between the MAC and the
-requantizer. That is itself the finding: pipelining that one boundary — one
-extra register stage between row-mac and requantize — would let each half
-run at its own, much faster, individual frequency instead of paying for both
-in series every cycle. Not implemented; this is a measured diagnosis of the
-existing single-cycle datapath, same status as the `requantize` finding
-above.
+This is the one place in the project where STA found a real problem, the RTL
+changed because of it, and the fix was verified by re-running the same flow.
+
+**The diagnosis.** The original `conv5x5_pe` failed the 100 MHz reference
+clock by far more than either of its sub-blocks alone — 37.4 MHz, against
+102.0 MHz for `conv5x5_row_mac` and 53.9 MHz for `requantize` individually.
+Its setup path started at a weight input (`wgt_row_i[16]`), ran through a
+`maj3_1`/`xor3_1` stretch matching `conv5x5_row_mac`'s adder tree, crossed a
+2.35 ns high-fanout gate, then ran through a second, longer `maj3_1` stretch
+matching `requantize`'s carry chain, before reaching the accumulator
+flip-flop. The arithmetic was blunt: **26.76 ns ≈ 9.80 ns + 18.54 ns**. Both
+adders sat in one combinational cycle, so the block paid for both critical
+paths in series on every accepted row.
+
+**The fix.** One pipeline register. `conv5x5_pe` now latches the accumulator
+result into `result_q` before it enters `requantize`
+([`rtl/conv5x5_pe.sv`](../rtl/conv5x5_pe.sv)), making requantization a second
+pipeline stage with its own ready/valid handshake. Throughput is unchanged —
+still one kernel row per accepted cycle — at the cost of one extra cycle of
+output latency per pixel.
+
+**The re-measurement**, same flow, same PDK, same constraints:
+
+| | Before (single-cycle) | After (registered RQ) | Change |
+|---|---:|---:|---:|
+| Critical path | 26.759 ns | 16.007 ns | **−40.2%** |
+| Fmax | 37.4 MHz | **62.5 MHz** | **1.67×** |
+| Cells | 3,015 | 3,094 | +79 (+2.6%) |
+| Sequential cells | 41 | 74 | +33 |
+| Area | 24,074.339 µm² | 24,993.971 µm² | +3.8% |
+| Power @ 10 ns | 794.9 µW | 943.4 µW | +18.7% |
+| Worst hold slack | +0.232 ns | +0.238 ns | — |
+
+The +33 flip-flops are exactly the new register: 32 bits of `result_q` plus
+one `rq_valid_q`. **1.67× the frequency for 3.8% more area** is the kind of
+trade this project previously had no way to even state, let alone measure.
+
+**What the path became.** The new setup path
+(`asic/sta/results/conv5x5_pe_10ns.sta.log`) starts at `shift_i[0]` and runs
+through a 33-deep `maj3_1` chain into the output flop — i.e. it is now purely
+the `requantize` carry chain described in the section above, with the row-MAC
+no longer in series with it. The remaining bottleneck is therefore the *same*
+one the standalone `requantize` analysis identified, and the same two
+independent fixes apply: constant-folding `shift_i` (now literally the
+startpoint of the critical path) for area, and a pipelined or carry-select
+adder for the rest of the frequency. Neither is implemented.
+
+**Not applied to `conv2d_engine`.** The production datapath
+(`lenet5_top` → `conv2d_engine`) inlines `conv5x5_row_mac` and `requantize`
+directly rather than instantiating `conv5x5_pe`, and it has the identical
+back-to-back structure — plus an `act_mem`/`wgt_mem` read in the same
+combinational cycle, so it is very likely worse. The same one-register fix
+would apply. It was deliberately **not** made here: it shifts the end-to-end
+cycle count, which is the verified 202,866-cycle result quoted across the
+docs and captured in the committed screenshots. Changing a verified baseline
+is a separate, deliberate piece of work, not a side effect of a timing fix.
 
 ## SRAM sizing for the still-unsynthesized blocks
 

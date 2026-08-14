@@ -61,7 +61,7 @@ both simulators, and now confirmed synthesizable.
 
 | Module | Cells | Flip-flops | Notes |
 |---|---:|---:|---|
-| `conv5x5_pe` (+ `conv5x5_row_mac`, `requantize`) | 4,727 | 41 | Unchanged interface/arithmetic from the earlier milestone; re-run for real in this pass (`synth/yosys.ys`, `results/conv5x5_pe_generic.json`). |
+| `conv5x5_pe` (+ `conv5x5_row_mac`, `requantize`) | 4,762 | 74 | Interface and arithmetic unchanged; requantization became a second pipeline stage after STA found the row-MAC and requantize adders sharing one combinational cycle (`docs/PPA.md`). That added 33 flip-flops and 35 cells versus the 4,727/41 reported on 2026-08-07 (`synth/yosys.ys`, `results/conv5x5_pe_generic.json`). |
 | `avg_pool2x2_int8` | 303 | 0 (combinational) | First synthesis run for this module -- it predates this session but was never wired into `synth/yosys.ys` before (`synth/avg_pool2x2_int8.ys`, `results/avg_pool2x2_int8_generic.json`). |
 | `dense_row_mac` | 4,672 | 0 (combinational) | New this session; required the while-loop-to-generate/genvar fix above (`synth/dense_row_mac.ys`, `results/dense_row_mac_generic.json`). |
 

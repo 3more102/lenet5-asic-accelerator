@@ -554,7 +554,7 @@
   <table>
     <thead><tr><th>Module</th><th class="num">Wires</th><th class="num">Cells</th><th>Notes</th></tr></thead>
     <tbody>
-      <tr><td><code>conv5x5_pe</code> (+ <code>conv5x5_row_mac</code>, <code>requantize</code>)</td><td class="num">1,320</td><td class="num">4,727</td><td>41 flip-flops (40 <code>$_DFFE_PN0P_</code> + 1 <code>$_DFF_PN0_</code>)</td></tr>
+      <tr><td><code>conv5x5_pe</code> (+ <code>conv5x5_row_mac</code>, <code>requantize</code>)</td><td class="num">1,324</td><td class="num">4,762</td><td>74 flip-flops (73 <code>$_DFFE_PN0P_</code> + 1 <code>$_DFF_PN0_</code>)</td></tr>
       <tr><td><code>avg_pool2x2_int8</code></td><td class="num">137</td><td class="num">303</td><td>purely combinational, no clock port</td></tr>
       <tr><td><code>dense_row_mac</code></td><td class="num">1,175</td><td class="num">4,672</td><td>purely combinational, 8 lanes</td></tr>
     </tbody>
@@ -572,8 +572,8 @@
     <tbody>
       <tr><td><code>conv5x5_row_mac</code></td><td class="num">2,870</td><td>5 signed 8&times;8 multipliers + explicit two-level adder tree</td></tr>
       <tr><td><code>requantize</code></td><td class="num">1,554</td><td>33-bit round-away-from-zero, ReLU, saturate</td></tr>
-      <tr><td><code>conv5x5_pe</code> glue</td><td class="num">305</td><td>accumulator control and bias injection</td></tr>
-      <tr><td><b>hierarchy total</b></td><td class="num"><b>4,727</b></td><td>the three sum to 4,729; cross-boundary optimisation accounts for the difference</td></tr>
+      <tr><td><code>conv5x5_pe</code> glue</td><td class="num">340</td><td>accumulator control, bias injection, and the requantize pipeline register</td></tr>
+      <tr><td><b>hierarchy total</b></td><td class="num"><b>4,762</b></td><td>the three sum to 4,764; cross-boundary optimisation accounts for the difference</td></tr>
     </tbody>
   </table>
   </div>
