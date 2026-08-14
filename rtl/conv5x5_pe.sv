@@ -14,6 +14,10 @@
 // (measured 26.76 ns / 37.4 MHz without it, 16.01 ns / 62.5 MHz with it, for
 // +3.8% area -- see docs/PPA.md). Costs one extra cycle of output latency per
 // pixel; throughput is unchanged at one kernel row per accepted cycle.
+//
+// The block now measures 14.57 ns / 68.6 MHz: rewriting requantize's rounding
+// as shift-then-increment took a further 1.44 ns off what had become the
+// dominant path. Both fixes together: 26.76 -> 14.57 ns, 1.84x.
 module conv5x5_pe #(
     parameter integer DATA_WIDTH = 8,
     parameter integer ACC_WIDTH  = 32

@@ -554,7 +554,7 @@
   <table>
     <thead><tr><th>Module</th><th class="num">Wires</th><th class="num">Cells</th><th>Notes</th></tr></thead>
     <tbody>
-      <tr><td><code>conv5x5_pe</code> (+ <code>conv5x5_row_mac</code>, <code>requantize</code>)</td><td class="num">1,324</td><td class="num">4,762</td><td>74 flip-flops (73 <code>$_DFFE_PN0P_</code> + 1 <code>$_DFF_PN0_</code>)</td></tr>
+      <tr><td><code>conv5x5_pe</code> (+ <code>conv5x5_row_mac</code>, <code>requantize</code>)</td><td class="num">1,324</td><td class="num">4,125</td><td>74 flip-flops (73 <code>$_DFFE_PN0P_</code> + 1 <code>$_DFF_PN0_</code>)</td></tr>
       <tr><td><code>avg_pool2x2_int8</code></td><td class="num">137</td><td class="num">303</td><td>purely combinational, no clock port</td></tr>
       <tr><td><code>dense_row_mac</code></td><td class="num">1,175</td><td class="num">4,672</td><td>purely combinational, 8 lanes</td></tr>
     </tbody>
@@ -571,9 +571,9 @@
     <thead><tr><th>Sub-block</th><th class="num">Cells</th><th>What it is</th></tr></thead>
     <tbody>
       <tr><td><code>conv5x5_row_mac</code></td><td class="num">2,870</td><td>5 signed 8&times;8 multipliers + explicit two-level adder tree</td></tr>
-      <tr><td><code>requantize</code></td><td class="num">1,554</td><td>33-bit round-away-from-zero, ReLU, saturate</td></tr>
+      <tr><td><code>requantize</code></td><td class="num">917</td><td>33-bit round-away-from-zero, ReLU, saturate — down from 1,554 after the rounding was rewritten as shift-then-increment (<a href="PPA.md">docs/PPA.md</a>)</td></tr>
       <tr><td><code>conv5x5_pe</code> glue</td><td class="num">340</td><td>accumulator control, bias injection, and the requantize pipeline register</td></tr>
-      <tr><td><b>hierarchy total</b></td><td class="num"><b>4,762</b></td><td>the three sum to 4,764; cross-boundary optimisation accounts for the difference</td></tr>
+      <tr><td><b>hierarchy total</b></td><td class="num"><b>4,125</b></td><td>the three sum to 4,127; cross-boundary optimisation accounts for the difference</td></tr>
     </tbody>
   </table>
   </div>
@@ -588,7 +588,7 @@
     would optimise.</b> <code>shift_i</code> is a runtime <code>[5:0]</code> input, so
     Yosys must infer a full barrel shifter. Every layer actually uses
     <b>shift = 7</b>. Fixing the shift at elaboration time would collapse most of
-    those 1,554 cells for zero functional change. Offer this when asked &ldquo;what
+    those 917 cells for zero functional change. Offer this when asked &ldquo;what
     would you improve?&rdquo; — it is specific, measured, and it shows you read your own
     synthesis report rather than just its last line.
   </div>

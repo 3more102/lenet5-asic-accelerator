@@ -63,7 +63,7 @@ both simulators, and now confirmed synthesizable.
 
 | Module | Cells | Flip-flops | Notes |
 |---|---:|---:|---|
-| `conv5x5_pe` (+ `conv5x5_row_mac`, `requantize`) | 4,762 | 74 | Interface and arithmetic unchanged; requantization became a second pipeline stage after STA found the row-MAC and requantize adders sharing one combinational cycle (`docs/PPA.md`). That added 33 flip-flops and 35 cells versus the 4,727/41 reported on 2026-08-07 (`synth/yosys.ys`, `results/conv5x5_pe_generic.json`). |
+| `conv5x5_pe` (+ `conv5x5_row_mac`, `requantize`) | 4,125 | 74 | Interface and arithmetic unchanged. Two changes since the 4,727/41 reported on 2026-08-07: requantization became a second pipeline stage (+33 flip-flops, +35 cells), then `requantize`'s rounding was rewritten as shift-then-increment, which removed 637 cells (1,554 → 917 in that submodule). Both are measured in `docs/PPA.md` (`synth/yosys.ys`, `results/conv5x5_pe_generic.json`). |
 | `avg_pool2x2_int8` | 303 | 0 (combinational) | First synthesis run for this module -- it predates this session but was never wired into `synth/yosys.ys` before (`synth/avg_pool2x2_int8.ys`, `results/avg_pool2x2_int8_generic.json`). |
 | `dense_row_mac` | 4,672 | 0 (combinational) | New this session; required the while-loop-to-generate/genvar fix above (`synth/dense_row_mac.ys`, `results/dense_row_mac_generic.json`). |
 
@@ -106,7 +106,9 @@ picture.
 Static timing analysis on the sky130hd-mapped netlist showed `conv5x5_pe`
 closing at only 37.4 MHz because the row-MAC adder tree and the requantizer's
 carry chain shared one combinational cycle. Registering the accumulator
-result before `requantize` fixed that (**62.5 MHz, 1.67x, for +3.8% area** —
+result before `requantize` fixed that (**62.5 MHz, 1.67x, for +3.8% area**), and
+rewriting requantize's rounding as shift-then-increment took it further to
+**68.6 MHz with 18.8% less area in that block** (**1.84x overall** —
 `docs/PPA.md`). The same structural fix was then applied to `conv2d_engine`,
 which had the identical pattern plus a memory read in the same cycle.
 
@@ -126,7 +128,7 @@ output pixels (C1 6x28x28 = 4,704, C3 16x10x10 = 1,600, C5 120), i.e. the
 predicted one-cycle-per-output-pixel cost and nothing more. Icarus and
 ModelSim report the identical finish time independently.
 
-Two limits worth stating plainly. The 1.67x is measured **for `conv5x5_pe`
+Two limits worth stating plainly. The 1.84x is measured **for `conv5x5_pe`
 only**; `conv2d_engine` holds behavioural memory arrays and is not
 synthesizable, so its improvement is inferred by structural analogy, not
 measured. And `results/screenshots/07_end_to_end_cycles.png` still shows the

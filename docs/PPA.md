@@ -69,10 +69,10 @@ clocked wrapper around it.
 | Block | Cells | Seq. cells | Area (µm²) | Min. period* | Fmax* | Setup met @ 10 ns | Worst hold slack | Power @ 10 ns† |
 |---|---:|---:|---:|---:|---:|:---:|---:|---:|
 | `conv5x5_row_mac` | 1,776 | 0 | 15,846.448 | 9.804 ns | 102.0 MHz | yes (WNS +0.196 ns) | +2.197 ns | 406.1 µW |
-| `requantize` | 687 | 0 | 4,310.384 | 18.544 ns | 53.9 MHz | **no** (WNS −8.544 ns) | +1.875 ns | 120.5 µW |
+| `requantize` | 560 | 0 | 3,498.355 | 13.414 ns | 74.6 MHz | **no** (WNS −3.414 ns) | +1.884 ns | 97.8 µW |
 | `avg_pool2x2_int8` | 128 | 0 | 1,057.264 | 5.841 ns | 171.2 MHz | yes (WNS +4.159 ns) | +2.229 ns | 28.3 µW |
 | `dense_row_mac` | 2,836 | 0 | 25,719.667 | 10.664 ns | 93.8 MHz | **no** (WNS −0.664 ns) | +2.063 ns | 655.1 µW |
-| `conv5x5_pe` (full PE: row-mac + requantize + accumulator) | 3,094 | 74 | 24,993.971 | 16.007 ns | 62.5 MHz | **no** (WNS −6.007 ns) | +0.238 ns | 943.4 µW |
+| `conv5x5_pe` (full PE: row-mac + requantize + accumulator) | 2,891 | 74 | 24,582.326 | 14.568 ns | 68.6 MHz | **no** (WNS −4.568 ns) | +0.232 ns | 925.4 µW |
 
 \* "Min. period" is the clock period at which setup WNS = 0 under the stated
 I/O delay budget above — i.e. the real achievable period, not a bare gate
@@ -136,29 +136,72 @@ arbitrary frequency, if quoting one number:
 | Block | Energy per operation @ 10 ns (10%/50% activity assumption) |
 |---|---:|
 | `conv5x5_row_mac` (one kernel-row MAC) | 4.061 pJ |
-| `requantize` (one output requantization) | 1.205 pJ |
+| `requantize` (one output requantization) | 0.978 pJ |
 | `avg_pool2x2_int8` (one 2×2 pooling window) | 0.283 pJ |
 | `dense_row_mac` (one dense-layer row MAC) | 6.551 pJ |
-| `conv5x5_pe` (one full PE cycle: MAC + requantize) | 9.434 pJ |
+| `conv5x5_pe` (one full PE cycle: MAC + requantize) | 9.254 pJ |
 
 Full 9-point sweep data for the three fast blocks:
 `asic/sta/results/ppa_period_sweep_3blocks.csv`.
 
-## Where the time actually goes: `requantize`'s adder, not its shifter
+## `requantize`: the adder was the problem, and algebra removed it
 
-`requantize` is the only one of the three fast blocks that fails to close at
-the stated 100 MHz / 10 ns reference clock (needs 53.9 MHz instead). Its
-setup path (`asic/sta/results/requantize_10ns.sta.log`) starts at `shift_i`,
-passes through a handful of decode gates, then a **~20-cell-deep chain of
-`sky130_fd_sc_hd__maj3_1`** — the carry chain of the 33-bit round-away-from-
-zero adder — before reaching a few more gates and `data_o`. The barrel
-shifter that `shift_i` drives is a large fraction of this block's *area*
-(see `docs/QA_PREP.md`'s cell-count breakdown), but the adder's carry chain,
-not the shifter, is what limits its *frequency*. The two are different
-problems with different fixes: constant-folding `shift_i` (every layer uses
-shift = 7, [`golden/deploy.py:28`](../golden/deploy.py#L28)) would shrink
-area; a pipelined or carry-select adder would fix timing. Neither has been
-implemented — this is a measured diagnosis, not yet an optimization.
+The original `requantize` was the slowest of the three leaf blocks — 53.9 MHz
+against the 100 MHz reference. Its setup path started at `shift_i`, passed
+through a few decode gates, then ran through a **33-cell-deep chain of
+`sky130_fd_sc_hd__maj3_1`**: the carry chain of the 33-bit round-away-from-
+zero adder. The barrel shifter that `shift_i` drives is a large fraction of
+the block's *area*, but the adder, not the shifter, set its *frequency*.
+
+**The fix was not a pipeline register — it was rewriting the arithmetic.**
+Rounding was computed the textbook way, `(m + 2^(s-1)) >>> s`: a full
+34-bit add, then a shift. For any non-negative magnitude `m` and shift
+`s >= 1`, letting `t = m >>> (s-1)`:
+
+```
+(m + 2^(s-1)) >>> s   ==   (t >>> 1) + t[0]
+```
+
+(`t` even → `t/2`; `t` odd → `(t+1)/2`; both equal the floor of the left
+side. Verified exhaustively over every shift 1–32 before the RTL changed.)
+Both forms need one barrel shift, but the left also needs a full adder chain,
+while the right needs only an **increment by a single bit** — half adders
+instead of full adders. `>>> 1` and `[0]` are wiring, not logic.
+
+The tool confirms the mechanism precisely. The new critical path
+(`asic/sta/results/requantize_10ns.sta.log`) contains **zero `maj3_1` cells**,
+down from 33; the carry chain is now an `or4_1`/`nor4_1` tree, because an
+increment's carry only propagates through bits that are all 1 — a shallow OR
+reduction rather than a deep majority chain.
+
+| `requantize` | Before | After | Change |
+|---|---:|---:|---:|
+| Critical path | 18.544 ns | 13.414 ns | **−27.7%** |
+| Fmax | 53.9 MHz | **74.6 MHz** | **1.38×** |
+| Cells | 687 | 560 | −18.5% |
+| Area | 4,310.384 µm² | 3,498.355 µm² | **−18.8%** |
+| Power @ 10 ns | 120.5 µW | 97.8 µW | −18.9% |
+
+Smaller, faster **and** lower power — no trade at all, and no cost anywhere
+else either: the block stays purely combinational, so no interface change, no
+added latency, and the end-to-end cycle count is bit-identical at 209,290.
+The full regression passes in both simulators with the predicted class
+unchanged, which is the check that matters — the testbenches compare against
+the Python oracle, so a rounding change that was even one ULP off in one edge
+case would fail rather than quietly pass.
+
+`conv5x5_pe` inherits it, since its path was requantize-dominated:
+16.008 → 14.568 ns (62.5 → 68.6 MHz), 3,094 → 2,891 cells. Combined with the
+pipeline register in the previous section, the PE went **26.759 → 14.568 ns
+overall — 37.4 → 68.6 MHz, 1.84×** — from two independent, separately
+measured fixes.
+
+**Still not done:** constant-folding `shift_i`. Every layer uses shift = 7
+([`golden/deploy.py:28`](../golden/deploy.py#L28)), so the barrel shifter is
+generality nothing currently exercises. That would shrink area further, but
+unlike the change above it is not free — `conv2d_engine` drives `shift_i`
+from a runtime config register, so fixing it means giving up per-layer
+configurability. That is an architectural decision, not a local optimization.
 
 ## `conv5x5_pe`: a measured bottleneck, fixed and re-measured
 
