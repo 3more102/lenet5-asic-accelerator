@@ -91,6 +91,17 @@ module conv2d_engine #(
     logic signed [DATA_WIDTH-1:0] quantized;
     logic current_connected;
 
+    // Requantization pipeline stage. quant_source is registered here before it
+    // reaches `requantize`, so the act_mem/wgt_mem read, the row-MAC adder tree
+    // and the requantizer's carry chain no longer share one combinational
+    // cycle. The coordinates travel alongside the accumulator so the output
+    // stream stays correctly tagged one cycle later.
+    logic signed [ACC_WIDTH-1:0] rq_acc_q;
+    logic                        rq_pending_q;
+    logic [7:0]                  rq_channel_q;
+    logic [7:0]                  rq_y_q;
+    logic [7:0]                  rq_x_q;
+
     integer lane_idx;
     integer act_linear_index;
     integer wgt_linear_index;
@@ -151,7 +162,7 @@ module conv2d_engine #(
         .ACC_WIDTH(ACC_WIDTH),
         .OUT_WIDTH(DATA_WIDTH)
     ) u_requantize (
-        .acc_i     (quant_source),
+        .acc_i     (rq_acc_q),
         .shift_i   (cfg_shift_q),
         .relu_en_i (cfg_relu_en_q),
         .data_o    (quantized)
@@ -173,6 +184,11 @@ module conv2d_engine #(
             input_channel_q  <= '0;
             kernel_row_q     <= '0;
             accumulator_q    <= '0;
+            rq_acc_q         <= '0;
+            rq_pending_q     <= 1'b0;
+            rq_channel_q     <= '0;
+            rq_y_q           <= '0;
+            rq_x_q           <= '0;
             out_valid_o      <= 1'b0;
             out_data_o       <= '0;
             out_channel_o    <= '0;
@@ -209,10 +225,22 @@ module conv2d_engine #(
                     input_channel_q  <= '0;
                     kernel_row_q     <= '0;
                     accumulator_q    <= bias_mem[0];
+                    rq_pending_q     <= 1'b0;
                     busy_o           <= 1'b1;
                 end
             end else if (busy_o) begin
-                if (out_valid_o) begin
+                // Second pipeline stage: the accumulator latched last cycle has
+                // now been requantized, so publish it. Reached only with
+                // out_valid_o low, since rq_pending_q is set exclusively from
+                // branches that require that.
+                if (rq_pending_q) begin
+                    out_data_o    <= quantized;
+                    out_channel_o <= rq_channel_q;
+                    out_y_o       <= rq_y_q;
+                    out_x_o       <= rq_x_q;
+                    out_valid_o   <= 1'b1;
+                    rq_pending_q  <= 1'b0;
+                end else if (out_valid_o) begin
                     if (out_ready_i) begin
                         out_valid_o <= 1'b0;
 
@@ -242,22 +270,22 @@ module conv2d_engine #(
                     end
                 end else if (!current_connected) begin
                     if (input_channel_q == (cfg_in_ch_q - 1)) begin
-                        out_data_o    <= quantized;
-                        out_channel_o <= output_channel_q;
-                        out_y_o       <= output_y_q;
-                        out_x_o       <= output_x_q;
-                        out_valid_o   <= 1'b1;
+                        rq_acc_q     <= quant_source;
+                        rq_channel_q <= output_channel_q;
+                        rq_y_q       <= output_y_q;
+                        rq_x_q       <= output_x_q;
+                        rq_pending_q <= 1'b1;
                     end else begin
                         input_channel_q <= input_channel_q + 1'b1;
                         kernel_row_q    <= '0;
                     end
                 end else if (kernel_row_q == 3'd4) begin
                     if (input_channel_q == (cfg_in_ch_q - 1)) begin
-                        out_data_o    <= quantized;
-                        out_channel_o <= output_channel_q;
-                        out_y_o       <= output_y_q;
-                        out_x_o       <= output_x_q;
-                        out_valid_o   <= 1'b1;
+                        rq_acc_q     <= quant_source;
+                        rq_channel_q <= output_channel_q;
+                        rq_y_q       <= output_y_q;
+                        rq_x_q       <= output_x_q;
+                        rq_pending_q <= 1'b1;
                     end else begin
                         accumulator_q   <= accumulator_q + row_sum;
                         input_channel_q <= input_channel_q + 1'b1;

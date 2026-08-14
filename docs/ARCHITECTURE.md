@@ -149,8 +149,8 @@ across outputs -- consistent with `conv2d_engine`'s own one-row-per-cycle,
 non-overlapped posture.
 
 `lenet5_top` measured end to end (ModelSim, full canonical 32x32x1 input,
-including every per-layer weight/bias/connectivity ROM load): **202,866
-cycles** (2,028,660 ns at 100 MHz, about 2.03 ms), dominated by the C5 weight
+including every per-layer weight/bias/connectivity ROM load): **209,290
+cycles** (2,092,900 ns at 100 MHz, about 2.09 ms), dominated by the C5 weight
 load (48,000 words) and the C1/C3 convolution compute. This is a
 verification-oriented, resource-shared, non-overlapped sequencing baseline,
 not a throughput target -- overlapping ROM loads with the previous stage's

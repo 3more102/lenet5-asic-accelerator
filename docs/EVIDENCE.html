@@ -362,8 +362,8 @@
     </li>
     <li>
       <b>The run takes a few minutes</b>, dominated by <code>tb_lenet5_top</code>,
-      which simulates <b>202,866 cycles</b>. A watchdog fires <code>$fatal</code> at
-      600,000 cycles, so the test finishes inside <b>34%</b> of its budget — a hang
+      which simulates <b>209,290 cycles</b>. A watchdog fires <code>$fatal</code> at
+      600,000 cycles, so the test finishes inside <b>35%</b> of its budget — a hang
       cannot masquerade as a pass. Screen A7 shows that arithmetic being derived from
       the simulator's own timestamp.
     </li>
@@ -650,30 +650,46 @@
     left for the audience to trust.
   </p>
 
+  <div class="note caution">
+    <span class="h">This capture is superseded — re-take it before presenting</span>
+    The screenshot above shows <b>2,028,660 ns</b>, which was correct when it was taken.
+    <code>conv2d_engine</code> has since been pipelined: the accumulator is registered before it
+    reaches <code>requantize</code>, so the memory read, the row-MAC adder tree and the
+    requantizer's carry chain no longer share one combinational cycle
+    (<a href="PPA.md">docs/PPA.md</a>). That costs exactly one cycle per convolution output pixel,
+    and both Icarus and ModelSim now independently report <b>2,092,900 ns = 209,290 cycles</b> —
+    +6,424, which is precisely the number of conv output pixels (4,704 + 1,600 + 120). The table
+    below carries the current numbers; the image does not. Nothing about <i>the derivation</i>
+    this screen demonstrates has changed — only the timestamp it operates on.
+  </div>
+
   <h3>The derivation, step by step</h3>
   <div class="scroll">
   <table>
     <thead><tr><th>Step</th><th class="num">Value</th><th>Where it comes from</th></tr></thead>
     <tbody>
-      <tr><td>Simulated time at <code>$finish</code></td><td class="num">2,028,660 ns</td><td>ModelSim's own timestamp — not a number we chose</td></tr>
+      <tr><td>Simulated time at <code>$finish</code></td><td class="num">2,092,900 ns</td><td>ModelSim's own timestamp — not a number we chose</td></tr>
       <tr><td>Clock period</td><td class="num">10 ns</td><td>the stated 100 MHz reference</td></tr>
-      <tr><td>Cycles</td><td class="num">202,866</td><td>2,028,660 &divide; 10</td></tr>
-      <tr><td>Wall-clock equivalent</td><td class="num">2.03 ms</td><td>202,866 &times; 10 ns</td></tr>
+      <tr><td>Cycles</td><td class="num">209,290</td><td>2,092,900 &divide; 10</td></tr>
+      <tr><td>Wall-clock equivalent</td><td class="num">2.09 ms</td><td>209,290 &times; 10 ns</td></tr>
       <tr><td>Watchdog budget</td><td class="num">600,000</td><td><code>vectors/config.svh</code></td></tr>
-      <tr><td>Margin</td><td class="num">397,134</td><td>600,000 &minus; 202,866 — finished at 34% of budget</td></tr>
+      <tr><td>Margin</td><td class="num">390,710</td><td>600,000 &minus; 209,290 — finished at 35% of budget</td></tr>
     </tbody>
   </table>
   </div>
 
   <div class="note">
     <span class="h">Why this screen is worth its slot</span>
-    &ldquo;202,866 cycles&rdquo; is the single most quotable number in the project, and it
-    is the one an examiner is most likely to ask you to justify. This screen answers
-    that before it is asked: the figure is a division performed on a timestamp the
-    simulator printed, with every intermediate value visible. There is nothing to take
-    on faith. It also shows the run finishing with <b>397,134 cycles of margin</b>
-    against the watchdog — so the pass is a real completion, not a test that ran out
-    of time in a way that happened to look successful.
+    The end-to-end cycle count — currently <b>209,290</b> — is the single most quotable
+    number in the project, and the one an examiner is most likely to ask you to justify.
+    This screen answers that before it is asked: the figure is a division performed on a
+    timestamp the simulator printed, with every intermediate value visible. There is
+    nothing to take on faith. That is also why the number moving did not damage the
+    claim: when <code>conv2d_engine</code> was pipelined, the same derivation simply ran
+    on a new timestamp, and <i>both</i> simulators produced it independently. It also
+    shows the run finishing with <b>390,710 cycles of margin</b> against the watchdog —
+    so the pass is a real completion, not a test that ran out of time in a way that
+    happened to look successful.
   </div>
 
   <div class="note caution">
@@ -687,7 +703,7 @@
     whether <code>conv5x5_pe</code> itself actually holds 100&nbsp;MHz against sky130hd,
     which is worth checking before repeating the 100&nbsp;MHz figure as if it were
     closed timing for the whole chip.<br><br>
-    <b>It is not a throughput target.</b> 202,866 cycles &asymp; <b>493
+    <b>It is not a throughput target.</b> 209,290 cycles &asymp; <b>478
     inferences/second</b> is a deliberately non-overlapped verification baseline: every
     stage runs to completion before the next begins, ROM loading is not overlapped with
     compute, and the pooling and dense controllers are unpipelined. That simplicity is

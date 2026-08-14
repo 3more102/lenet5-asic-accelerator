@@ -209,15 +209,35 @@ independent fixes apply: constant-folding `shift_i` (now literally the
 startpoint of the critical path) for area, and a pipelined or carry-select
 adder for the rest of the frequency. Neither is implemented.
 
-**Not applied to `conv2d_engine`.** The production datapath
-(`lenet5_top` → `conv2d_engine`) inlines `conv5x5_row_mac` and `requantize`
-directly rather than instantiating `conv5x5_pe`, and it has the identical
-back-to-back structure — plus an `act_mem`/`wgt_mem` read in the same
-combinational cycle, so it is very likely worse. The same one-register fix
-would apply. It was deliberately **not** made here: it shifts the end-to-end
-cycle count, which is the verified 202,866-cycle result quoted across the
-docs and captured in the committed screenshots. Changing a verified baseline
-is a separate, deliberate piece of work, not a side effect of a timing fix.
+**Also applied to `conv2d_engine` — but unmeasurable there.** The production
+datapath (`lenet5_top` → `conv2d_engine`) inlines `conv5x5_row_mac` and
+`requantize` directly rather than instantiating `conv5x5_pe`, and it had the
+identical back-to-back structure — plus an `act_mem`/`wgt_mem` read in the
+same combinational cycle, so if anything it was worse. The same one-register
+fix has been applied there, with the output coordinates pipelined alongside
+the accumulator so the stream stays correctly tagged.
+
+Be precise about what that does and does not buy:
+
+| | `conv5x5_pe` | `conv2d_engine` |
+|---|---|---|
+| Fix applied | yes | yes |
+| Functionally re-verified | yes | yes (48/48 vs oracle, both simulators) |
+| Frequency improvement | **measured, 1.67×** | **not measurable** |
+
+`conv2d_engine` holds behavioural `act_mem`/`wgt_mem` arrays, so it is one of
+the blocks deliberately excluded from synthesis (see the scope table). There
+is no PDK path to a frequency figure for it — `act_mem` alone is 16,384×8 and
+would infer roughly 131k flip-flops, which is neither a meaningful netlist nor
+a tractable `abc` run. The improvement there is therefore **inferred by
+structural analogy to the measured PE result, not measured**. Do not quote
+1.67× for the engine.
+
+What *was* measured is the cost: **202,866 → 209,290 cycles end to end
+(+6,424)**, which is exactly one cycle per convolution output pixel
+(C1 6×28×28 = 4,704, C3 16×10×10 = 1,600, C5 120 — summing to 6,424). Icarus
+and ModelSim independently report the same 2,092,900 ns finish time, and the
+predicted class is unchanged and still bit-exact against `golden/deploy.py`.
 
 ## SRAM sizing for the still-unsynthesized blocks
 

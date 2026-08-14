@@ -1,6 +1,8 @@
 # Verification Summary
 
-Date: 2026-08-07
+Date: 2026-08-07 (re-verified 2026-08-15 after the requantize pipelining
+change — see "Addendum" at the end; figures in this document reflect the
+re-verified state, not the original 2026-08-07 run)
 
 ## Status
 
@@ -44,7 +46,7 @@ both simulators, and now confirmed synthesizable.
   including a dedicated hand-computed tie-break check (lowest index wins).
 - `lenet5_top` produced the correct predicted class end to end on the full
   canonical 32x32x1 input, bit-exact against `golden/deploy.py:
-  deploy_forward_int8` (~203,000 cycles simulated, well inside a 600,000-cycle
+  deploy_forward_int8` (~209,000 cycles simulated, well inside a 600,000-cycle
   watchdog).
 - SystemVerilog elaboration/compilation passed for all 14 RTL modules and 8
   testbenches via `scripts/modelsim.do` (ModelSim/Questa Intel FPGA Edition
@@ -98,4 +100,35 @@ analysis for these same arithmetic blocks — see
 not a tapeout, but real cells and real Liberty timing arcs, not generic
 techmap counts. Don't read the table below as if it were the final PPA
 picture.
+
+## Addendum — 2026-08-15: requantize pipelining, and full re-verification
+
+Static timing analysis on the sky130hd-mapped netlist showed `conv5x5_pe`
+closing at only 37.4 MHz because the row-MAC adder tree and the requantizer's
+carry chain shared one combinational cycle. Registering the accumulator
+result before `requantize` fixed that (**62.5 MHz, 1.67x, for +3.8% area** —
+`docs/PPA.md`). The same structural fix was then applied to `conv2d_engine`,
+which had the identical pattern plus a memory read in the same cycle.
+
+Everything above was re-run against the changed RTL, in both simulators:
+
+- 15/15 Python golden-model unit tests still pass.
+- All 8 self-checking testbenches still pass under Icarus Verilog 12.0 **and**
+  ModelSim/Questa 10.5b, 0 errors / 0 warnings.
+- `conv2d_engine` still produces 48/48 outputs matching the bit-exact Python
+  model, including under the hostile every-7th-cycle backpressure pattern.
+- `lenet5_top` still produces the correct predicted class end to end,
+  bit-exact against `golden/deploy.py: deploy_forward_int8`.
+
+The one figure that moved is the cycle count: **202,866 -> 209,290 cycles**
+(2,092,900 ns at 100 MHz). The `+6,424` is exactly the number of convolution
+output pixels (C1 6x28x28 = 4,704, C3 16x10x10 = 1,600, C5 120), i.e. the
+predicted one-cycle-per-output-pixel cost and nothing more. Icarus and
+ModelSim report the identical finish time independently.
+
+Two limits worth stating plainly. The 1.67x is measured **for `conv5x5_pe`
+only**; `conv2d_engine` holds behavioural memory arrays and is not
+synthesizable, so its improvement is inferred by structural analogy, not
+measured. And `results/screenshots/07_end_to_end_cycles.png` still shows the
+old 2,028,660 ns timestamp — it predates this change and needs re-capturing.
 

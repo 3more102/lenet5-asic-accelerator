@@ -73,7 +73,7 @@ ModelSim; generic synthesis passes under Yosys.
 | C3 input-map connections | 60 (not 96) |
 | MACs across C1/C3/C5 | 315,600 |
 | PE row cycles across C1/C3/C5 | 63,120 |
-| End-to-end measured cycles (`lenet5_top`, ModelSim) | 202,866 |
+| End-to-end measured cycles (`lenet5_top`, ModelSim) | 209,290 |
 
 The end-to-end figure includes every per-layer weight/bias ROM load and is a
 non-overlapped, resource-shared sequencing baseline — not a throughput target.
