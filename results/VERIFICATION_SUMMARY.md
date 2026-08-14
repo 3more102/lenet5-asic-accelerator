@@ -67,10 +67,14 @@ both simulators, and now confirmed synthesizable.
 
 These are technology-independent cell counts from generic synthesis
 (`proc; opt; fsm; opt; memory; opt; techmap; opt`), not foundry area
-estimates. `avg_pool2x2_int8` and `dense_row_mac` have no clock port (pure
-combinational primitives), so no SDC applies to them standalone -- a timing
-budget only becomes meaningful once they're embedded in a clocked wrapper
-(`avg_pool2x2_stream`, `dense_engine`), which are not synthesized yet.
+estimates -- superseded by the real sky130hd numbers in `docs/PPA.md`.
+`avg_pool2x2_int8` and `dense_row_mac` have no clock port (pure combinational
+primitives), so a conventional per-block SDC with a real `create_clock` does
+not apply to them standalone. `docs/PPA.md` sidesteps that with a virtual
+clock plus input/output delays -- the standard STA technique for timing a
+combinational block in isolation -- rather than waiting for them to be
+embedded in a clocked wrapper (`avg_pool2x2_stream`, `dense_engine`), which
+are still not synthesized.
 
 ## Expected warnings
 
@@ -82,7 +86,16 @@ architecture and interface documents.
 
 ## Not claimed
 
-No PDK was supplied. This result does not claim post-layout timing, silicon
-area, dynamic/leakage power, DRC, LVS, IR drop, electromigration, scan coverage,
-or SRAM sign-off.
+This pass used generic Yosys techmap only (`proc; opt; fsm; opt; memory; opt;
+techmap; opt`) — no standard-cell library, so no silicon area, power,
+frequency, DRC, LVS, IR drop, electromigration, scan coverage, or SRAM
+sign-off from these numbers specifically.
+
+That is no longer the whole story for this project, though: a later pass ran
+real gate-level synthesis onto the **sky130hd** PDK plus static timing/power
+analysis for these same arithmetic blocks — see
+[`docs/PPA.md`](../docs/PPA.md). Still pre-layout (no place-and-route), still
+not a tapeout, but real cells and real Liberty timing arcs, not generic
+techmap counts. Don't read the table below as if it were the final PPA
+picture.
 

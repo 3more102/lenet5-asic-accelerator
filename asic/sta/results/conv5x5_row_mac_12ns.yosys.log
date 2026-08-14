@@ -1,0 +1,869 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2025  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)
+
+-- Executing script file `/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/asic/sta/work/conv5x5_row_mac_12ns.ys' --
+
+1. Executing Liberty frontend: /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+Imported 428 cell types from liberty file.
+
+2. Executing Verilog-2005 frontend: /mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv
+Parsing SystemVerilog input from `/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv' to AST representation.
+Generating RTLIL representation for module `\conv5x5_row_mac'.
+Successfully finished Verilog frontend.
+
+3. Executing HIERARCHY pass (managing design hierarchy).
+
+3.1. Analyzing design hierarchy..
+Top module:  \conv5x5_row_mac
+
+3.2. Analyzing design hierarchy..
+Top module:  \conv5x5_row_mac
+Removed 0 unused modules.
+
+4. Executing SYNTH pass.
+
+4.1. Executing HIERARCHY pass (managing design hierarchy).
+
+4.1.1. Analyzing design hierarchy..
+Top module:  \conv5x5_row_mac
+
+4.1.2. Analyzing design hierarchy..
+Top module:  \conv5x5_row_mac
+Removed 0 unused modules.
+
+4.2. Executing PROC pass (convert processes to netlists).
+
+4.2.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+4.2.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Removed a total of 0 dead cases.
+
+4.2.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 21 assignments to connections.
+
+4.2.4. Executing PROC_INIT pass (extract init attributes).
+
+4.2.5. Executing PROC_ARST pass (detect async resets in processes).
+
+4.2.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+
+4.2.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+
+4.2.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+No latch inferred for signal `\conv5x5_row_mac.\row_sum_o' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\act0' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\act1' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\act2' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\act3' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\act4' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\wgt0' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\wgt1' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\wgt2' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\wgt3' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\wgt4' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\prod0' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\prod1' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\prod2' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\prod3' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\prod4' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\ext0' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\ext1' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\ext2' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\ext3' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+No latch inferred for signal `\conv5x5_row_mac.\ext4' from process `\conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+
+4.2.9. Executing PROC_DFF pass (convert process syncs to FFs).
+
+4.2.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+4.2.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Removing empty process `conv5x5_row_mac.$proc$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:0$1'.
+Cleaned up 0 empty switches.
+
+4.2.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.3. Executing FLATTEN pass (flatten design).
+
+4.4. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.5. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+Removed 0 unused cells and 27 unused wires.
+<suppressed ~1 debug messages>
+
+4.6. Executing CHECK pass (checking for obvious problems).
+Checking module conv5x5_row_mac...
+Found and reported 0 problems.
+
+4.7. Executing OPT pass (performing simple optimizations).
+
+4.7.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.7.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+Removed a total of 0 cells.
+
+4.7.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+4.7.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_row_mac.
+Performed a total of 0 changes.
+
+4.7.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+Removed a total of 0 cells.
+
+4.7.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.7.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+
+4.7.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.7.9. Finished OPT passes. (There is nothing left to do.)
+
+4.8. Executing FSM pass (extract and optimize FSM).
+
+4.8.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+4.8.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+4.8.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+4.8.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+
+4.8.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+4.8.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+4.8.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+4.8.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+4.9. Executing OPT pass (performing simple optimizations).
+
+4.9.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.9.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+Removed a total of 0 cells.
+
+4.9.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+4.9.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_row_mac.
+Performed a total of 0 changes.
+
+4.9.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+Removed a total of 0 cells.
+
+4.9.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.9.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+
+4.9.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.9.9. Finished OPT passes. (There is nothing left to do.)
+
+4.10. Executing WREDUCE pass (reducing word size of cells).
+Converting cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$7 ($add) from unsigned to signed.
+Removed top 16 bits (of 32) from port A of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$7 ($add).
+Removed top 16 bits (of 32) from port B of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$7 ($add).
+Removed top 15 bits (of 32) from port Y of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$7 ($add).
+Converting cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$8 ($add) from unsigned to signed.
+Removed top 16 bits (of 32) from port A of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$8 ($add).
+Removed top 16 bits (of 32) from port B of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$8 ($add).
+Removed top 15 bits (of 32) from port Y of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$8 ($add).
+Converting cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9 ($add) from unsigned to signed.
+Removed top 15 bits (of 32) from port A of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9 ($add).
+Removed top 15 bits (of 32) from port B of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9 ($add).
+Removed top 14 bits (of 32) from port Y of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9 ($add).
+Converting cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$10 ($add) from unsigned to signed.
+Removed top 14 bits (of 32) from port A of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$10 ($add).
+Removed top 16 bits (of 32) from port B of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$10 ($add).
+Removed top 13 bits (of 32) from port Y of cell conv5x5_row_mac.$add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$10 ($add).
+
+4.11. Executing PEEPOPT pass (run peephole optimizers).
+
+4.12. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+
+4.13. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module conv5x5_row_mac:
+  creating $macc model for $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$10 ($add).
+  creating $macc model for $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$7 ($add).
+  creating $macc model for $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$8 ($add).
+  creating $macc model for $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9 ($add).
+  creating $macc model for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:35$2 ($mul).
+  creating $macc model for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:36$3 ($mul).
+  creating $macc model for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:37$4 ($mul).
+  creating $macc model for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:38$5 ($mul).
+  creating $macc model for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:39$6 ($mul).
+  merging $macc model for $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$7 into $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9.
+  merging $macc model for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:35$2 into $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9.
+  merging $macc model for $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$8 into $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9.
+  merging $macc model for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:37$4 into $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9.
+  merging $macc model for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:36$3 into $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9.
+  merging $macc model for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:38$5 into $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9.
+  merging $macc model for $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9 into $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$10.
+  merging $macc model for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:39$6 into $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$10.
+  creating $macc cell for $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$10: $auto$alumacc.cc:365:replace_macc$11
+  created 0 $alu and 1 $macc cells.
+
+4.14. Executing SHARE pass (SAT-based resource sharing).
+Found 5 cells in module conv5x5_row_mac that may be considered for resource sharing.
+  Analyzing resource sharing options for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:39$6 ($mul):
+    Found cell that is never activated: $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:39$6
+    Cell is never active. Sharing is pointless, we simply remove it.
+  Analyzing resource sharing options for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:38$5 ($mul):
+    Found cell that is never activated: $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9
+    Found cell that is never activated: $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$8
+    Found cell that is never activated: $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:38$5
+    Cell is never active. Sharing is pointless, we simply remove it.
+  Analyzing resource sharing options for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:37$4 ($mul):
+    Found cell that is never activated: $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:37$4
+    Cell is never active. Sharing is pointless, we simply remove it.
+  Analyzing resource sharing options for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:36$3 ($mul):
+    Found cell that is never activated: $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$7
+    Found cell that is never activated: $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:36$3
+    Cell is never active. Sharing is pointless, we simply remove it.
+  Analyzing resource sharing options for $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:35$2 ($mul):
+    Found cell that is never activated: $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:35$2
+    Cell is never active. Sharing is pointless, we simply remove it.
+Removing 8 cells in module conv5x5_row_mac:
+  Removing cell $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:35$2 ($mul).
+  Removing cell $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:36$3 ($mul).
+  Removing cell $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$7 ($add).
+  Removing cell $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:37$4 ($mul).
+  Removing cell $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:38$5 ($mul).
+  Removing cell $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$8 ($add).
+  Removing cell $add$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:48$9 ($add).
+  Removing cell $mul$/mnt/c/Users/omar/Downloads/DR.Rania/LeNet5_ASIC_Project/rtl/conv5x5_row_mac.sv:39$6 ($mul).
+
+4.15. Executing OPT pass (performing simple optimizations).
+
+4.15.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.15.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+Removed a total of 0 cells.
+
+4.15.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+4.15.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_row_mac.
+Performed a total of 0 changes.
+
+4.15.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+Removed a total of 0 cells.
+
+4.15.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.15.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+Removed 0 unused cells and 3 unused wires.
+<suppressed ~1 debug messages>
+
+4.15.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.15.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+4.15.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+4.15.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_row_mac.
+Performed a total of 0 changes.
+
+4.15.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+Removed a total of 0 cells.
+
+4.15.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.15.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+
+4.15.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.15.16. Finished OPT passes. (There is nothing left to do.)
+
+4.16. Executing MEMORY pass.
+
+4.16.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+4.16.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+4.16.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+4.16.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+4.16.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+4.16.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+
+4.16.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+4.16.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+4.16.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+
+4.16.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+4.17. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+
+4.18. Executing OPT pass (performing simple optimizations).
+
+4.18.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.18.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+Removed a total of 0 cells.
+
+4.18.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.18.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+
+4.18.5. Finished fast OPT passes.
+
+4.19. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+
+4.20. Executing OPT pass (performing simple optimizations).
+
+4.20.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.20.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+Removed a total of 0 cells.
+
+4.20.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \conv5x5_row_mac..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+4.20.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \conv5x5_row_mac.
+Performed a total of 0 changes.
+
+4.20.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+Removed a total of 0 cells.
+
+4.20.6. Executing OPT_SHARE pass.
+
+4.20.7. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.20.8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+
+4.20.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.20.10. Finished OPT passes. (There is nothing left to do.)
+
+4.21. Executing TECHMAP pass (map to technology primitives).
+
+4.21.1. Executing Verilog-2005 frontend: /usr/bin/../share/yosys/techmap.v
+Parsing Verilog input from `/usr/bin/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `\$__div_mod_u'.
+Generating RTLIL representation for module `\$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `\$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_pmux'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Successfully finished Verilog frontend.
+
+4.21.2. Continuing TECHMAP pass.
+Using extmapper maccmap for cells of type $macc_v2.
+  add \act_row_i [7:0] * \wgt_row_i [7:0] (8x8 bits, signed)
+  add \act_row_i [39:32] * \wgt_row_i [39:32] (8x8 bits, signed)
+  add \act_row_i [23:16] * \wgt_row_i [23:16] (8x8 bits, signed)
+  add \act_row_i [15:8] * \wgt_row_i [15:8] (8x8 bits, signed)
+  add \act_row_i [31:24] * \wgt_row_i [31:24] (8x8 bits, signed)
+Using extmapper simplemap for cells of type $and.
+Using extmapper simplemap for cells of type $not.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000010011 for cells of type $fa.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000000001 for cells of type $fa.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000010010 for cells of type $fa.
+Using template $paramod$4e6ee5eb737cf7428f8e246e911ae1dac9ae2979\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $xor.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000010011 for cells of type $lcu.
+Using extmapper simplemap for cells of type $pos.
+Using extmapper simplemap for cells of type $mux.
+No more expansions possible.
+<suppressed ~638 debug messages>
+
+4.22. Executing OPT pass (performing simple optimizations).
+
+4.22.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+<suppressed ~1228 debug messages>
+
+4.22.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+<suppressed ~3108 debug messages>
+Removed a total of 1036 cells.
+
+4.22.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.22.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+Removed 38 unused cells and 468 unused wires.
+<suppressed ~39 debug messages>
+
+4.22.5. Finished fast OPT passes.
+
+4.23. Executing ABC pass (technology mapping using ABC).
+
+4.23.1. Extracting gate netlist of module `\conv5x5_row_mac' to `<abc-temp-dir>/input.blif'..
+Extracted 2678 gates and 2758 wires to a netlist network with 80 inputs and 19 outputs.
+
+4.23.1.1. Executing ABC.
+Running ABC command: "<yosys-exe-dir>/yosys-abc" -s -f <abc-temp-dir>/abc.script 2>&1
+ABC: ABC command line: "source <abc-temp-dir>/abc.script".
+ABC: 
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_library <abc-temp-dir>/stdcells.genlib 
+ABC: + strash 
+ABC: + dretime 
+ABC: + map 
+ABC: + write_blif <abc-temp-dir>/output.blif 
+
+4.23.1.2. Re-integrating ABC results.
+ABC RESULTS:               AND cells:      268
+ABC RESULTS:            ANDNOT cells:      869
+ABC RESULTS:               MUX cells:        2
+ABC RESULTS:              NAND cells:      110
+ABC RESULTS:               NOR cells:       96
+ABC RESULTS:               NOT cells:       60
+ABC RESULTS:                OR cells:      302
+ABC RESULTS:             ORNOT cells:       53
+ABC RESULTS:              XNOR cells:      219
+ABC RESULTS:               XOR cells:      719
+ABC RESULTS:        internal signals:     2659
+ABC RESULTS:           input signals:       80
+ABC RESULTS:          output signals:       19
+Removing temp directory.
+
+4.24. Executing OPT pass (performing simple optimizations).
+
+4.24.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module conv5x5_row_mac.
+
+4.24.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\conv5x5_row_mac'.
+Removed a total of 0 cells.
+
+4.24.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.24.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+Removed 0 unused cells and 404 unused wires.
+<suppressed ~1 debug messages>
+
+4.24.5. Finished fast OPT passes.
+
+4.25. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `conv5x5_row_mac'. Setting top module to conv5x5_row_mac.
+
+4.25.1. Analyzing design hierarchy..
+Top module:  \conv5x5_row_mac
+
+4.25.2. Analyzing design hierarchy..
+Top module:  \conv5x5_row_mac
+Removed 0 unused modules.
+
+4.26. Printing statistics.
+
+=== conv5x5_row_mac ===
+
+   Number of wires:               2702
+   Number of wire bits:           3111
+   Number of public wires:          23
+   Number of public wire bits:     432
+   Number of ports:                  3
+   Number of port bits:            112
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               2698
+     $_ANDNOT_                     869
+     $_AND_                        268
+     $_MUX_                          2
+     $_NAND_                       110
+     $_NOR_                         96
+     $_NOT_                         60
+     $_ORNOT_                       53
+     $_OR_                         302
+     $_XNOR_                       219
+     $_XOR_                        719
+
+4.27. Executing CHECK pass (checking for obvious problems).
+Checking module conv5x5_row_mac...
+Found and reported 0 problems.
+
+5. Executing DFFLIBMAP pass (mapping DFF cells to sequential cells from liberty file).
+  cell sky130_fd_sc_hd__dfxtp_1 (noninv, pins=3, area=20.02) is a direct match for cell type $_DFF_P_.
+  cell sky130_fd_sc_hd__dfrtn_1 (noninv, pins=4, area=25.02) is a direct match for cell type $_DFF_NN0_.
+  cell sky130_fd_sc_hd__dfrtp_1 (noninv, pins=4, area=25.02) is a direct match for cell type $_DFF_PN0_.
+  cell sky130_fd_sc_hd__dfstp_2 (noninv, pins=4, area=26.28) is a direct match for cell type $_DFF_PN1_.
+  cell sky130_fd_sc_hd__edfxtp_1 (noninv, pins=4, area=30.03) is a direct match for cell type $_DFFE_PP_.
+  cell sky130_fd_sc_hd__dfbbn_1 (noninv, pins=6, area=32.53) is a direct match for cell type $_DFFSR_NNN_.
+  cell sky130_fd_sc_hd__dfbbp_1 (noninv, pins=6, area=32.53) is a direct match for cell type $_DFFSR_PNN_.
+  final dff cell mappings:
+    unmapped dff cell: $_DFF_N_
+    \sky130_fd_sc_hd__dfxtp_1 _DFF_P_ (.CLK( C), .D( D), .Q( Q));
+    \sky130_fd_sc_hd__dfrtn_1 _DFF_NN0_ (.CLK_N( C), .D( D), .Q( Q), .RESET_B( R));
+    unmapped dff cell: $_DFF_NN1_
+    unmapped dff cell: $_DFF_NP0_
+    unmapped dff cell: $_DFF_NP1_
+    \sky130_fd_sc_hd__dfrtp_1 _DFF_PN0_ (.CLK( C), .D( D), .Q( Q), .RESET_B( R));
+    \sky130_fd_sc_hd__dfstp_2 _DFF_PN1_ (.CLK( C), .D( D), .Q( Q), .SET_B( R));
+    unmapped dff cell: $_DFF_PP0_
+    unmapped dff cell: $_DFF_PP1_
+    unmapped dff cell: $_DFFE_NN_
+    unmapped dff cell: $_DFFE_NP_
+    unmapped dff cell: $_DFFE_PN_
+    \sky130_fd_sc_hd__edfxtp_1 _DFFE_PP_ (.CLK( C), .D( D), .DE( E), .Q( Q));
+    \sky130_fd_sc_hd__dfbbn_1 _DFFSR_NNN_ (.CLK_N( C), .D( D), .Q( Q), .Q_N(~Q), .RESET_B( R), .SET_B( S));
+    unmapped dff cell: $_DFFSR_NNP_
+    unmapped dff cell: $_DFFSR_NPN_
+    unmapped dff cell: $_DFFSR_NPP_
+    \sky130_fd_sc_hd__dfbbp_1 _DFFSR_PNN_ (.CLK( C), .D( D), .Q( Q), .Q_N(~Q), .RESET_B( R), .SET_B( S));
+    unmapped dff cell: $_DFFSR_PNP_
+    unmapped dff cell: $_DFFSR_PPN_
+    unmapped dff cell: $_DFFSR_PPP_
+
+5.1. Executing DFFLEGALIZE pass (convert FFs to types supported by the target).
+<suppressed ~24 debug messages>
+Mapping DFF cells in module `\conv5x5_row_mac':
+
+6. Executing ABC pass (technology mapping using ABC).
+
+6.1. Extracting gate netlist of module `\conv5x5_row_mac' to `<abc-temp-dir>/input.blif'..
+Extracted 2698 gates and 2778 wires to a netlist network with 80 inputs and 19 outputs.
+
+6.1.1. Executing ABC.
+Running ABC command: "<yosys-exe-dir>/yosys-abc" -s -f <abc-temp-dir>/abc.script 2>&1
+ABC: ABC command line: "source <abc-temp-dir>/abc.script".
+ABC: 
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_lib -w /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib 
+ABC: Parsing finished successfully.  Parsing time =     0.28 sec
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__decap_12" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__decap_3" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__decap_4" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__decap_6" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__decap_8" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfbbn_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfbbn_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfbbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfrbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfrbp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfrtn_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfrtp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfrtp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfrtp_4".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfsbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfsbp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfstp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfstp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfstp_4".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfxbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfxbp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfxtp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfxtp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dfxtp_4".
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__diode_2" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__dlclkp_1" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__dlclkp_2" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__dlclkp_4" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlrbn_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlrbn_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlrbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlrbp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlrtn_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlrtn_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlrtn_4".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlrtp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlrtp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlrtp_4".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlxbn_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlxbn_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlxbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlxtn_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlxtn_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlxtn_4".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__dlxtp_1".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__ebufn_1".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__ebufn_2".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__ebufn_4".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__ebufn_8".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__edfxbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__edfxtp_1".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__einvn_0".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__einvn_1".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__einvn_2".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__einvn_4".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__einvn_8".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__einvp_1".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__einvp_2".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__einvp_4".
+ABC: Scl_LibertyReadGenlib() skipped three-state cell "sky130_fd_sc_hd__einvp_8".
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__lpflow_bleeder_1" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__lpflow_decapkapwr_12" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__lpflow_decapkapwr_3" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__lpflow_decapkapwr_4" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__lpflow_decapkapwr_6" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__lpflow_decapkapwr_8" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__lpflow_inputisolatch_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfbbn_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfbbn_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfbbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfrbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfrbp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfrtn_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfrtp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfrtp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfrtp_4".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfsbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfsbp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfstp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfstp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfstp_4".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfxbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfxbp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfxtp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfxtp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sdfxtp_4".
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__sdlclkp_1" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__sdlclkp_2" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped cell "sky130_fd_sc_hd__sdlclkp_4" without logic function.
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sedfxbp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sedfxbp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sedfxtp_1".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sedfxtp_2".
+ABC: Scl_LibertyReadGenlib() skipped sequential cell "sky130_fd_sc_hd__sedfxtp_4".
+ABC: Library "sky130_fd_sc_hd__tt_025C_1v80" from "/root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib" has 334 cells (94 skipped: 63 seq; 13 tri-state; 18 no func; 0 dont_use).  Time =     0.40 sec
+ABC: Memory =   19.81 MB. Time =     0.40 sec
+ABC: Warning: Detected 9 multi-output gates (for example, "sky130_fd_sc_hd__fa_1").
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &fraig -x 
+ABC: + &put 
+ABC: + scorr 
+ABC: Warning: The network is combinational (run "fraig" or "fraig_sweep").
+ABC: + dc2 
+ABC: + dretime 
+ABC: + retime -o -D 12000 
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &dch -f 
+ABC: + &nf -D 12000 
+ABC: + &put 
+ABC: + write_blif <abc-temp-dir>/output.blif 
+
+6.1.2. Re-integrating ABC results.
+ABC RESULTS:   sky130_fd_sc_hd__a21boi_0 cells:        4
+ABC RESULTS:   sky130_fd_sc_hd__a21o_1 cells:       10
+ABC RESULTS:   sky130_fd_sc_hd__a21oi_1 cells:       60
+ABC RESULTS:   sky130_fd_sc_hd__a22o_1 cells:        9
+ABC RESULTS:   sky130_fd_sc_hd__a22oi_1 cells:       13
+ABC RESULTS:   sky130_fd_sc_hd__a2bb2oi_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__a311oi_1 cells:        2
+ABC RESULTS:   sky130_fd_sc_hd__a31o_1 cells:        2
+ABC RESULTS:   sky130_fd_sc_hd__a31oi_1 cells:       10
+ABC RESULTS:   sky130_fd_sc_hd__a32oi_1 cells:        3
+ABC RESULTS:   sky130_fd_sc_hd__and2_0 cells:       35
+ABC RESULTS:   sky130_fd_sc_hd__and3_1 cells:       16
+ABC RESULTS:   sky130_fd_sc_hd__and4_1 cells:        4
+ABC RESULTS:   sky130_fd_sc_hd__clkinv_1 cells:       47
+ABC RESULTS:   sky130_fd_sc_hd__lpflow_inputiso1p_1 cells:        9
+ABC RESULTS:   sky130_fd_sc_hd__lpflow_isobufsrc_1 cells:       44
+ABC RESULTS:   sky130_fd_sc_hd__maj3_1 cells:      280
+ABC RESULTS:   sky130_fd_sc_hd__mux2i_1 cells:        2
+ABC RESULTS:   sky130_fd_sc_hd__nand2_1 cells:      298
+ABC RESULTS:   sky130_fd_sc_hd__nand2b_1 cells:       48
+ABC RESULTS:   sky130_fd_sc_hd__nand3_1 cells:       22
+ABC RESULTS:   sky130_fd_sc_hd__nand3b_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__nand4_1 cells:       13
+ABC RESULTS:   sky130_fd_sc_hd__nor2_1 cells:       80
+ABC RESULTS:   sky130_fd_sc_hd__nor2b_1 cells:        6
+ABC RESULTS:   sky130_fd_sc_hd__nor3_1 cells:       11
+ABC RESULTS:   sky130_fd_sc_hd__nor3b_1 cells:        3
+ABC RESULTS:   sky130_fd_sc_hd__nor4_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__o211ai_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__o21a_1 cells:       16
+ABC RESULTS:   sky130_fd_sc_hd__o21ai_0 cells:       50
+ABC RESULTS:   sky130_fd_sc_hd__o21ba_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__o21bai_1 cells:        3
+ABC RESULTS:   sky130_fd_sc_hd__o22a_1 cells:        2
+ABC RESULTS:   sky130_fd_sc_hd__o22ai_1 cells:        5
+ABC RESULTS:   sky130_fd_sc_hd__o2bb2ai_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__o311ai_0 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__o31ai_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__o41a_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__or3_1 cells:        9
+ABC RESULTS:   sky130_fd_sc_hd__xnor2_1 cells:      288
+ABC RESULTS:   sky130_fd_sc_hd__xnor3_1 cells:      143
+ABC RESULTS:   sky130_fd_sc_hd__xor2_1 cells:      141
+ABC RESULTS:   sky130_fd_sc_hd__xor3_1 cells:       79
+ABC RESULTS:        internal signals:     2679
+ABC RESULTS:           input signals:       80
+ABC RESULTS:          output signals:       19
+Removing temp directory.
+
+7. Executing SETUNDEF pass (replace undef values with defined constants).
+
+8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+Removed 0 unused cells and 2798 unused wires.
+<suppressed ~21 debug messages>
+
+9. Executing CHECK pass (checking for obvious problems).
+Checking module conv5x5_row_mac...
+Found and reported 0 problems.
+
+10. Executing SPLITNETS pass (splitting up multi-bit signals).
+
+11. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \conv5x5_row_mac..
+
+12. Printing statistics.
+
+=== conv5x5_row_mac ===
+
+   Number of wires:               1760
+   Number of wire bits:           1869
+   Number of public wires:           3
+   Number of public wire bits:     112
+   Number of ports:                  3
+   Number of port bits:            112
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               1776
+     sky130_fd_sc_hd__a21boi_0       4
+     sky130_fd_sc_hd__a21o_1        10
+     sky130_fd_sc_hd__a21oi_1       60
+     sky130_fd_sc_hd__a22o_1         9
+     sky130_fd_sc_hd__a22oi_1       13
+     sky130_fd_sc_hd__a2bb2oi_1      1
+     sky130_fd_sc_hd__a311oi_1       2
+     sky130_fd_sc_hd__a31o_1         2
+     sky130_fd_sc_hd__a31oi_1       10
+     sky130_fd_sc_hd__a32oi_1        3
+     sky130_fd_sc_hd__and2_0        35
+     sky130_fd_sc_hd__and3_1        16
+     sky130_fd_sc_hd__and4_1         4
+     sky130_fd_sc_hd__clkinv_1      47
+     sky130_fd_sc_hd__lpflow_inputiso1p_1      9
+     sky130_fd_sc_hd__lpflow_isobufsrc_1     44
+     sky130_fd_sc_hd__maj3_1       280
+     sky130_fd_sc_hd__mux2i_1        2
+     sky130_fd_sc_hd__nand2_1      298
+     sky130_fd_sc_hd__nand2b_1      48
+     sky130_fd_sc_hd__nand3_1       22
+     sky130_fd_sc_hd__nand3b_1       1
+     sky130_fd_sc_hd__nand4_1       13
+     sky130_fd_sc_hd__nor2_1        80
+     sky130_fd_sc_hd__nor2b_1        6
+     sky130_fd_sc_hd__nor3_1        11
+     sky130_fd_sc_hd__nor3b_1        3
+     sky130_fd_sc_hd__nor4_1         1
+     sky130_fd_sc_hd__o211ai_1       1
+     sky130_fd_sc_hd__o21a_1        16
+     sky130_fd_sc_hd__o21ai_0       50
+     sky130_fd_sc_hd__o21ba_1        1
+     sky130_fd_sc_hd__o21bai_1       3
+     sky130_fd_sc_hd__o22a_1         2
+     sky130_fd_sc_hd__o22ai_1        5
+     sky130_fd_sc_hd__o2bb2ai_1      1
+     sky130_fd_sc_hd__o311ai_0       1
+     sky130_fd_sc_hd__o31ai_1        1
+     sky130_fd_sc_hd__o41a_1         1
+     sky130_fd_sc_hd__or3_1          9
+     sky130_fd_sc_hd__xnor2_1      288
+     sky130_fd_sc_hd__xnor3_1      143
+     sky130_fd_sc_hd__xor2_1       141
+     sky130_fd_sc_hd__xor3_1        79
+
+   Chip area for module '\conv5x5_row_mac': 15846.448000
+     of which used for sequential elements: 0.000000 (0.00%)
+
+13. Executing Verilog backend.
+
+13.1. Executing BMUXMAP pass.
+
+13.2. Executing DEMUXMAP pass.
+Dumping module `\conv5x5_row_mac'.
+
+End of script. Logfile hash: 206f3c6c4a, CPU: user 1.69s system 0.14s, MEM: 48.21 MB peak
+Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)
+Time spent: 93% 2x abc (21 sec), 1% 16x opt_expr (0 sec), ...

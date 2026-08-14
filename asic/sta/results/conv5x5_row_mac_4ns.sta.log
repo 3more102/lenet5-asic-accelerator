@@ -1,0 +1,250 @@
+OpenROAD v2.0-17598-ga008522d8 
+Features included (+) or not (-): +Charts +GPU +GUI +Python : None
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[INFO ODB-0227] LEF file: /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lef/sky130_fd_sc_hd.tlef, created 13 layers, 25 vias
+[INFO ODB-0227] LEF file: /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lef/sky130_fd_sc_hd_merged.lef, created 441 library cells
+@@DESIGN@@ conv5x5_row_mac @@PERIOD@@ 4
+@@SETUP_BEGIN@@
+Startpoint: wgt_row_i[1] (input port clocked by core_clk)
+Endpoint: row_sum_o[18] (output port clocked by core_clk)
+Path Group: core_clk
+Path Type: max
+
+    Delay      Time   Description
+-------------------------------------------------------------
+   0.0000    0.0000   clock core_clk (rise edge)
+   0.0000    0.0000   clock network delay (ideal)
+   1.0000    1.0000 ^ input external delay
+   0.0741    1.0741 ^ wgt_row_i[1] (in)
+   0.1587    1.2328 ^ _1916_/X (sky130_fd_sc_hd__and2_0)
+   0.4240    1.6568 v _1938_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3949    2.0517 v _1943_/X (sky130_fd_sc_hd__xor3_1)
+   0.3962    2.4479 v _1945_/X (sky130_fd_sc_hd__xor3_1)
+   0.3787    2.8265 v _1955_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3948    3.2214 v _1972_/X (sky130_fd_sc_hd__xor3_1)
+   0.3787    3.6001 v _2002_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3853    3.9853 v _2010_/X (sky130_fd_sc_hd__xor3_1)
+   0.3925    4.3778 v _2015_/X (sky130_fd_sc_hd__maj3_1)
+   0.3877    4.7656 v _2125_/X (sky130_fd_sc_hd__xor3_1)
+   0.2127    4.9783 ^ _2127_/Y (sky130_fd_sc_hd__xnor2_1)
+   0.1964    5.1747 ^ _2129_/X (sky130_fd_sc_hd__o41a_1)
+   0.1349    5.3097 v _2563_/Y (sky130_fd_sc_hd__o211ai_1)
+   0.2539    5.5635 ^ _2873_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.1458    5.7093 v _3139_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.3369    6.0462 ^ _3356_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.1331    6.1793 v _3359_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.3811    6.5604 v _3445_/X (sky130_fd_sc_hd__maj3_1)
+   2.0435    8.6039 ^ _3532_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.0000    8.6039 ^ row_sum_o[18] (out)
+             8.6039   data arrival time
+
+   4.0000    4.0000   clock core_clk (rise edge)
+   0.0000    4.0000   clock network delay (ideal)
+  -0.2000    3.8000   clock uncertainty
+   0.0000    3.8000   clock reconvergence pessimism
+  -1.0000    2.8000   output external delay
+             2.8000   data required time
+-------------------------------------------------------------
+             2.8000   data required time
+            -8.6039   data arrival time
+-------------------------------------------------------------
+            -5.8039   slack (VIOLATED)
+
+
+Startpoint: wgt_row_i[1] (input port clocked by core_clk)
+Endpoint: row_sum_o[19] (output port clocked by core_clk)
+Path Group: core_clk
+Path Type: max
+
+    Delay      Time   Description
+-------------------------------------------------------------
+   0.0000    0.0000   clock core_clk (rise edge)
+   0.0000    0.0000   clock network delay (ideal)
+   1.0000    1.0000 ^ input external delay
+   0.0741    1.0741 ^ wgt_row_i[1] (in)
+   0.1587    1.2328 ^ _1916_/X (sky130_fd_sc_hd__and2_0)
+   0.4240    1.6568 v _1938_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3949    2.0517 v _1943_/X (sky130_fd_sc_hd__xor3_1)
+   0.3962    2.4479 v _1945_/X (sky130_fd_sc_hd__xor3_1)
+   0.3787    2.8265 v _1955_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3948    3.2214 v _1972_/X (sky130_fd_sc_hd__xor3_1)
+   0.3787    3.6001 v _2002_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3853    3.9853 v _2010_/X (sky130_fd_sc_hd__xor3_1)
+   0.3925    4.3778 v _2015_/X (sky130_fd_sc_hd__maj3_1)
+   0.3877    4.7656 v _2125_/X (sky130_fd_sc_hd__xor3_1)
+   0.2127    4.9783 ^ _2127_/Y (sky130_fd_sc_hd__xnor2_1)
+   0.1964    5.1747 ^ _2129_/X (sky130_fd_sc_hd__o41a_1)
+   0.1349    5.3097 v _2563_/Y (sky130_fd_sc_hd__o211ai_1)
+   0.2539    5.5635 ^ _2873_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.1458    5.7093 v _3139_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.3369    6.0462 ^ _3356_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.1331    6.1793 v _3359_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.3811    6.5604 v _3445_/X (sky130_fd_sc_hd__maj3_1)
+   2.0435    8.6039 ^ _3532_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.0000    8.6039 ^ row_sum_o[19] (out)
+             8.6039   data arrival time
+
+   4.0000    4.0000   clock core_clk (rise edge)
+   0.0000    4.0000   clock network delay (ideal)
+  -0.2000    3.8000   clock uncertainty
+   0.0000    3.8000   clock reconvergence pessimism
+  -1.0000    2.8000   output external delay
+             2.8000   data required time
+-------------------------------------------------------------
+             2.8000   data required time
+            -8.6039   data arrival time
+-------------------------------------------------------------
+            -5.8039   slack (VIOLATED)
+
+
+Startpoint: wgt_row_i[1] (input port clocked by core_clk)
+Endpoint: row_sum_o[20] (output port clocked by core_clk)
+Path Group: core_clk
+Path Type: max
+
+    Delay      Time   Description
+-------------------------------------------------------------
+   0.0000    0.0000   clock core_clk (rise edge)
+   0.0000    0.0000   clock network delay (ideal)
+   1.0000    1.0000 ^ input external delay
+   0.0741    1.0741 ^ wgt_row_i[1] (in)
+   0.1587    1.2328 ^ _1916_/X (sky130_fd_sc_hd__and2_0)
+   0.4240    1.6568 v _1938_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3949    2.0517 v _1943_/X (sky130_fd_sc_hd__xor3_1)
+   0.3962    2.4479 v _1945_/X (sky130_fd_sc_hd__xor3_1)
+   0.3787    2.8265 v _1955_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3948    3.2214 v _1972_/X (sky130_fd_sc_hd__xor3_1)
+   0.3787    3.6001 v _2002_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3853    3.9853 v _2010_/X (sky130_fd_sc_hd__xor3_1)
+   0.3925    4.3778 v _2015_/X (sky130_fd_sc_hd__maj3_1)
+   0.3877    4.7656 v _2125_/X (sky130_fd_sc_hd__xor3_1)
+   0.2127    4.9783 ^ _2127_/Y (sky130_fd_sc_hd__xnor2_1)
+   0.1964    5.1747 ^ _2129_/X (sky130_fd_sc_hd__o41a_1)
+   0.1349    5.3097 v _2563_/Y (sky130_fd_sc_hd__o211ai_1)
+   0.2539    5.5635 ^ _2873_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.1458    5.7093 v _3139_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.3369    6.0462 ^ _3356_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.1331    6.1793 v _3359_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.3811    6.5604 v _3445_/X (sky130_fd_sc_hd__maj3_1)
+   2.0435    8.6039 ^ _3532_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.0000    8.6039 ^ row_sum_o[20] (out)
+             8.6039   data arrival time
+
+   4.0000    4.0000   clock core_clk (rise edge)
+   0.0000    4.0000   clock network delay (ideal)
+  -0.2000    3.8000   clock uncertainty
+   0.0000    3.8000   clock reconvergence pessimism
+  -1.0000    2.8000   output external delay
+             2.8000   data required time
+-------------------------------------------------------------
+             2.8000   data required time
+            -8.6039   data arrival time
+-------------------------------------------------------------
+            -5.8039   slack (VIOLATED)
+
+
+@@SETUP_END@@
+@@HOLD_BEGIN@@
+Startpoint: act_row_i[8] (input port clocked by core_clk)
+Endpoint: row_sum_o[1] (output port clocked by core_clk)
+Path Group: core_clk
+Path Type: min
+
+    Delay      Time   Description
+-------------------------------------------------------------
+   0.0000    0.0000   clock core_clk (rise edge)
+   0.0000    0.0000   clock network delay (ideal)
+   1.0000    1.0000 v input external delay
+   0.0360    1.0360 v act_row_i[8] (in)
+   0.0901    1.1261 ^ _1760_/Y (sky130_fd_sc_hd__nand2_1)
+   0.0833    1.2094 v _1762_/X (sky130_fd_sc_hd__xor2_1)
+   0.0835    1.2929 ^ _1771_/Y (sky130_fd_sc_hd__nand2_1)
+   0.1035    1.3965 v _1805_/X (sky130_fd_sc_hd__xor2_1)
+   0.0000    1.3965 v row_sum_o[1] (out)
+             1.3965   data arrival time
+
+   0.0000    0.0000   clock core_clk (rise edge)
+   0.0000    0.0000   clock network delay (ideal)
+   0.2000    0.2000   clock uncertainty
+   0.0000    0.2000   clock reconvergence pessimism
+  -1.0000   -0.8000   output external delay
+            -0.8000   data required time
+-------------------------------------------------------------
+            -0.8000   data required time
+            -1.3965   data arrival time
+-------------------------------------------------------------
+             2.1965   slack (MET)
+
+
+@@HOLD_END@@
+@@WNS_BEGIN@@
+worst slack -5.8039
+worst slack 2.1965
+tns -128.6238
+@@WNS_END@@
+@@POWER_BEGIN@@
+Group                  Internal  Switching    Leakage      Total
+                          Power      Power      Power      Power (Watts)
+----------------------------------------------------------------
+Sequential           0.0000e+00 0.0000e+00 0.0000e+00 0.0000e+00   0.0%
+Combinational        5.2991e-04 4.8531e-04 6.9423e-09 1.0152e-03 100.0%
+Clock                0.0000e+00 0.0000e+00 0.0000e+00 0.0000e+00   0.0%
+Macro                0.0000e+00 0.0000e+00 0.0000e+00 0.0000e+00   0.0%
+Pad                  0.0000e+00 0.0000e+00 0.0000e+00 0.0000e+00   0.0%
+----------------------------------------------------------------
+Total                5.2991e-04 4.8531e-04 6.9423e-09 1.0152e-03 100.0%
+                          52.2%      47.8%       0.0%
+@@POWER_END@@
+@@AREA_BEGIN@@
+Design area 15846 u^2 100% utilization.
+@@AREA_END@@
+@@CHECK_BEGIN@@
+Startpoint: wgt_row_i[1] (input port clocked by core_clk)
+Endpoint: row_sum_o[18] (output port clocked by core_clk)
+Path Group: core_clk
+Path Type: max
+
+    Delay      Time   Description
+-------------------------------------------------------------
+   0.0000    0.0000   clock core_clk (rise edge)
+   0.0000    0.0000   clock network delay (ideal)
+   1.0000    1.0000 ^ input external delay
+   0.0741    1.0741 ^ wgt_row_i[1] (in)
+   0.1587    1.2328 ^ _1916_/X (sky130_fd_sc_hd__and2_0)
+   0.4240    1.6568 v _1938_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3949    2.0517 v _1943_/X (sky130_fd_sc_hd__xor3_1)
+   0.3962    2.4479 v _1945_/X (sky130_fd_sc_hd__xor3_1)
+   0.3787    2.8265 v _1955_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3948    3.2214 v _1972_/X (sky130_fd_sc_hd__xor3_1)
+   0.3787    3.6001 v _2002_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3853    3.9853 v _2010_/X (sky130_fd_sc_hd__xor3_1)
+   0.3925    4.3778 v _2015_/X (sky130_fd_sc_hd__maj3_1)
+   0.3877    4.7656 v _2125_/X (sky130_fd_sc_hd__xor3_1)
+   0.2127    4.9783 ^ _2127_/Y (sky130_fd_sc_hd__xnor2_1)
+   0.1964    5.1747 ^ _2129_/X (sky130_fd_sc_hd__o41a_1)
+   0.1349    5.3097 v _2563_/Y (sky130_fd_sc_hd__o211ai_1)
+   0.2539    5.5635 ^ _2873_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.1458    5.7093 v _3139_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.3369    6.0462 ^ _3356_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.1331    6.1793 v _3359_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.3811    6.5604 v _3445_/X (sky130_fd_sc_hd__maj3_1)
+   2.0435    8.6039 ^ _3532_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.0000    8.6039 ^ row_sum_o[18] (out)
+             8.6039   data arrival time
+
+   4.0000    4.0000   clock core_clk (rise edge)
+   0.0000    4.0000   clock network delay (ideal)
+  -0.2000    3.8000   clock uncertainty
+   0.0000    3.8000   clock reconvergence pessimism
+  -1.0000    2.8000   output external delay
+             2.8000   data required time
+-------------------------------------------------------------
+             2.8000   data required time
+            -8.6039   data arrival time
+-------------------------------------------------------------
+            -5.8039   slack (VIOLATED)
+
+
+@@CHECK_END@@
+STA_DONE

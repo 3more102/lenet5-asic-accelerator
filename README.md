@@ -3,7 +3,7 @@
 [![CI](https://github.com/3more102/lenet5-asic-accelerator/actions/workflows/ci.yml/badge.svg)](https://github.com/3more102/lenet5-asic-accelerator/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![RTL: SystemVerilog](https://img.shields.io/badge/RTL-SystemVerilog-orange.svg)](rtl/)
-[![PDK: none assumed](https://img.shields.io/badge/PDK-none%20assumed-lightgrey.svg)](docs/SEMICUSTOM_FLOW.md)
+[![PPA: sky130hd, pre-layout](https://img.shields.io/badge/PPA-sky130hd%2C%20pre--layout-blue.svg)](docs/PPA.md)
 
 A verified, technology-independent RTL implementation of the LeNet-5 inference
 datapath, built as a semi-custom ASIC starting point. Every testbench checks the
@@ -17,11 +17,14 @@ hand-written expected values.
 - a configurable, memory-backed 5x5 convolution reference engine;
 - a full `lenet5_top` that sequences C1→S2→C3→S4→C5→F6→classifier;
 - self-checking RTL tests with generated golden vectors and backpressure;
-- generic synthesis constraints and semi-custom implementation guidance.
+- real area/timing/power against the sky130hd PDK for every storage-free
+  arithmetic block, plus semi-custom implementation guidance for the rest.
 
-The arithmetic RTL is technology-independent. **No PDK was assumed**, so area,
-timing, and power numbers must be generated with the intended standard-cell
-libraries and SRAM macros.
+The RTL was written technology-independent, but it is no longer PPA-blind:
+**[`docs/PPA.md`](docs/PPA.md)** has real gate-level area, static-timing
+slack, and power against **sky130hd** for `conv5x5_pe` and its four sibling
+leaf blocks — pre-layout (synthesis + STA, no place-and-route yet; see that
+doc for exactly what is and is not covered).
 
 ## Pipeline
 
@@ -101,6 +104,13 @@ Run generic synthesis of the arithmetic leaf blocks:
 make synth
 ```
 
+Run real sky130hd area/timing/power (needs `yosys` and `openroad` on `PATH`;
+see [`docs/PPA.md`](docs/PPA.md) for what it produces):
+
+```bash
+make ppa
+```
+
 Run in ModelSim/Questa:
 
 ```bash
@@ -133,8 +143,10 @@ Waveforms are written to `results/conv2d_engine.vcd` by Icarus and to
 | `docs/INTERFACES.md` | Cycle-level and tensor-layout contracts |
 | `docs/SEMICUSTOM_FLOW.md` | RTL-to-GDS plan and sign-off checklist |
 | `docs/VERIFICATION_PLAN.md` | Verification scope and remaining work |
+| `docs/PPA.md` | Real sky130hd area/timing/power, pre-layout |
 | `synth/` | Generic synthesis scripts and 100 MHz sample SDC |
-| `asic/openroad/` | OpenROAD Flow Scripts starter configuration |
+| `asic/openroad/` | OpenROAD Flow Scripts configuration, run script, toolchain patches |
+| `asic/sta/` | Real sky130hd synthesis + OpenSTA sweep (`make ppa`) |
 
 ## Important project boundary
 

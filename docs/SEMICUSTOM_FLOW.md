@@ -3,10 +3,21 @@
 ## Deliverable maturity
 
 The RTL and golden-model arithmetic are regression-tested. This package is not
-a tapeout database: no foundry PDK, SRAM compiler, IO library, DFT insertion,
-clock-tree implementation, parasitic extraction, or sign-off corner set was
-provided. Therefore it would be incorrect to quote final area, frequency,
-power, DRC, or LVS results.
+a tapeout database: no SRAM compiler, IO library, DFT insertion, clock-tree
+implementation, parasitic extraction, multi-corner sign-off, DRC, or LVS was
+run. Those remain correctly out of scope until real place-and-route sign-off.
+
+That said, **real pre-layout numbers now exist** for the storage-free
+arithmetic tier, against the open **sky130hd** PDK: gate-level synthesis onto
+real standard cells (`yosys`/`abc`) plus static timing and power analysis
+(OpenSTA, via the `openroad` binary) for `conv5x5_pe` and its four sibling
+leaf blocks. See [`docs/PPA.md`](PPA.md) for the full table, the switching-
+activity assumption behind the power numbers, and exactly what pre-layout vs.
+post-layout means for each figure quoted there. Final (post-P&R) area,
+frequency, power, DRC, and LVS results are still not available — see
+"Toolchain notes" in `docs/PPA.md` for why (an embedded-Python version
+mismatch blocks this environment's place-and-route stage specifically, not
+synthesis or STA).
 
 ## Recommended RTL-to-GDS sequence
 
@@ -57,7 +68,12 @@ power, DRC, or LVS results.
 
 `synth/conv5x5_pe.sdc` defines a 100 MHz clock, 200 ps uncertainty, 1 ns
 input/output delay, and an asynchronous-reset false path. These are example
-integration assumptions, not achieved timing. Replace them with the SoC budget.
+integration assumptions, not an SoC timing budget — replace them with the
+real one before integration. `docs/PPA.md` uses the same input/output delay
+and uncertainty style (generated per block by `asic/sta/sta.tcl` rather than
+hand-written per block) to sweep clock period and report each block's actual
+achievable frequency against sky130hd; that sweep is a design-space result,
+not a substitute for the SoC-level constraint work below.
 
 At minimum, audit:
 
@@ -84,11 +100,23 @@ easy to verify, and appropriate for early PPA sweeps.
 
 ## Open-source implementation
 
-The starter `asic/openroad/config.mk` targets the reusable PE and defaults to
-the `sky130hd` platform used by OpenROAD Flow Scripts. Install the matching
-OpenROAD Flow Scripts release, pass the config to its `make` flow, and tune die
-area/density for that release. The official flow tutorial documents the current
-commands and reports.
+`asic/openroad/config.mk` targets the reusable PE and defaults to the
+`sky130hd` platform used by OpenROAD Flow Scripts (ORFS). Install the matching
+ORFS release, run `bash asic/openroad/run_orfs.sh`, and tune die area/density
+for that release; the official flow tutorial documents the current commands
+and reports. This is the "closest to a real flow" path and is what produced
+the `conv5x5_pe` numbers in `docs/PPA.md` — but on a yosys/OpenROAD pairing
+where place-and-route currently cannot run (see
+`asic/openroad/patches/README.md` for the two version mismatches hit and how
+one of them is patched).
+
+Because P&R is blocked here, `asic/sta/run_ppa.sh` covers the rest: it
+synthesizes each storage-free leaf block straight to sky130hd cells with
+`yosys`/`abc` and drives OpenSTA (through the `openroad` binary, which embeds
+it) directly on the mapped netlist, sweeping clock period to find each block's
+real achievable frequency. It needs only `yosys` and `openroad` on `PATH` —
+no ORFS `make` flow, so no dependency on the broken P&R stage. Both paths read
+the same PDK and land in `docs/PPA.md`.
 
 ## Commercial implementation
 

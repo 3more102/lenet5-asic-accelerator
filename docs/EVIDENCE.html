@@ -612,15 +612,21 @@
   <div class="note caution">
     <span class="h">The boundary — state it before you are asked</span>
     These are <b>technology-independent generic cell counts</b> from
-    <code>proc; opt; fsm; opt; memory; opt; techmap; opt</code>. <b>No PDK was
-    supplied</b>, so there is no standard-cell library, no timing arcs and no
-    capacitance model. That means <b>no</b> silicon area, <b>no</b> power, <b>no</b>
-    maximum frequency, <b>no</b> DRC/LVS/scan. A cell count is a complexity measure;
-    anyone quoting mm&sup2; or mW from this output is inventing it. Only three of the
+    <code>proc; opt; fsm; opt; memory; opt; techmap; opt</code> — no standard-cell
+    library, no timing arcs, no capacitance model, so no silicon area/power/frequency
+    from <i>this</i> screen. A cell count here is a complexity measure; anyone quoting
+    mm&sup2; or mW from generic-techmap output is inventing it. Only three of the
     fourteen modules are synthesized here because the other four controllers hold
     behavioural ROM and scratch arrays that a production design replaces with compiled
-    SRAM macros — synthesizing those without a PDK would produce a meaningless pile of
-    inferred flip-flops.
+    SRAM macros — synthesizing those without real memory macros would produce a
+    meaningless pile of inferred flip-flops.
+    <br><br>
+    This is no longer the whole PPA story, though: real gate-level synthesis onto
+    <b>sky130hd</b> standard cells, plus static timing and power analysis, now exists
+    for these same arithmetic blocks — see <code>docs/PPA.md</code> and
+    <code>asic/sta/results/ppa_summary.csv</code>. Pre-layout (no place-and-route
+    yet), single typical corner, and the power number's switching activity is stated
+    rather than measured — but real cells, real Liberty timing arcs, real µm&sup2;.
   </div>
 </section>
 
@@ -672,10 +678,15 @@
 
   <div class="note caution">
     <span class="h">Two things this number is not</span>
-    <b>It is not a timing result.</b> 100 MHz is a <em>stated reference clock used for
-    unit conversion</em>. Cycles are what was measured; the millisecond figure is just
-    cycles &divide; 100 MHz. With no PDK there is no closed timing and therefore no
-    claimed maximum frequency.<br><br>
+    <b>It is not a timing result — for this module.</b> <code>lenet5_top</code> is one
+    of the four controller modules that is still unsynthesized (behavioural ROM/scratch
+    arrays — see A6), so for the full pipeline, 100 MHz remains a <em>stated reference
+    clock used for unit conversion</em>: cycles are what was measured, the millisecond
+    figure is just cycles &divide; 100 MHz. What real timing closure <em>does</em> now
+    exist for is the arithmetic core underneath it — <code>docs/PPA.md</code> reports
+    whether <code>conv5x5_pe</code> itself actually holds 100&nbsp;MHz against sky130hd,
+    which is worth checking before repeating the 100&nbsp;MHz figure as if it were
+    closed timing for the whole chip.<br><br>
     <b>It is not a throughput target.</b> 202,866 cycles &asymp; <b>493
     inferences/second</b> is a deliberately non-overlapped verification baseline: every
     stage runs to completion before the next begins, ROM loading is not overlapped with

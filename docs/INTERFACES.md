@@ -170,3 +170,50 @@ memories. A macro implementation should:
 4. use ping-pong activation banks between convolution and pooling;
 5. protect CDCs if the DMA and compute clocks differ.
 
+### Worked example: why point 1 is not a drop-in macro swap
+
+Both memory-backed engines read their activation array combinationally at
+more than one address in the same cycle, and a standard 1rw1r SRAM macro (one
+read address per cycle) cannot serve that directly:
+
+- `conv2d_engine.act_mem` — `rtl/conv2d_engine.sv:114-128`: the `lane_idx`
+  loop unrolls to five simultaneous reads (`act_linear_index` computed once
+  per lane, all in the same `always_comb`) to build one 5-wide kernel row
+  per cycle for `conv5x5_row_mac`.
+- `avg_pool2x2_stream.act_mem` — `rtl/avg_pool2x2_stream.sv:68-82`: four
+  simultaneous reads at `addr00`/`addr01`/`addr10`/`addr11` build one 2x2
+  pooling window per cycle for `avg_pool2x2_int8`.
+
+Both are the same pattern for the same reason: reading N addresses per cycle
+is what lets the surrounding combinational datapath (the row-MAC tree, the
+pooling adder) stay unchanged from its "one row/window per accepted cycle"
+contract. It is deliberate, and it is exactly what makes these arrays
+behavioral rather than physical — no 1rw1r macro issues four reads per
+cycle, so this is not a case of swapping `act_mem [0:N-1]` for one instance of
+a generated SRAM macro and reconnecting the same wires.
+
+The actual fix is a **line-buffer feeder**, not a wider macro:
+
+1. keep the real backing store as an ordinary 1rw1r macro, one address per
+   cycle, refilled a row (or a 2x2 window's worth of rows) ahead of when the
+   datapath needs it;
+2. shift each freshly-read word into a small bank of registers/shift-regs
+   holding exactly the rows the combinational stage needs "live" — 5 words
+   wide for `conv2d_engine`'s kernel row, 2x2 words for
+   `avg_pool2x2_stream`'s window;
+3. point `act_row`/`samples` at that line buffer instead of at `act_mem`
+   directly — `conv5x5_row_mac`/`avg_pool2x2_int8` themselves need no change,
+   since their inputs are already flattened buses, not memory reads.
+
+This is the standard line-buffer structure used in streaming image/CNN
+datapaths generally, not something specific to this project — it is called
+out here with file:line references so it is a scoped, actionable task rather
+than the generic "add SRAM" note the top-level bullet list gives on its own.
+`wgt_mem` shares `act_mem`'s exact situation (same `lane_idx` loop, same
+`always_comb`, `rtl/conv2d_engine.sv:121-127`) and needs the same line-buffer
+treatment. `bias_mem` and `conn_mem` are simpler: their reads
+(`rtl/conv2d_engine.sv:211,230,234,239` for `bias_mem`) sit in mutually
+exclusive `if`/`else if`/`else` branches of a sequential `always_ff`, so only
+one address is ever read in a given cycle — those two map onto a macro
+directly once sized (`docs/PPA.md` has the bit counts).
+

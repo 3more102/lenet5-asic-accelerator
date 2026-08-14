@@ -21,7 +21,7 @@ RTL := \
 
 .PHONY: all vectors golden-test demo lint sim-pe sim-c3 sim-engine sim-pool sim-f6 \
 	sim-classifier sim-classifier-tie sim-top regression synth synth-pe synth-pool \
-	synth-mac clean
+	synth-mac ppa orfs clean
 
 all: regression
 
@@ -101,6 +101,22 @@ synth-pool:
 
 synth-mac:
 	$(YOSYS) -s synth/dense_row_mac.ys
+
+# Real sky130hd area/timing/power: yosys+abc technology mapping followed by
+# OpenSTA (via the openroad binary, which embeds it) on every storage-free
+# leaf block, swept across clock periods. Needs `yosys` and `openroad` on
+# PATH; does not need a working ORFS place-and-route stage (see
+# asic/openroad/patches/README.md for why that stage is currently blocked
+# here). Results land in asic/sta/results/ppa_summary.csv and are written up
+# in docs/PPA.md.
+ppa:
+	bash asic/sta/run_ppa.sh
+
+# Full ORFS RTL-to-GDS synthesis stage for conv5x5_pe (requires an ORFS
+# install; set ORFS_ROOT if it is not at /root/OpenROAD-flow-scripts, and see
+# asic/openroad/patches/ if synthesis aborts on `stat -hierarchy`).
+orfs:
+	bash asic/openroad/run_orfs.sh
 
 clean:
 	rm -f results/*.vvp results/*.vcd results/*.json results/*.log

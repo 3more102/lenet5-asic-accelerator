@@ -72,8 +72,11 @@ a stale `vectors/` directory is caught rather than silently trusted.
 - Match the surrounding style: `always_comb` / `always_ff`, `logic` only,
   explicit signed widths, no unpacked arrays in datapath code that synthesis
   might infer as memory (see the comment in `rtl/conv5x5_row_mac.sv`).
-- Keep RTL technology-independent. No PDK is assumed anywhere in this repo, and
-  no vendor primitive should be instantiated.
+- Keep the RTL itself technology-independent: no vendor primitive should be
+  instantiated in `rtl/*.sv`, and no PDK should be assumed there. (The
+  synthesis/STA tool flow under `asic/` and `synth/` does target a real PDK,
+  sky130hd — see `docs/PPA.md` — but that lives entirely in flow scripts, not
+  in the RTL sources. Keep it that way.)
 - If a block is synthesizable at the arithmetic tier, give it a script in
   `synth/` and a target in the `synth` rule. Blocks with behavioural ROM/SRAM
   arrays are intentionally excluded — they need a memory compiler, as described
@@ -85,8 +88,11 @@ Please do not add claims the repo cannot support. The shipped vectors are
 deterministic random values that verify arithmetic; they are **not trained
 MNIST weights**, and no accuracy number should be stated until training,
 quantization-aware calibration, and exported per-layer scales exist. Likewise,
-area/timing/power figures require real standard-cell libraries and SRAM macros,
-which this repository does not assume.
+real area/timing/power figures require a real standard-cell library and, for
+the memory-backed blocks, real SRAM macros — `docs/PPA.md` has both for the
+storage-free arithmetic tier (sky130hd, pre-layout), but post-place-and-route
+numbers, sign-off corners, and anything for the SRAM-backed blocks still do
+not exist. Don't round either boundary off when citing these docs.
 
 Open work is tracked in `docs/VERIFICATION_PLAN.md` and Section 7 of
 `docs/ARCHITECTURE.md`.

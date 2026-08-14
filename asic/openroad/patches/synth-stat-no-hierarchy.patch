@@ -1,0 +1,11 @@
+--- a/flow/scripts/synth.tcl
++++ b/flow/scripts/synth.tcl
+@@ -284,7 +284,7 @@
+ # Reports
+ tee -o $::env(REPORTS_DIR)/synth_check.txt check
+
+-tee -o $::env(REPORTS_DIR)/synth_stat.txt stat -hierarchy {*}$lib_args
++tee -o $::env(REPORTS_DIR)/synth_stat.txt stat {*}$lib_args
+
+ # check the design is composed exclusively of target cells, and
+ # check for other problems
