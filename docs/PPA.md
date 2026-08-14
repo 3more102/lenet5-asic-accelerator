@@ -254,7 +254,20 @@ make ppa
 # Path 2: full ORFS synthesis stage for conv5x5_pe (needs an ORFS install;
 # see asic/openroad/patches/ if it aborts on `stat -hierarchy`)
 make orfs
+
+# Verify this document still matches the raw STA results (Python only, no PDK
+# needed -- CI runs this on every push)
+make check-ppa
 ```
+
+**If you re-run `make ppa`, re-run `make check-ppa`.** Every figure in the
+headline table above is transcribed by hand from
+`asic/sta/results/ppa_summary.csv`, which is exactly the coupling that rots
+silently — regenerate the results, forget one cell, and this file starts
+claiming a number the tool never produced. `scripts/check_ppa_consistency.py`
+re-derives all 35 figures (including Fmax from the critical path and µW from
+watts) and fails with the specific block and field that drifted. It is the
+same guard the vectors already have, applied one level up.
 
 Raw evidence for everything above: `asic/sta/results/` (Path 1: CSV + per-run
 `yosys`/`sta` logs) and `asic/openroad/results/` (Path 2: `synth_stat.txt`,

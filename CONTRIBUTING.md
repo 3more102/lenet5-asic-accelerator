@@ -36,6 +36,17 @@ make regression
 make synth
 ```
 
+If you touched anything under `asic/sta/` or re-ran `make ppa`, also run:
+
+```bash
+make check-ppa
+```
+
+It fails if `docs/PPA.md`'s headline table no longer matches
+`asic/sta/results/ppa_summary.csv`. Those figures are hand-transcribed, so
+this is the same anti-drift guard the vectors get — CI runs it on every push,
+and it needs only Python, not a PDK.
+
 `make regression` runs, in order: the golden-model unit tests, SystemVerilog
 elaboration/lint of the full RTL list, all eight self-checking testbenches, and
 the end-to-end demo. Every testbench prints an explicit `PASS <name>` line; a

@@ -48,6 +48,13 @@ jobs:
       - name: Fail if regenerated vectors differ from the committed ones
         run: git diff --exit-code -- vectors/
 
+      # Same idea one level up: docs/PPA.md's headline numbers are transcribed
+      # by hand from asic/sta/results/ppa_summary.csv, so guard that coupling
+      # too. Needs only Python -- it checks the committed STA results against
+      # the committed document and never re-runs the sky130 flow.
+      - name: Fail if docs/PPA.md drifts from the STA results
+        run: make check-ppa
+
       - name: Upload waveforms and logs
         if: always()
         uses: actions/upload-artifact@v4

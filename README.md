@@ -111,6 +111,13 @@ see [`docs/PPA.md`](docs/PPA.md) for what it produces):
 make ppa
 ```
 
+Check that `docs/PPA.md` still matches those results (Python only, no PDK
+needed — CI runs it on every push):
+
+```bash
+make check-ppa
+```
+
 Run in ModelSim/Questa:
 
 ```bash
@@ -146,7 +153,7 @@ Waveforms are written to `results/conv2d_engine.vcd` by Icarus and to
 | `docs/PPA.md` | Real sky130hd area/timing/power, pre-layout |
 | `synth/` | Generic synthesis scripts and 100 MHz sample SDC |
 | `asic/openroad/` | OpenROAD Flow Scripts configuration, run script, toolchain patches |
-| `asic/sta/` | Real sky130hd synthesis + OpenSTA sweep (`make ppa`) |
+| `asic/sta/` | Real sky130hd synthesis + OpenSTA sweep (`make ppa`), and the raw CSV/logs `docs/PPA.md` is checked against |
 
 ## Important project boundary
 

@@ -21,7 +21,7 @@ RTL := \
 
 .PHONY: all vectors golden-test demo lint sim-pe sim-c3 sim-engine sim-pool sim-f6 \
 	sim-classifier sim-classifier-tie sim-top regression synth synth-pe synth-pool \
-	synth-mac ppa orfs clean
+	synth-mac ppa check-ppa orfs clean
 
 all: regression
 
@@ -111,6 +111,14 @@ synth-mac:
 # in docs/PPA.md.
 ppa:
 	bash asic/sta/run_ppa.sh
+
+# Fail if docs/PPA.md's headline table drifts from the raw STA results in
+# asic/sta/results/ppa_summary.csv. Those figures are transcribed by hand, so
+# re-running `make ppa` without updating the document would otherwise leave it
+# quietly claiming numbers the tool never produced. Needs only Python, so
+# unlike `make ppa` itself this runs anywhere -- including CI.
+check-ppa:
+	python3 scripts/check_ppa_consistency.py
 
 # Full ORFS RTL-to-GDS synthesis stage for conv5x5_pe (requires an ORFS
 # install; set ORFS_ROOT if it is not at /root/OpenROAD-flow-scripts, and see
