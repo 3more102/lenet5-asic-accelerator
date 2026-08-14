@@ -48,12 +48,12 @@ both simulators, and now confirmed synthesizable.
   canonical 32x32x1 input, bit-exact against `golden/deploy.py:
   deploy_forward_int8` (~209,000 cycles simulated, well inside a 600,000-cycle
   watchdog).
-- SystemVerilog elaboration/compilation passed for all 14 RTL modules and 8
+- SystemVerilog elaboration/compilation passed for all 14 RTL modules and 9
   testbenches via `scripts/modelsim.do` (ModelSim/Questa Intel FPGA Edition
   10.5b), 0 errors / 0 warnings.
-- The same 8 testbenches also pass under `make regression` (Icarus Verilog
+- The same 9 testbenches also pass under `make regression` (Icarus Verilog
   12.0, via WSL2 Ubuntu) -- `python -m unittest`, `lint` elaboration of
-  `conv2d_engine`/`conv5x5_pe`/`lenet5_top`, all 8 `sim-*` targets, and the
+  `conv2d_engine`/`conv5x5_pe`/`lenet5_top`, all 9 `sim-*` targets, and the
   canonical-model demo. Full log: `results/icarus_regression_20260807.log`.
 - Generic Yosys synthesis (0.52) passed for `conv5x5_pe` (+ `conv5x5_row_mac`,
   `requantize`), `avg_pool2x2_int8`, and `dense_row_mac` via `make synth`.
@@ -115,7 +115,7 @@ which had the identical pattern plus a memory read in the same cycle.
 Everything above was re-run against the changed RTL, in both simulators:
 
 - 15/15 Python golden-model unit tests still pass.
-- All 8 self-checking testbenches still pass under Icarus Verilog 12.0 **and**
+- All 9 self-checking testbenches still pass under Icarus Verilog 12.0 **and**
   ModelSim/Questa 10.5b, 0 errors / 0 warnings.
 - `conv2d_engine` still produces 48/48 outputs matching the bit-exact Python
   model, including under the hostile every-7th-cycle backpressure pattern.

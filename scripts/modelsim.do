@@ -21,6 +21,7 @@ vlog -sv +incdir+. \
     rtl/lenet5_dense_config.sv \
     rtl/lenet5_top.sv \
     tb/tb_conv5x5_pe.sv \
+    tb/tb_requantize.sv \
     tb/tb_lenet5_c3_connectivity.sv \
     tb/tb_conv2d_engine.sv \
     tb/tb_avg_pool2x2_stream.sv \
@@ -30,6 +31,11 @@ vlog -sv +incdir+. \
     tb/tb_lenet5_top.sv
 
 vsim -c work.tb_conv5x5_pe
+onfinish stop
+run -all
+quit -sim
+
+vsim -c work.tb_requantize
 onfinish stop
 run -all
 quit -sim

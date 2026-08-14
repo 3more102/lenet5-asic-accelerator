@@ -310,7 +310,7 @@
 <!-- ============================== A3 ============================== -->
 <section class="shot" id="a3">
   <h2><span class="tag">A3</span>Full open-source regression — Icarus Verilog 12.0</h2>
-  <p class="claim">Proves: all eight self-checking testbenches pass, end to end, in a freely reproducible toolchain.</p>
+  <p class="claim">Proves: all nine self-checking testbenches pass, end to end, in a freely reproducible toolchain.</p>
 
   <div class="cmd">wsl -e bash scripts/regression_summary.sh</div>
 
@@ -322,7 +322,7 @@
   <h3>What is on screen</h3>
   <p>
     The wrapper script runs the entire <code>make regression</code> target — Python
-    unit tests, lint/elaboration, all eight RTL testbenches and the canonical demo —
+    unit tests, lint/elaboration, all nine RTL testbenches and the canonical demo —
     then prints <b>only the verdict lines</b>, so the whole result fits on one screen
     instead of scrolling past thousands of compile lines. The full transcript stays
     in <code>results/regression_summary.log</code>.
@@ -355,7 +355,7 @@
   <ul>
     <li>
       <b>The last line is the one to point at.</b>
-      <code>8/8 RTL testbenches passed -- full log in results/regression_summary.log</code>
+      <code>9/9 RTL testbenches passed -- full log in results/regression_summary.log</code>
       is not a hand-written banner: the script counts the <code>PASS</code> lines it
       actually found in the log. If a testbench had failed, or had not run at all, the
       count would not read 8 — so the summary cannot flatter the result.
@@ -387,7 +387,7 @@
     Three things stacked on one screen. First <code>golden/generate_vectors.py</code>
     writes the stimulus <em>and</em> the expected results for every testbench, echoing
     the configuration of each as it goes. Then ModelSim/Questa Intel FPGA Edition
-    10.5b replays all eight testbenches, finishing on
+    10.5b replays all nine testbenches, finishing on
     <b><code>PASS: all ModelSim/Questa regressions completed</code></b>. Finally the
     eight <code>#&nbsp;PASS</code> verdicts are pulled back out of ModelSim's own
     transcript, so the individual results and the completion banner are visible
@@ -395,7 +395,7 @@
   </p>
   <p>
     The closing line carries the compile evidence too:
-    <b><code>8/8 testbenches PASS; '# Errors: 0, Warnings: 0' on all 9
+    <b><code>9/9 testbenches PASS; '# Errors: 0, Warnings: 0' on all 9
     compile/sim steps</code></b>. That is the &ldquo;0 errors, 0 warnings across all 14
     RTL and 8 testbench files&rdquo; claim from page 1 of the presentation guide, shown
     rather than asserted.

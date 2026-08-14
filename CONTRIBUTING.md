@@ -48,7 +48,7 @@ this is the same anti-drift guard the vectors get — CI runs it on every push,
 and it needs only Python, not a PDK.
 
 `make regression` runs, in order: the golden-model unit tests, SystemVerilog
-elaboration/lint of the full RTL list, all eight self-checking testbenches, and
+elaboration/lint of the full RTL list, all nine self-checking testbenches, and
 the end-to-end demo. Every testbench prints an explicit `PASS <name>` line; a
 silent finish is a failure, not a pass.
 

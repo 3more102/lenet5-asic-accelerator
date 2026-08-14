@@ -49,7 +49,7 @@ fixed-point contract.
 
 ## Verification status
 
-All ten regression stages pass under Icarus Verilog 12.0 and Siemens
+All eleven regression stages pass under Icarus Verilog 12.0 and Siemens
 ModelSim; generic synthesis passes under Yosys.
 
 | Check | What it proves |
@@ -57,6 +57,7 @@ ModelSim; generic synthesis passes under Yosys.
 | `golden.test_golden` | quantization corner cases + the full floating LeNet-5 shape chain |
 | `lint` | SystemVerilog elaboration of the complete RTL list, three top modules |
 | `tb_conv5x5_pe` | PE accumulation, bias injection, requantization, output backpressure |
+| `tb_requantize` | 5,504-case differential sweep vs the oracle: half-way rounding, both saturation boundaries, shift=0 bypass, int32 extremes, plus randomized coverage |
 | `tb_lenet5_c3_connectivity` | the exact 60 canonical C3 input-map connections |
 | `tb_conv2d_engine` | 48 engine outputs vs the Python int8 oracle |
 | `tb_avg_pool2x2_stream` | 12 pooling outputs vs the oracle |

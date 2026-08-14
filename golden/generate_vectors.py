@@ -19,7 +19,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from golden.deploy import DEFAULT_SHIFTS, deploy_forward_int8, random_deploy_parameters
-from golden.quantized_conv import argmax_classifier, avg_pool2x2_int8, conv2d_valid_int8, dense_int8
+from golden.quantized_conv import (
+    argmax_classifier,
+    avg_pool2x2_int8,
+    conv2d_valid_int8,
+    dense_int8,
+    requantize,
+)
 
 VECTOR_DIR = ROOT / "vectors"
 
@@ -221,6 +227,87 @@ def generate_top_vectors() -> str:
 """
 
 
+def generate_requantize_vectors() -> str:
+    """Directed + randomized differential vectors for tb_requantize.sv.
+
+    Every other testbench exercises `requantize` only indirectly, and only on
+    whatever accumulator values the fixed convolution vectors happen to
+    produce at shift = 7. That leaves the parts most likely to be wrong
+    untested: the exact half-way values the round-away-from-zero rule is
+    defined by, both saturation boundaries, the shift = 0 bypass, and the
+    extremes of the int32 accumulator. This sweeps them deliberately, then
+    adds random cases across the whole (accumulator, shift) space.
+    """
+
+    cases: list[tuple[int, int, int]] = []  # (acc, shift, relu)
+
+    int32_min, int32_max = -(1 << 31), (1 << 31) - 1
+
+    def add(acc: int, shift: int) -> None:
+        # The port is 32 bits wide, so anything outside that range would be
+        # silently truncated on the way into the hex file while the expected
+        # value here was computed from Python's unbounded integer -- which
+        # would report a mismatch against correct RTL. Skip rather than lie.
+        if not int32_min <= acc <= int32_max:
+            return
+        cases.append((acc, shift, 0))
+        cases.append((acc, shift, 1))
+
+    for shift in range(0, 32):
+        # Half-way values: the tie cases the rounding rule is defined by. At
+        # shift s the tie is at +/-2^(s-1), and it must round away from zero.
+        if shift:
+            half = 1 << (shift - 1)
+            for base in (0, 1 << shift, 2 << shift):
+                add(base + half, shift)
+                add(-(base + half), shift)
+                add(base + half - 1, shift)  # just below the tie
+                add(base + half + 1, shift)  # just above it
+        # Saturation boundaries, approached from both sides.
+        for target in (-129, -128, -127, 126, 127, 128):
+            add(target << shift, shift)
+        # Accumulator extremes and small values.
+        for acc in (0, 1, -1, int32_max, int32_min, int32_max - 1, int32_min + 1):
+            add(acc, shift)
+
+    # Worst-case real accumulation from the architecture: C5 is 16 channels x
+    # 25 taps x 127 x 127 (docs/ARCHITECTURE.md), so bracket that magnitude.
+    worst = 16 * 25 * 127 * 127
+    for shift in (0, 1, 7, 15, 31):
+        for acc in (worst, -worst, worst + 1, -worst - 1):
+            add(acc, shift)
+
+    rng = np.random.default_rng(20260815)
+    for _ in range(4000):
+        acc = int(rng.integers(int32_min, int32_max, dtype=np.int64))
+        shift = int(rng.integers(0, 32))
+        cases.append((acc, shift, int(rng.integers(0, 2))))
+
+    accs = np.array([c[0] for c in cases], dtype=np.int64)
+    shifts = np.array([c[1] for c in cases], dtype=np.int64)
+    relus = np.array([c[2] for c in cases], dtype=np.int64)
+
+    expected = np.array(
+        [
+            int(requantize(np.int64(acc), int(shift), bool(relu)))
+            for acc, shift, relu in zip(accs, shifts, relus)
+        ],
+        dtype=np.int64,
+    )
+
+    rq_dir = VECTOR_DIR / "requant"
+    write_hex(rq_dir / "acc.hex", accs, 32)
+    write_hex(rq_dir / "shift.hex", shifts, 8)
+    write_hex(rq_dir / "relu.hex", relus, 8)
+    write_hex(rq_dir / "expected.hex", expected, 8)
+
+    print(f"requantize: {len(cases)} differential cases")
+
+    return f"""// ---- tb_requantize.sv ----
+`define TV_RQ_COUNT {len(cases)}
+"""
+
+
 def main() -> None:
     VECTOR_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -229,6 +316,7 @@ def main() -> None:
         generate_pool_vectors(),
         generate_f6_vectors(),
         generate_classifier_vectors(),
+        generate_requantize_vectors(),
         generate_top_vectors(),
     ]
 

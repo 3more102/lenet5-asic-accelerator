@@ -41,6 +41,9 @@
 `define TV_CLS_BIAS_COUNT 4
 `define TV_CLS_EXPECTED_CLASS 3
 
+// ---- tb_requantize.sv ----
+`define TV_RQ_COUNT 5504
+
 // ---- tb_lenet5_top.sv ----
 `define TV_TOP_EXPECTED_CLASS 6
 `define TV_TOP_WATCHDOG_CYCLES 600000

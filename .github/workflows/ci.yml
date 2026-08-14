@@ -37,7 +37,7 @@ jobs:
 
       # Regenerates vectors/, so the committed vectors can never silently
       # drift away from golden/. `regression` runs, in order: the golden-model
-      # unit tests, SystemVerilog elaboration/lint, all eight self-checking
+      # unit tests, SystemVerilog elaboration/lint, all nine self-checking
       # testbenches, and the end-to-end LeNet-5 demo.
       - name: Regenerate golden vectors
         run: make vectors

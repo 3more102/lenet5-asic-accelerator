@@ -19,7 +19,7 @@ RTL := \
 	rtl/lenet5_dense_config.sv \
 	rtl/lenet5_top.sv
 
-.PHONY: all vectors golden-test demo lint sim-pe sim-c3 sim-engine sim-pool sim-f6 \
+.PHONY: all vectors golden-test demo lint sim-pe sim-requantize sim-c3 sim-engine sim-pool sim-f6 \
 	sim-classifier sim-classifier-tie sim-top regression synth synth-pe synth-pool \
 	synth-mac ppa check-ppa orfs clean
 
@@ -47,6 +47,15 @@ sim-pe:
 	$(IVERILOG) -g2012 -Wall -s tb_conv5x5_pe -o results/tb_pe.vvp \
 		$(RTL) tb/tb_conv5x5_pe.sv
 	$(VVP) results/tb_pe.vvp
+
+# Differential sweep of requantize against the Python oracle: half-way values,
+# both saturation boundaries, the shift = 0 bypass and int32 extremes, plus
+# randomized coverage. Every other testbench reaches this module only
+# indirectly and only at shift = 7.
+sim-requantize: vectors
+	$(IVERILOG) -g2012 -Wall -I. -s tb_requantize -o results/tb_requantize.vvp \
+		$(RTL) tb/tb_requantize.sv
+	$(VVP) results/tb_requantize.vvp
 
 sim-c3:
 	$(IVERILOG) -g2012 -Wall -s tb_lenet5_c3_connectivity \
@@ -83,7 +92,7 @@ sim-top: vectors
 		-o results/tb_top.vvp $(RTL) tb/tb_lenet5_top.sv
 	$(VVP) results/tb_top.vvp
 
-regression: golden-test lint sim-pe sim-c3 sim-engine sim-pool sim-f6 \
+regression: golden-test lint sim-pe sim-requantize sim-c3 sim-engine sim-pool sim-f6 \
 	sim-classifier sim-classifier-tie sim-top demo
 
 # synth-pe is the original target name kept as an alias so existing callers
