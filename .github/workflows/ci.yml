@@ -100,3 +100,30 @@ jobs:
           name: yosys-generic-netlists
           path: results/*_generic.json
           if-no-files-found: ignore
+
+  equiv:
+    name: Post-synthesis equivalence (Yosys SAT)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Yosys
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends yosys
+          yosys -V
+
+      - name: Create results directory
+        run: mkdir -p results
+
+      # Proves each generic netlist computes the same function as the RTL it was
+      # elaborated from -- by SAT and induction over all inputs and all reachable
+      # states, not by replaying vectors. Every other job here is simulation and
+      # says nothing about what synthesis emitted. Each script ends in
+      # `equiv_status -assert`, so one unproven equivalence point fails this job.
+      #
+      # Its own job rather than a step of `synth` because it is the slow one
+      # (~8 minutes for the three blocks against seconds for synthesis) and a
+      # failure here means something quite different from a synthesis failure.
+      - name: Prove RTL == netlist
+        run: make equiv

@@ -32,6 +32,7 @@
 | Near-maximum accumulator magnitude, and no wrap | same | `tb_extremes.sv` |
 | Raw pre-requantization accumulator (`out_acc_o`) | `dense_int8` accumulator output | `tb_extremes.sv` |
 | Largest and smallest legal layer dimensions | same | `tb_extremes.sv` |
+| Generic netlist computes the same function as the RTL | the RTL itself, by SAT | `synth/equiv_*.ys` (`make equiv`) |
 
 The main engine test generates activations, weights, biases, a sparse mask, raw
 accumulators, and expected int8 outputs from a deterministic seed. RTL output is
@@ -110,6 +111,45 @@ of the cases measured. The width is now exercised rather than assumed, though
 the argument that no legal configuration can exceed it remains an argument,
 not a proof.
 
+**Post-synthesis equivalence (`synth/equiv_*.ys`, `make equiv`):** everything
+above is RTL simulation. It compares the RTL against the Python model on
+whatever stimulus a testbench drives, and says nothing about what synthesis
+emitted. `make equiv` closes that by proving, for each synthesizable block, that
+the generic netlist computes the same function as the RTL it was elaborated
+from -- by SAT on the combinational points and induction on the sequential ones,
+over all inputs and all reachable states rather than over a vector set.
+
+`equiv_make` pairs the two designs' signals, `equiv_simple` discharges points by
+SAT, `equiv_induct` proves the rest inductively, and `equiv_status -assert`
+exits non-zero if a single point is left unproven. That assert is what makes it
+a check: without it the flow prints a report and returns success regardless.
+
+| Block | Equivalence points | Runtime |
+|---|---|---|
+| `conv5x5_pe` (with `conv5x5_row_mac`, `requantize`) | 694 | ~196 s |
+| `dense_row_mac` | 768 | ~300 s |
+| `avg_pool2x2_int8` | 130 | seconds |
+
+What it does **not** prove, stated plainly:
+
+- **Only the three synthesizable leaf blocks.** `conv2d_engine`,
+  `avg_pool2x2_stream`, `dense_engine`, `classifier_argmax` and `lenet5_top`
+  hold behavioural ROM/scratch arrays and are not synthesized at all yet, so
+  there is no netlist of them to compare against.
+- **Only the *generic* netlist.** This is the `synth/*.ys` flow — Yosys
+  `techmap` with no real cell library. The sky130hd/ABC-mapped netlist behind
+  `docs/PPA.md` is a *different* netlist produced by a different flow, and is
+  not covered here.
+- **Function, not timing.** Equivalence says the two compute the same values;
+  it says nothing about setup/hold, and nothing about anything a real library,
+  SDF back-annotation or scan insertion would introduce.
+
+Two flow details that are easy to get wrong, both recorded in the scripts:
+`async2sync` must run on **both** sides or `equiv_simple` dies with "No SAT
+model available for async FF cell" on `conv5x5_pe`'s asynchronous reset; and
+`equiv_simple -short` before the full `equiv_simple` discharges most points
+cheaply, which is the difference between 196 s and minutes on `conv5x5_pe`.
+
 ## Required before tapeout
 
 - trained-network C1, C3, and C5 layer tests;
@@ -126,7 +166,11 @@ not a proof.
   `lenet5_top`'s FSM every run; the five engines sequence with nested counters
   rather than an enumerated state register, so they have no equivalent
   structural target and remain covered behaviourally by their oracles);
-- post-synthesis equivalence checking;
+- post-synthesis equivalence checking **of the remaining blocks and of the
+  mapped netlist** (`make equiv` now proves RTL == generic netlist for the three
+  synthesizable leaf blocks -- see the equivalence note above -- but the five
+  ROM/scratch-array modules have no netlist yet, and the sky130hd-mapped netlist
+  behind `docs/PPA.md` is a different netlist that is not checked);
 - scan/MBIST verification;
 - gate-level reset and SDF simulations;
 - SRAM model replacement tests;

@@ -1,14 +1,15 @@
 # Verification Summary
 
-Date: 2026-08-07, re-verified four times on 2026-08-15 — after the requantize
+Date: 2026-08-07, re-verified five times on 2026-08-15 — after the requantize
 pipelining change, after adding controller-FSM coverage and the
 config-validation reject tier, after adding the stall-invariance and
-reset-interruption tier, and after adding the operand/dimension extremes tier.
-See the four Addenda at the end. The body below reflects the first
-re-verification; **where a later addendum moves a number, the later one is
-authoritative** — that means the cycle figures come from the second (measured
-per inference rather than read off `$finish`) and the testbench count from the
-fourth (**12**, not 9, 10 or 11).
+reset-interruption tier, after adding the operand/dimension extremes tier, and
+after adding post-synthesis formal equivalence. See the five Addenda at the end.
+The body below reflects the first re-verification; **where a later addendum
+moves a number, the later one is authoritative** — that means the cycle figures
+come from the second (measured per inference rather than read off `$finish`) and
+the testbench count from the fourth (**12**, not 9, 10 or 11). The fifth adds a
+check that is not a testbench at all and is not counted among the twelve.
 
 ## Status
 
@@ -396,3 +397,64 @@ claims to test.
 `scripts/regression_summary.sh`'s expected total was updated to match and still
 fails if any of the twelve stops reporting. `tb_extremes` carries its own
 50,000-cycle watchdog and finishes in about 3,100 cycles.
+
+---
+
+## Fifth addendum -- 2026-08-15: post-synthesis equivalence (`make equiv`)
+
+Closes the "post-synthesis equivalence checking" item from
+`docs/VERIFICATION_PLAN.md`, partially -- see the limits below. Run under Yosys
+0.68; the 0.52 quoted earlier in this document is what the WSL2 toolchain
+carried on 2026-08-07 and is left as the historical record of that pass.
+
+**The gap it closes.** All twelve testbenches are RTL simulation. Each compares
+the RTL against the Python golden model on whatever stimulus it drives, and none
+of them looks at what synthesis produced. Nothing in this project had ever
+checked the netlist. `make equiv` proves, for each synthesizable block, that the
+generic netlist computes the same function as the RTL it was elaborated from --
+by SAT on the combinational equivalence points and induction on the sequential
+ones, over all inputs and all reachable states rather than over a vector set.
+That is a different *kind* of evidence from everything above it: the twelve
+testbenches say "these outputs matched on these inputs", this says "no input
+exists that separates them".
+
+| Block | Equivalence points | Unproven | Runtime |
+|---|---|---|---|
+| `conv5x5_pe` (with `conv5x5_row_mac`, `requantize`) | 694 | 0 | ~196 s |
+| `dense_row_mac` | 768 | 0 | ~300 s |
+| `avg_pool2x2_int8` | 130 | 0 | seconds |
+| **total** | **1,592** | **0** | ~8 min |
+
+**Proven able to fail.** The flow ends in `equiv_status -assert`, which is the
+only thing separating a check from a report -- without it Yosys prints the
+unproven count and exits 0. Five mutations were injected into the *gate* side
+only, which is exactly the failure mode being guarded against (a netlist that
+does not implement its RTL): rounding constant 2 -> 1 on the positive branch and
+again on the negative branch, one of the four samples dropped from the sum,
+`>>> 2` weakened to `>>> 1`, and the sign-extension replaced by zero-extension.
+All five were caught, each leaving a different number of unproven points
+(14, 16, 10, 16, 10). The unmutated control returns 0 with 130/130 proven --
+without that control the 5/5 would be equally consistent with a harness that
+always fails.
+
+**Two flow traps, both of which fail loudly rather than quietly.**
+`conv5x5_pe` resets asynchronously, and `equiv_simple` has no SAT model for an
+async flip-flop: without `async2sync` on *both* sides the run dies with "No SAT
+model available for async FF cell". And `equiv_simple -short` before the full
+`equiv_simple` discharges most points against shortened input cones, which is
+the difference between 196 s and several minutes on `conv5x5_pe`.
+
+**What this does not prove**, since the phrase "formally verified" invites more
+than was done. Only the three synthesizable leaf blocks are covered:
+`conv2d_engine`, `avg_pool2x2_stream`, `dense_engine`, `classifier_argmax` and
+`lenet5_top` hold behavioural ROM/scratch arrays, are not synthesized at all,
+and therefore have no netlist to compare against. Only the *generic* netlist is
+covered -- the sky130hd/ABC-mapped netlist behind `docs/PPA.md` comes from a
+different flow and is not checked. And equivalence is a statement about
+function, not timing: it says nothing about setup/hold, SDF back-annotation, or
+scan insertion.
+
+`make equiv` is deliberately not part of `make regression`. At roughly eight
+minutes it would triple regression wall-clock for a check that only needs
+re-running when the RTL or the synthesis flow changes; CI runs it as its own
+job so a failure there reads differently from a simulation failure.

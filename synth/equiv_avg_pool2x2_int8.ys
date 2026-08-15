@@ -1,0 +1,39 @@
+# Post-synthesis formal equivalence: avg_pool2x2_int8 RTL vs its generic netlist.
+# See synth/equiv_conv5x5_pe.ys for why this flow is shaped the way it is.
+#
+# This module is purely combinational, so equiv_induct has nothing to do and all
+# 130 equivalence points fall to equiv_simple. It is also the module the
+# equivalence mutation campaign is run against, precisely because it is the
+# fastest to re-prove: see the fifth addendum of results/VERIFICATION_SUMMARY.md.
+
+read_verilog -sv rtl/avg_pool2x2_int8.sv
+hierarchy -check -top avg_pool2x2_int8
+proc
+flatten
+async2sync
+opt_clean
+design -stash gold
+
+read_verilog -sv rtl/avg_pool2x2_int8.sv
+hierarchy -check -top avg_pool2x2_int8
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt
+flatten
+async2sync
+opt_clean
+design -stash gate
+
+design -copy-from gold -as gold avg_pool2x2_int8
+design -copy-from gate -as gate avg_pool2x2_int8
+equiv_make gold gate equiv
+hierarchy -top equiv
+equiv_simple -short
+equiv_simple
+equiv_induct
+equiv_status -assert

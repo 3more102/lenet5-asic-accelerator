@@ -1,0 +1,46 @@
+# Post-synthesis formal equivalence: dense_row_mac RTL vs its generic netlist.
+# See synth/equiv_conv5x5_pe.ys for why this flow is shaped the way it is.
+#
+# This is the module whose reduction tree was originally a procedural `while`
+# loop with a variable-stride `for` bound. It simulated correctly in both
+# ModelSim and Icarus and was rejected outright by Yosys, and was rebuilt as an
+# elaboration-time generate/genvar pairwise tree (docs/ARCHITECTURE.md). That
+# history is the argument for checking it here: a construct that elaborates
+# differently than it simulates is exactly what an RTL-vs-netlist proof catches,
+# and the rebuilt tree had only ever been re-checked behaviourally.
+#
+# `memory` reports "Replacing memory \level with list of registers" on the gate
+# side -- that is the reduction tree's intermediate array being mapped to
+# flip-flops, which is expected, not a warning to silence.
+
+read_verilog -sv rtl/dense_row_mac.sv
+hierarchy -check -top dense_row_mac
+proc
+flatten
+async2sync
+opt_clean
+design -stash gold
+
+read_verilog -sv rtl/dense_row_mac.sv
+hierarchy -check -top dense_row_mac
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt
+flatten
+async2sync
+opt_clean
+design -stash gate
+
+design -copy-from gold -as gold dense_row_mac
+design -copy-from gate -as gate dense_row_mac
+equiv_make gold gate equiv
+hierarchy -top equiv
+equiv_simple -short
+equiv_simple
+equiv_induct
+equiv_status -assert

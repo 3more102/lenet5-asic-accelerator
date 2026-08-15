@@ -1,0 +1,130 @@
+# make equiv -- post-synthesis formal equivalence, 2026-08-15, Yosys 0.68 (WSL2 Ubuntu).
+#
+# FILTERED. The raw log is ~483 KB, almost all of it one "Trying to prove $equiv
+# for <signal>" line per equivalence point. Kept here: the yosys banner, every
+# equiv_* command boundary, every proven/unproven tally, the final verdicts and
+# the timing lines. Regenerate the full trace with: make equiv
+#
+# Result: 694 + 130 + 768 = 1592 equivalence points, 0 unproven, MAKE_RC=0, 456s.
+
+yosys -s synth/equiv_conv5x5_pe.ys
+1. Executing Verilog-2005 frontend: rtl/conv5x5_row_mac.sv
+2. Executing Verilog-2005 frontend: rtl/requantize.sv
+3. Executing Verilog-2005 frontend: rtl/conv5x5_pe.sv
+4. Executing HIERARCHY pass (managing design hierarchy).
+5. Executing PROC pass (convert processes to netlists).
+6. Executing FLATTEN pass (flatten design).
+7. Executing ASYNC2SYNC pass.
+8. Executing OPT_CLEAN pass (remove unused cells and wires).
+9. Executing Verilog-2005 frontend: rtl/conv5x5_row_mac.sv
+10. Executing Verilog-2005 frontend: rtl/requantize.sv
+11. Executing Verilog-2005 frontend: rtl/conv5x5_pe.sv
+12. Executing HIERARCHY pass (managing design hierarchy).
+13. Executing PROC pass (convert processes to netlists).
+14. Executing OPT pass (performing simple optimizations).
+15. Executing FSM pass (extract and optimize FSM).
+16. Executing OPT pass (performing simple optimizations).
+17. Executing MEMORY pass.
+18. Executing OPT pass (performing simple optimizations).
+19. Executing TECHMAP pass (map to technology primitives).
+20. Executing OPT pass (performing simple optimizations).
+21. Executing FLATTEN pass (flatten design).
+22. Executing ASYNC2SYNC pass.
+23. Executing OPT_CLEAN pass (remove unused cells and wires).
+24. Executing EQUIV_MAKE pass (creating equiv checking module).
+25. Executing HIERARCHY pass (managing design hierarchy).
+26. Executing EQUIV_SIMPLE pass.
+Found 694 unproven $equiv cells (40 groups) in equiv:
+Proved 556 previously unproven $equiv cells.
+27. Executing EQUIV_SIMPLE pass.
+Found 138 unproven $equiv cells (6 groups) in equiv:
+Proved 0 previously unproven $equiv cells.
+28. Executing EQUIV_INDUCT pass.
+Found 138 unproven $equiv cells in module equiv:
+Proved 138 previously unproven $equiv cells.
+29. Executing EQUIV_STATUS pass.
+  Of those cells 694 are proven and 0 are unproven.
+  Equivalence successfully proven!
+End of script. Logfile hash: 8221418f24, time: 179.95s, user: 179.26s, system: 0.19s, MEM: 106.93 MB peak
+Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 15.2.0)
+Time spent: 99% 2x equiv_simple (178 sec), 0% 1x equiv_induct (0 sec), ...
+yosys -s synth/equiv_avg_pool2x2_int8.ys
+1. Executing Verilog-2005 frontend: rtl/avg_pool2x2_int8.sv
+Warning: Replacing memory \sample_ext with list of registers. See rtl/avg_pool2x2_int8.sv:26, rtl/avg_pool2x2_int8.sv:23
+Warning: Replacing memory \sample with list of registers. See rtl/avg_pool2x2_int8.sv:23, rtl/avg_pool2x2_int8.sv:22
+2. Executing HIERARCHY pass (managing design hierarchy).
+3. Executing PROC pass (convert processes to netlists).
+4. Executing FLATTEN pass (flatten design).
+5. Executing ASYNC2SYNC pass.
+6. Executing OPT_CLEAN pass (remove unused cells and wires).
+7. Executing Verilog-2005 frontend: rtl/avg_pool2x2_int8.sv
+Warning: Replacing memory \sample_ext with list of registers. See rtl/avg_pool2x2_int8.sv:26, rtl/avg_pool2x2_int8.sv:23
+Warning: Replacing memory \sample with list of registers. See rtl/avg_pool2x2_int8.sv:23, rtl/avg_pool2x2_int8.sv:22
+8. Executing HIERARCHY pass (managing design hierarchy).
+9. Executing PROC pass (convert processes to netlists).
+10. Executing OPT pass (performing simple optimizations).
+11. Executing FSM pass (extract and optimize FSM).
+12. Executing OPT pass (performing simple optimizations).
+13. Executing MEMORY pass.
+14. Executing OPT pass (performing simple optimizations).
+15. Executing TECHMAP pass (map to technology primitives).
+16. Executing OPT pass (performing simple optimizations).
+17. Executing FLATTEN pass (flatten design).
+18. Executing ASYNC2SYNC pass.
+19. Executing OPT_CLEAN pass (remove unused cells and wires).
+20. Executing EQUIV_MAKE pass (creating equiv checking module).
+21. Executing HIERARCHY pass (managing design hierarchy).
+22. Executing EQUIV_SIMPLE pass.
+Found 130 unproven $equiv cells (12 groups) in equiv:
+Proved 130 previously unproven $equiv cells.
+23. Executing EQUIV_SIMPLE pass.
+Proved 0 previously unproven $equiv cells.
+24. Executing EQUIV_INDUCT pass.
+No selected unproven $equiv cells found in equiv.
+Proved 0 previously unproven $equiv cells.
+25. Executing EQUIV_STATUS pass.
+  Of those cells 130 are proven and 0 are unproven.
+  Equivalence successfully proven!
+Warnings: 2 unique messages, 4 total
+End of script. Logfile hash: 474410de70, time: 0.28s, user: 0.13s, system: 0.03s, MEM: 32.43 MB peak
+Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 15.2.0)
+Time spent: 30% 2x equiv_simple (0 sec), 16% 1x techmap (0 sec), ...
+yosys -s synth/equiv_dense_row_mac.ys
+1. Executing Verilog-2005 frontend: rtl/dense_row_mac.sv
+Warning: Replacing memory \level with list of registers. See rtl/dense_row_mac.sv:40
+2. Executing HIERARCHY pass (managing design hierarchy).
+3. Executing PROC pass (convert processes to netlists).
+4. Executing FLATTEN pass (flatten design).
+5. Executing ASYNC2SYNC pass.
+6. Executing OPT_CLEAN pass (remove unused cells and wires).
+7. Executing Verilog-2005 frontend: rtl/dense_row_mac.sv
+Warning: Replacing memory \level with list of registers. See rtl/dense_row_mac.sv:40
+8. Executing HIERARCHY pass (managing design hierarchy).
+9. Executing PROC pass (convert processes to netlists).
+10. Executing OPT pass (performing simple optimizations).
+11. Executing FSM pass (extract and optimize FSM).
+12. Executing OPT pass (performing simple optimizations).
+13. Executing MEMORY pass.
+14. Executing OPT pass (performing simple optimizations).
+15. Executing TECHMAP pass (map to technology primitives).
+16. Executing OPT pass (performing simple optimizations).
+17. Executing FLATTEN pass (flatten design).
+18. Executing ASYNC2SYNC pass.
+19. Executing OPT_CLEAN pass (remove unused cells and wires).
+20. Executing EQUIV_MAKE pass (creating equiv checking module).
+21. Executing HIERARCHY pass (managing design hierarchy).
+22. Executing EQUIV_SIMPLE pass.
+Found 768 unproven $equiv cells (40 groups) in equiv:
+Proved 768 previously unproven $equiv cells.
+23. Executing EQUIV_SIMPLE pass.
+Proved 0 previously unproven $equiv cells.
+24. Executing EQUIV_INDUCT pass.
+No selected unproven $equiv cells found in equiv.
+Proved 0 previously unproven $equiv cells.
+25. Executing EQUIV_STATUS pass.
+  Of those cells 768 are proven and 0 are unproven.
+  Equivalence successfully proven!
+Warnings: 1 unique messages, 2 total
+End of script. Logfile hash: 670a96ebd1, time: 275.61s, user: 275.18s, system: 0.09s, MEM: 80.06 MB peak
+Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 15.2.0)
+Time spent: 99% 2x equiv_simple (274 sec), 0% 17x opt_expr (0 sec), ...

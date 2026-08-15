@@ -21,7 +21,8 @@ RTL := \
 
 .PHONY: all vectors golden-test demo lint sim-pe sim-requantize sim-c3 sim-engine sim-pool sim-f6 \
 	sim-classifier sim-classifier-tie sim-config-guard sim-robustness sim-extremes \
-	sim-top regression synth synth-pe synth-pool synth-mac ppa check-ppa orfs clean
+	sim-top regression synth synth-pe synth-pool synth-mac \
+	equiv equiv-pe equiv-pool equiv-mac ppa check-ppa orfs clean
 
 all: regression
 
@@ -136,6 +137,28 @@ synth-pool:
 
 synth-mac:
 	$(YOSYS) -s synth/dense_row_mac.ys
+
+# Post-synthesis formal equivalence: prove by SAT that each generic netlist
+# computes the same function as the RTL it came from, for all inputs and all
+# reachable states. Every other check in this repo is RTL simulation against the
+# Python model and says nothing about what synthesis emitted. Each script ends
+# in `equiv_status -assert`, so a single unproven equivalence point fails the
+# target rather than printing a report nobody reads.
+#
+# Deliberately NOT part of `regression`: conv5x5_pe alone takes ~200s and
+# dense_row_mac ~300s, which would triple regression wall-clock for a check that
+# only needs re-running when the RTL or the synthesis flow changes. CI runs it as
+# its own job. See docs/VERIFICATION_PLAN.md for what it does and does not prove.
+equiv: equiv-pe equiv-pool equiv-mac
+
+equiv-pe:
+	$(YOSYS) -s synth/equiv_conv5x5_pe.ys
+
+equiv-pool:
+	$(YOSYS) -s synth/equiv_avg_pool2x2_int8.ys
+
+equiv-mac:
+	$(YOSYS) -s synth/equiv_dense_row_mac.ys
 
 # Real sky130hd area/timing/power: yosys+abc technology mapping followed by
 # OpenSTA (via the openroad binary, which embeds it) on every storage-free

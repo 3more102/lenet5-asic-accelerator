@@ -1,0 +1,57 @@
+# Post-synthesis formal equivalence: conv5x5_pe RTL vs its generic netlist.
+#
+# Every other check in this repo is RTL simulation: it compares the RTL against
+# the Python golden model. None of them look at what synthesis produced. This
+# proves, by SAT rather than by stimulus, that the netlist Yosys emits computes
+# the same function as the RTL it was elaborated from -- for all inputs and all
+# reachable states, not just the vectors a testbench happens to drive.
+#
+# "gold" is the RTL after elaboration only. "gate" is the same source through
+# the full synth/yosys.ys flow. equiv_make pairs their signals, equiv_simple
+# discharges the combinational points by SAT, equiv_induct proves the sequential
+# ones by induction, and equiv_status -assert exits non-zero if a single point
+# is left unproven -- that assert is what makes this a check rather than a report.
+#
+# Two things this flow needs that are easy to miss:
+#   * async2sync, on BOTH sides. conv5x5_pe resets on rst_ni asynchronously, and
+#     equiv_simple has no SAT model for an async FF -- without it the run dies
+#     with "No SAT model available for async FF cell", not with a wrong answer.
+#   * equiv_simple -short before the full equiv_simple. The short pass stops its
+#     input cones at shared nodes and discharges most points cheaply, leaving far
+#     fewer for the expensive full pass: 196s here versus minutes without it.
+
+read_verilog -sv rtl/conv5x5_row_mac.sv
+read_verilog -sv rtl/requantize.sv
+read_verilog -sv rtl/conv5x5_pe.sv
+hierarchy -check -top conv5x5_pe
+proc
+flatten
+async2sync
+opt_clean
+design -stash gold
+
+read_verilog -sv rtl/conv5x5_row_mac.sv
+read_verilog -sv rtl/requantize.sv
+read_verilog -sv rtl/conv5x5_pe.sv
+hierarchy -check -top conv5x5_pe
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt
+flatten
+async2sync
+opt_clean
+design -stash gate
+
+design -copy-from gold -as gold conv5x5_pe
+design -copy-from gate -as gate conv5x5_pe
+equiv_make gold gate equiv
+hierarchy -top equiv
+equiv_simple -short
+equiv_simple
+equiv_induct
+equiv_status -assert

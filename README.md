@@ -50,7 +50,10 @@ fixed-point contract.
 ## Verification status
 
 All fourteen regression stages below pass under Icarus Verilog 12.0 and Siemens
-ModelSim; generic synthesis passes under Yosys.
+ModelSim; generic synthesis passes under Yosys. Separately from simulation,
+`make equiv` proves by SAT that each synthesized netlist computes the same
+function as its RTL — 1,592 equivalence points across the three synthesizable
+leaf blocks, none unproven.
 
 | Check | What it proves |
 |---|---|
@@ -112,6 +115,14 @@ Run generic synthesis of the arithmetic leaf blocks:
 
 ```bash
 make synth
+```
+
+Prove each generic netlist computes the same function as the RTL it came from —
+by SAT and induction over all inputs, not by replaying vectors (~8 minutes,
+`equiv_status -assert` fails the target on a single unproven point):
+
+```bash
+make equiv
 ```
 
 Run real sky130hd area/timing/power (needs `yosys` and `openroad` on `PATH`;
