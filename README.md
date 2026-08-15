@@ -53,7 +53,12 @@ All fourteen regression stages below pass under Icarus Verilog 12.0 and Siemens
 ModelSim; generic synthesis passes under Yosys. Separately from simulation,
 `make equiv` proves by SAT that each synthesized netlist computes the same
 function as its RTL — 1,592 equivalence points across the three synthesizable
-leaf blocks, none unproven.
+leaf blocks, none unproven. `make equiv-mapped` carries that proof onto the
+*sky130hd-mapped* netlist behind [`docs/PPA.md`](docs/PPA.md) for the two blocks
+where unbounded SAT converges, and `make gls` re-runs the existing testbenches
+against those mapped netlists for the blocks where it does not — see
+[`docs/VERIFICATION_PLAN.md`](docs/VERIFICATION_PLAN.md) for which is which and
+why.
 
 | Check | What it proves |
 |---|---|
@@ -123,6 +128,22 @@ by SAT and induction over all inputs, not by replaying vectors (~8 minutes,
 
 ```bash
 make equiv
+```
+
+Carry the same proof onto the sky130hd-mapped netlist, for the two blocks where
+unbounded SAT converges (needs the sky130hd liberty from an ORFS install; set
+`ORFS_ROOT` if it is not at `/root/OpenROAD-flow-scripts`):
+
+```bash
+make equiv-mapped
+```
+
+Re-run the existing testbenches against the sky130hd-mapped netlists instead of
+the RTL — same golden vectors, gates underneath — which is how the mapped MAC
+blocks get checked at all:
+
+```bash
+make gls
 ```
 
 Run real sky130hd area/timing/power (needs `yosys` and `openroad` on `PATH`;

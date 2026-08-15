@@ -1,0 +1,146 @@
+LeNet-5 ASIC -- sky130hd-mapped netlist checks, 2026-08-15
+==========================================================
+
+Filtered evidence log. Two targets, one PDK, one machine:
+
+  make equiv-mapped   formal RTL == sky130hd netlist (yosys 0.68, SAT)
+  make gls            the existing testbenches re-run against those netlists
+                      (yosys 0.68 for mapping, Icarus Verilog 12.0 to simulate)
+
+PDK: /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/
+     sky130_fd_sc_hd__tt_025C_1v80.lib
+
+What was filtered: yosys prints one line per equivalence point and per cell,
+which runs to hundreds of KB. Kept here are the tool banners, the mapped cell
+counts and areas, the equivalence tallies and the testbench verdicts. Nothing
+was edited. Regenerate the full trace with:
+
+  make equiv-mapped 2>&1 | tee equiv_mapped_raw.log
+  make gls          2>&1 | tee gls_raw.log
+
+Neither target runs in CI: both need the sky130hd liberty from an ORFS
+install, which the GitHub runner does not have. docs/VERIFICATION_PLAN.md
+states the full scope, including what these checks do not cover.
+
+------------------------------------------------------------------
+1. make equiv-mapped
+------------------------------------------------------------------
+yosys -s synth/equiv_mapped_requantize.ys
+ Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 15.2.0)
+   Chip area for module '\requantize': 3467.075200
+  Of those cells 8 are proven and 0 are unproven.
+  Equivalence successfully proven!
+Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 15.2.0)
+yosys -s synth/equiv_mapped_avg_pool2x2_int8.ys
+ Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 15.2.0)
+   Chip area for module '\avg_pool2x2_int8': 1071.027200
+  Of those cells 8 are proven and 0 are unproven.
+  Equivalence successfully proven!
+Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 15.2.0)
+
+------------------------------------------------------------------
+2. make gls
+------------------------------------------------------------------
+Assembled from the per-block artifacts scripts/run_gls.sh leaves in
+results/gls/ (<block>.yosys.log for the mapping, <block>.sim.log for the
+simulation verdict). Those files are regenerated on every run and are
+gitignored along with the netlists themselves.
+
+--- requantize ---------------------------------------------------------
+ Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 15.2.0)
+   Mapped cells (sky130hd): 550
+   Chip area for module '\requantize': 3467.075200
+Time spent: 45% 2x abc (0 sec), 12% 4x read_liberty (0 sec), ...
+PASS tb_requantize: 5504/5504 cases matched the Python golden model
+  corners hit: 1659 saturate-high, 821 saturate-low, 1270 ReLU-clamped
+tb/tb_requantize.sv:96: $finish called at 5504000 (1ps)
+
+--- conv5x5_pe ---------------------------------------------------------
+ Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 15.2.0)
+   Mapped cells (sky130hd): 3102
+   Chip area for module '\conv5x5_pe': 24323.328000
+Time spent: 70% 2x abc (5 sec), 6% 24x opt_clean (0 sec), ...
+PASS tb_conv5x5_pe: accumulation, bias, and backpressure
+tb/tb_conv5x5_pe.sv:88: $finish called at 140000 (1ps)
+
+--- avg_pool2x2_int8 ---------------------------------------------------------
+ Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 15.2.0)
+   Mapped cells (sky130hd): 135
+   Chip area for module '\avg_pool2x2_int8': 1071.027200
+Time spent: 35% 2x abc (0 sec), 15% 4x read_liberty (0 sec), ...
+PASS tb_avg_pool2x2_stream: 12 outputs matched the Python golden model
+tb/tb_avg_pool2x2_stream.sv:172: $finish called at 820000 (1ps)
+
+--- dense_row_mac ---------------------------------------------------------
+ Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 15.2.0)
+   Mapped cells (sky130hd): 2984
+   Chip area for module '\dense_row_mac': 25992.428800
+Time spent: 99% 2x abc (2099 sec), 0% 17x opt_clean (0 sec), ...
+PASS tb_dense_engine: 5 outputs matched the Python golden model
+tb/tb_dense_engine.sv:216: $finish called at 900000 (1ps)
+
+------------------------------------------------------------------
+3. Mutation campaigns -- proof that both tiers can fail
+------------------------------------------------------------------
+Mutations are applied to the netlist AFTER mapping and BEFORE the check, which
+is the failure being guarded against: a netlist that does not implement its
+RTL. Five per block -- drop an inverter, AND becomes OR, OR becomes AND, tie an
+output bit low, invert a gate input. Each campaign runs an unmutated control
+first, because "all caught" is also the score of a harness that always fails.
+
+== equiv-mapped mutation campaign: avg_pool2x2_int8
+  M0-control-unmutated: control PROVES (rc=0)
+  M1-drop-an-inverter: CAUGHT (rc=1)
+  M2-and-becomes-or: CAUGHT (rc=1)
+  M3-or-becomes-and: CAUGHT (rc=1)
+  M4-tie-an-output-low: CAUGHT (rc=1)
+  M5-invert-a-gate-input: CAUGHT (rc=1)
+== equiv-mapped mutation campaign: requantize
+  M0-control-unmutated: control PROVES (rc=0)
+  M1-drop-an-inverter: CAUGHT (rc=1)
+  M2-and-becomes-or: CAUGHT (rc=1)
+  M3-or-becomes-and: CAUGHT (rc=1)
+  M4-tie-an-output-low: CAUGHT (rc=1)
+  M5-invert-a-gate-input: CAUGHT (rc=1)
+
+== gls mutation campaign: requantize / tb_requantize
+  M0-control-unmutated: control PASSES (harness is not stuck failing)
+  M1-drop-an-inverter: CAUGHT
+  M2-and-becomes-or: CAUGHT
+  M3-or-becomes-and: CAUGHT
+  M4-tie-an-output-low: CAUGHT
+  M5-invert-a-gate-input: CAUGHT
+== gls mutation campaign: conv5x5_pe / tb_conv5x5_pe
+  M0-control-unmutated: control PASSES (harness is not stuck failing)
+  M1-drop-an-inverter: CAUGHT
+  M2-and-becomes-or: CAUGHT
+  M3-or-becomes-and: SURVIVED
+  M4-tie-an-output-low: no line matches. The mutation looks for a bit-indexed
+                        output assign; here out_data_o is registered (non-
+                        blocking, inside an always block) and in_ready_o is a
+                        whole-signal assign, so nothing matches. Counted as not
+                        run, not as caught.
+  M5-invert-a-gate-input: CAUGHT
+== gls mutation campaign: avg_pool2x2_int8 / tb_avg_pool2x2_stream
+  M0-control-unmutated: control PASSES (harness is not stuck failing)
+  M1-drop-an-inverter: SURVIVED
+  M2-and-becomes-or: CAUGHT
+  M3-or-becomes-and: CAUGHT
+  M4-tie-an-output-low: CAUGHT
+  M5-invert-a-gate-input: CAUGHT
+== gls mutation campaign: dense_row_mac / tb_dense_engine
+  M0-control-unmutated: control PASSES (harness is not stuck failing)
+  M1-drop-an-inverter: CAUGHT
+  M2-and-becomes-or: SURVIVED
+  M3-or-becomes-and: SURVIVED
+  M4-tie-an-output-low: CAUGHT
+  M5-invert-a-gate-input: SURVIVED
+
+Totals: equiv-mapped 10/10 caught. gls 14/19 valid mutations caught.
+
+The five gls survivors are discussed in docs/VERIFICATION_PLAN.md and the sixth
+addendum of results/VERIFICATION_SUMMARY.md rather than left as a number. A
+mutation survives when the testbench's stimulus never drives that node into an
+observable difference, so the score measures the stimulus and not the netlist --
+which is why dense_row_mac, reached through five F6 output values, scores 2/5,
+and why the avg_pool2x2_int8 survivor is caught outright by equiv-mapped.

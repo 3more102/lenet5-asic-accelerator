@@ -1,0 +1,75 @@
+# Prove by SAT that the *sky130hd-mapped* netlist of `requantize` computes the
+# same function as the RTL, for every input.
+#
+# synth/equiv_conv5x5_pe.ys and friends compare the RTL against the generic
+# netlist -- `techmap` output, no real cell library, structure largely intact.
+# This script compares it against the netlist that docs/PPA.md reports area and
+# timing for: `dfflibmap` + `abc -liberty` mapping onto real sky130hd standard
+# cells, at the same 10 ns target run_ppa.sh uses. That mapping is where a
+# synthesis bug would actually live, and it is a far more aggressive
+# transformation -- abc restructures the logic entirely, so the netlist below
+# is built from maj3/xnor3/a211oi cells that have no counterpart in the RTL.
+#
+# The price of that is the equivalence-point count. equiv_make pairs signals by
+# name; generic mapping leaves internal names intact (694 points on conv5x5_pe),
+# while abc leaves nothing but the ports. So this proof has 8 points, one per
+# output bit, and each is a full input-cone SAT problem over all 39 input bits
+# rather than a cheap match against a neighbouring node. Fewer points here means
+# a harder proof, not a weaker one.
+#
+# That is also why only two blocks have a script like this. Unbounded
+# equivalence over a mapped multiply-accumulate is a classic hard SAT instance:
+# conv5x5_row_mac did not converge in 20 minutes, and neither did the two blocks
+# containing it. Those netlists are covered by simulation instead -- see
+# `make gls` and docs/VERIFICATION_PLAN.md. Arithmetic-aware datapath matching
+# is precisely what commercial LEC has and `equiv_simple` does not.
+#
+# ORFS_ROOT is hard-coded here because yosys scripts take no parameters; change
+# the three liberty paths together if the PDK lives elsewhere.
+
+# ---- gold: the RTL -----------------------------------------------------------
+read_verilog -sv rtl/requantize.sv
+hierarchy -check -top requantize
+proc
+flatten
+async2sync
+opt_clean
+design -stash gold
+
+# ---- gate: the sky130hd-mapped netlist ---------------------------------------
+# read_liberty -lib loads the cell interfaces as blackboxes, which is what abc
+# and dfflibmap need. Reading the same liberty again with -overwrite replaces
+# those blackboxes with each cell's `function` as real logic; without that step
+# the cells have no SAT model and equiv_simple has nothing to reason about.
+design -reset
+read_liberty -lib /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+read_verilog -sv rtl/requantize.sv
+hierarchy -check -top requantize
+synth -top requantize -flatten
+dfflibmap -liberty /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+abc -liberty /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib -D 10000
+setundef -zero
+opt_clean -purge
+stat -liberty /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+read_liberty -overwrite -ignore_miss_func -ignore_miss_dir -ignore_miss_data_latch -ignore_buses /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+hierarchy -check -top requantize
+flatten
+async2sync
+opt_clean
+design -stash gate
+
+# ---- compare -----------------------------------------------------------------
+design -copy-from gold -as gold requantize
+design -copy-from gate -as gate requantize
+equiv_make gold gate equiv
+hierarchy -top equiv
+# equiv_struct merges structurally identical nodes first, which recovers a few
+# match points abc's renaming lost and keeps the SAT cones smaller.
+equiv_struct
+equiv_simple -short
+equiv_struct
+equiv_simple
+equiv_induct
+# -assert is the whole check. Without it equiv_status prints the unproven count
+# and exits 0, so the target would pass on a netlist that was never proven.
+equiv_status -assert

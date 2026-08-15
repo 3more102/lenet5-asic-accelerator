@@ -1,0 +1,53 @@
+# Prove by SAT that the *sky130hd-mapped* netlist of `avg_pool2x2_int8`
+# computes the same function as the RTL, for every input.
+#
+# See synth/equiv_mapped_requantize.ys for the full rationale: this compares
+# against the netlist docs/PPA.md measures, not the generic one, and the low
+# equivalence-point count is a consequence of abc leaving no internal names to
+# match, not of a weaker check.
+#
+# This block is the easier of the two to prove and the more interesting one to
+# have proven. It is purely combinational -- 32 input bits, 8 output bits -- so
+# the 8 points below are a complete statement about all 2^32 input patterns,
+# which no simulation tier in this repo reaches. It is also the one block with
+# no testbench of its own (`make gls` reaches it only through
+# tb_avg_pool2x2_stream), so this is the strongest check it gets.
+
+# ---- gold: the RTL -----------------------------------------------------------
+read_verilog -sv rtl/avg_pool2x2_int8.sv
+hierarchy -check -top avg_pool2x2_int8
+proc
+flatten
+async2sync
+opt_clean
+design -stash gold
+
+# ---- gate: the sky130hd-mapped netlist ---------------------------------------
+design -reset
+read_liberty -lib /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+read_verilog -sv rtl/avg_pool2x2_int8.sv
+hierarchy -check -top avg_pool2x2_int8
+synth -top avg_pool2x2_int8 -flatten
+dfflibmap -liberty /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+abc -liberty /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib -D 10000
+setundef -zero
+opt_clean -purge
+stat -liberty /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+read_liberty -overwrite -ignore_miss_func -ignore_miss_dir -ignore_miss_data_latch -ignore_buses /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+hierarchy -check -top avg_pool2x2_int8
+flatten
+async2sync
+opt_clean
+design -stash gate
+
+# ---- compare -----------------------------------------------------------------
+design -copy-from gold -as gold avg_pool2x2_int8
+design -copy-from gate -as gate avg_pool2x2_int8
+equiv_make gold gate equiv
+hierarchy -top equiv
+equiv_struct
+equiv_simple -short
+equiv_struct
+equiv_simple
+equiv_induct
+equiv_status -assert

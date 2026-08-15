@@ -22,7 +22,8 @@ RTL := \
 .PHONY: all vectors golden-test demo lint sim-pe sim-requantize sim-c3 sim-engine sim-pool sim-f6 \
 	sim-classifier sim-classifier-tie sim-config-guard sim-robustness sim-extremes \
 	sim-top regression synth synth-pe synth-pool synth-mac \
-	equiv equiv-pe equiv-pool equiv-mac ppa check-ppa orfs clean
+	equiv equiv-pe equiv-pool equiv-mac equiv-mapped equiv-mapped-requantize \
+	equiv-mapped-pool gls ppa check-ppa orfs clean
 
 all: regression
 
@@ -159,6 +160,35 @@ equiv-pool:
 
 equiv-mac:
 	$(YOSYS) -s synth/equiv_dense_row_mac.ys
+
+# The same proof, but against the sky130hd-mapped netlist docs/PPA.md measures
+# rather than the generic one -- real standard cells, real abc restructuring.
+# Only two blocks: unbounded equivalence over a mapped multiply-accumulate does
+# not converge with a plain SAT solver (conv5x5_row_mac ran 20 minutes without
+# finishing), so the MAC blocks' netlists are covered by `make gls` instead.
+# Needs the sky130hd liberty from ORFS, so unlike `make equiv` this cannot run
+# in CI; the committed evidence is results/gls_equiv_mapped_20260815.log.
+equiv-mapped: equiv-mapped-requantize equiv-mapped-pool
+
+equiv-mapped-requantize:
+	$(YOSYS) -s synth/equiv_mapped_requantize.ys
+
+equiv-mapped-pool:
+	$(YOSYS) -s synth/equiv_mapped_avg_pool2x2_int8.ys
+
+# Gate-level simulation: re-run the existing testbenches against the
+# sky130hd-mapped netlists instead of the RTL, two of them pure-gate and two as
+# mixed RTL/gate runs. This is how the blocks `equiv-mapped` cannot prove get
+# their netlists checked. Same golden vectors, same PASS lines, gates
+# underneath. Needs yosys, iverilog and the sky130hd liberty; see
+# scripts/run_gls.sh for the flow and docs/VERIFICATION_PLAN.md for its scope.
+#
+# Budget ~36 minutes, of which dense_row_mac is 35 and abc is essentially all
+# of it (2,099 s of a 2,102 s yosys run under 0.68; far quicker under 0.52).
+# The simulations themselves take seconds. Pass block names to skip it:
+#   bash scripts/run_gls.sh requantize conv5x5_pe avg_pool2x2_int8
+gls: vectors
+	bash scripts/run_gls.sh
 
 # Real sky130hd area/timing/power: yosys+abc technology mapping followed by
 # OpenSTA (via the openroad binary, which embeds it) on every storage-free

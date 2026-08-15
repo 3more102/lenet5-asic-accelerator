@@ -33,6 +33,8 @@
 | Raw pre-requantization accumulator (`out_acc_o`) | `dense_int8` accumulator output | `tb_extremes.sv` |
 | Largest and smallest legal layer dimensions | same | `tb_extremes.sv` |
 | Generic netlist computes the same function as the RTL | the RTL itself, by SAT | `synth/equiv_*.ys` (`make equiv`) |
+| sky130hd-mapped netlist computes the same function as the RTL | the RTL itself, by SAT | `synth/equiv_mapped_*.ys` (`make equiv-mapped`) |
+| sky130hd-mapped netlist against the golden vectors | Python model, via the existing testbenches | `scripts/run_gls.sh` (`make gls`) |
 
 The main engine test generates activations, weights, biases, a sparse mask, raw
 accumulators, and expected int8 outputs from a deterministic seed. RTL output is
@@ -138,8 +140,8 @@ What it does **not** prove, stated plainly:
   there is no netlist of them to compare against.
 - **Only the *generic* netlist.** This is the `synth/*.ys` flow — Yosys
   `techmap` with no real cell library. The sky130hd/ABC-mapped netlist behind
-  `docs/PPA.md` is a *different* netlist produced by a different flow, and is
-  not covered here.
+  `docs/PPA.md` is a *different* netlist produced by a different flow; it is
+  covered separately, by `make equiv-mapped` and `make gls` below.
 - **Function, not timing.** Equivalence says the two compute the same values;
   it says nothing about setup/hold, and nothing about anything a real library,
   SDF back-annotation or scan insertion would introduce.
@@ -149,6 +151,129 @@ Two flow details that are easy to get wrong, both recorded in the scripts:
 model available for async FF cell" on `conv5x5_pe`'s asynchronous reset; and
 `equiv_simple -short` before the full `equiv_simple` discharges most points
 cheaply, which is the difference between 196 s and minutes on `conv5x5_pe`.
+
+**The sky130hd-mapped netlist (`make equiv-mapped`, `make gls`):** the check
+above stops at the generic netlist. The netlist `docs/PPA.md` reports area,
+timing and power for is a different one — `dfflibmap` plus `abc -liberty`
+mapping onto real sky130hd standard cells — and until this tier existed, nothing
+checked it. That gap mattered more than the generic one: technology mapping is
+by far the more aggressive transformation, and the netlist it produces is built
+from `maj3`/`xnor3`/`a211oi` cells that have no counterpart in the RTL at all.
+
+Two methods cover it, because neither alone reaches every block.
+
+**Formal, where it converges (`make equiv-mapped`).** Same `equiv_*` flow as
+above, with the mapped netlist as the gate side.
+
+| Block | Equivalence points | Runtime | Result |
+|---|---|---|---|
+| `requantize` | 8 | ~2 s | proven |
+| `avg_pool2x2_int8` | 8 | ~2 s | proven |
+
+Eight points, not 694. `equiv_make` pairs signals by name; generic mapping
+leaves internal names intact, while `abc` leaves nothing but the ports. So each
+of these points is a full input-cone SAT problem rather than a cheap match
+against a neighbouring node — fewer points here means a harder proof, not a
+weaker one. For `avg_pool2x2_int8`, 8 points is a complete statement about all
+2^32 input patterns, which no simulation in this repo comes close to.
+
+**Why only two blocks.** The other three all contain a wide multiply-accumulate,
+and unbounded equivalence over a *mapped* one is a classic hard SAT instance:
+technology mapping destroys the structural correspondence between the two adder
+trees, so the solver is left proving a 32-bit product-sum from scratch.
+Measured, not assumed: `conv5x5_row_mac` — the 25-tap MAC itself — spent 714 s
+inside `equiv_simple` without discharging a single equivalence point, with
+`equiv_struct` reporting "Nothing to merge" beforehand. `conv5x5_pe` embeds that
+same MAC; an earlier run of it (without the `equiv_struct` passes) had proven
+the 8 output bits and was grinding through the 32-bit `accumulator_q` when it
+was stopped at 600 s. `dense_row_mac` was not run to completion at all —
+`abc` alone takes upwards of 18 minutes on it under Yosys 0.68 — so its
+exclusion here rests on it being the same structure, not on a measurement.
+
+Arithmetic-aware datapath matching is exactly what commercial LEC has and
+`equiv_simple` does not. This is a limit of the tool, not a suspicion about
+those blocks — so they are covered the other way.
+
+**Simulation, everywhere else (`make gls`).** `scripts/run_gls.sh` maps each
+block with the same flow `asic/sta/run_ppa.sh` uses — same liberty, same
+`synth -flatten`, same `abc -liberty` at the same 10 ns target — then re-runs
+the *existing* testbenches against the netlist instead of the RTL. Same golden
+vectors, same PASS lines, gates underneath.
+
+| Block | Testbench | Mode | Cells | Result | Runtime |
+|---|---|---|---|---|---|
+| `requantize` | `tb_requantize` (5,504 cases) | pure gate | 550 | PASS | seconds |
+| `conv5x5_pe` (+`conv5x5_row_mac`, `requantize`) | `tb_conv5x5_pe` | pure gate | 3,102 | PASS | ~10 s |
+| `avg_pool2x2_int8` | `tb_avg_pool2x2_stream` | mixed RTL/gate | 135 | PASS | seconds |
+| `dense_row_mac` | `tb_dense_engine` (F6 layer) | mixed RTL/gate | 2,984 | PASS | ~35 min |
+
+`dense_row_mac` dominates the wall-clock, and all of it is `abc`: 2,099 s of a
+2,102 s Yosys run. The same block maps in a fraction of that under Yosys 0.52
+(`asic/sta/results/`), so this is a tool-version cost rather than anything about
+the design. It is why `make gls` is not part of `make regression`.
+
+The last two run *mixed*: those blocks have no testbench of their own, so the
+mapped leaf sits inside its RTL wrapper and the wrapper's testbench drives it.
+`tb/gls_shim_*.sv` is what makes that substitution work — a gate netlist has no
+parameters, but every wrapper instantiates these blocks with parameter
+overrides, so each shim presents the RTL's parameterized interface and
+`$fatal`s if a caller ever asks for a configuration the netlist was not
+synthesized at.
+
+What this tier does **not** cover:
+
+- **Not the vendor's cell models.** Yosys reads each sky130hd cell's liberty
+  `function` back as logic so the netlist simulates without a vendor model.
+  That is the same source of truth `abc` mapped against, so the *function* is
+  the netlist's — but anything living only in a behavioural model (X-propagation
+  detail, timing checks, UDP internals) is not exercised.
+- **Not the same tool version as `docs/PPA.md`.** Those numbers came from Yosys
+  0.52; this runs on 0.68, and `abc` maps a little differently now — 135 cells
+  against the CSV's 128 for `avg_pool2x2_int8`, and so on. Same flow, same
+  liberty, same target; a netlist of the same shape rather than bit-identical.
+- **Still function, not timing.** No SDF, no back-annotation, zero-delay gates.
+- **No CI.** Both targets need the sky130hd liberty from an ORFS install, which
+  the CI runner does not have, so neither runs there. The committed evidence is
+  `results/gls_20260815.log`.
+
+Both tiers were proven able to fail, by mutating the netlist *after* mapping and
+*before* the check — which is the failure being guarded against, a netlist that
+does not implement its RTL. Five mutations per block: drop an inverter, AND
+becomes OR, OR becomes AND, tie an output bit low, invert a gate input. Each
+campaign ran a passing unmutated control first — without it, "all caught" would
+also be the score of a harness that fails on everything.
+
+| Tier | Block | Caught |
+|---|---|---|
+| `equiv-mapped` | `requantize` | 5/5 |
+| `equiv-mapped` | `avg_pool2x2_int8` | 5/5 |
+| `gls` | `requantize` | 5/5 |
+| `gls` | `avg_pool2x2_int8` | 4/5 |
+| `gls` | `conv5x5_pe` | 3/4 (one had no matching line in that netlist) |
+| `gls` | `dense_row_mac` | 2/5 |
+
+**The five `gls` survivors say more than the score does.** A mutation survives
+when the testbench's stimulus never drives that node into an observable
+difference, so this measures the *stimulus*, not the netlist — and it degrades
+exactly where the stimulus is thinnest.
+
+- `dense_row_mac` is the extreme case at 2/5. `tb_dense_engine` checks five F6
+  output values, and five vectors against a 2,984-cell 8-lane MAC leave most of
+  it untouched. Stated plainly: `make gls` establishes that this netlist
+  computes the F6 layer correctly, and not much beyond that.
+- The `avg_pool2x2_int8` survivor is a dropped inverter that
+  `tb_avg_pool2x2_stream`'s twelve golden outputs never distinguish — and that
+  `make equiv-mapped` catches immediately, since 8 SAT points cover every input
+  pattern. That is exactly what having two tiers is for.
+- The `conv5x5_pe` survivor is an OR-to-AND swap deep inside the PE, on a node
+  `tb_conv5x5_pe`'s directed stimulus never drives both ways. That block has no
+  formal cover, so it stands as a real gap rather than one another tier closes.
+
+The pattern is consistent and worth stating rather than smoothing over: the
+blocks formal can reach are the ones simulation already covers well, and the MAC
+blocks — the ones formal cannot reach — are exactly where simulation is weakest.
+Block-level constrained-random stimulus, rather than replaying layer vectors
+through a wrapper, is what would close it.
 
 ## Required before tapeout
 
@@ -166,13 +291,17 @@ cheaply, which is the difference between 196 s and minutes on `conv5x5_pe`.
   `lenet5_top`'s FSM every run; the five engines sequence with nested counters
   rather than an enumerated state register, so they have no equivalent
   structural target and remain covered behaviourally by their oracles);
-- post-synthesis equivalence checking **of the remaining blocks and of the
-  mapped netlist** (`make equiv` now proves RTL == generic netlist for the three
-  synthesizable leaf blocks -- see the equivalence note above -- but the five
-  ROM/scratch-array modules have no netlist yet, and the sky130hd-mapped netlist
-  behind `docs/PPA.md` is a different netlist that is not checked);
+- post-synthesis equivalence checking **of the remaining blocks, and of the
+  mapped MAC blocks** (`make equiv` proves RTL == generic netlist for the three
+  synthesizable leaf blocks, and `make equiv-mapped` proves RTL == sky130hd
+  netlist for `requantize` and `avg_pool2x2_int8` -- see the equivalence notes
+  above. The five ROM/scratch-array modules still have no netlist at all, and
+  the mapped MAC blocks are beyond `equiv_simple`, so they hold simulation
+  evidence only);
 - scan/MBIST verification;
-- gate-level reset and SDF simulations;
+- **SDF** gate-level simulations, and gate-level reset simulation (`make gls`
+  now runs every mapped leaf block against the golden vectors, but with
+  zero-delay gates and no back-annotation, so nothing here checks timing);
 - SRAM model replacement tests;
 - calibrated per-layer quantization scales (the deployment model currently
   uses a fixed shift=7 for every layer -- see `docs/ARCHITECTURE.md` Section 7);

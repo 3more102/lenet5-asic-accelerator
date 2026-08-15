@@ -22,6 +22,11 @@ scripts/compile_error.txt
 # --- Yosys generic-synthesis netlists (regenerate with `make synth`) ---
 results/*.json
 
+# --- sky130hd-mapped netlists and their sims (regenerate with `make gls`) ---
+# Each netlist is tens of thousands of lines of generated gates; the committed
+# evidence is results/gls_*.log, not the netlist itself.
+results/gls/
+
 # --- Build noise ---
 build_project.log
 
