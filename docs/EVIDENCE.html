@@ -310,7 +310,7 @@
 <!-- ============================== A3 ============================== -->
 <section class="shot" id="a3">
   <h2><span class="tag">A3</span>Full open-source regression — Icarus Verilog 12.0</h2>
-  <p class="claim">Proves: all fourteen self-checking testbenches pass, end to end, in a freely reproducible toolchain.</p>
+  <p class="claim">Proves: all fifteen self-checking testbenches pass, end to end, in a freely reproducible toolchain.</p>
 
   <div class="cmd">wsl -e bash scripts/regression_summary.sh</div>
 
@@ -340,11 +340,11 @@
     rather than eight — so the screen still reads <code>12/12</code> and the table
     below describes the current run, not the image. Re-run
     <code>wsl -e bash scripts/regression_summary.sh</code> and re-shoot it; the script
-    now counts distinct testbenches and <b>fails</b> if any of the fourteen stops
+    now counts distinct testbenches and <b>fails</b> if any of the fifteen stops
     reporting, so the screen cannot quietly show fewer tests than it claims.
   </div>
 
-  <h3>The fourteen testbenches, and what each one is actually checking</h3>
+  <h3>The fifteen testbenches, and what each one is actually checking</h3>
   <div class="scroll">
   <table>
     <thead><tr><th>PASS line</th><th>What it verifies</th></tr></thead>
@@ -353,6 +353,7 @@
       <tr><td><code>tb_requantize</code></td><td><b>5504/5504</b> shift/round/saturate cases matched the model — exhaustive over the legal input range</td></tr>
       <tr><td><code>tb_conv5x5_row_mac</code></td><td><b>6592/6592</b> cases on the 5-tap MAC: every lane swept across the full int8 range on both operands, weights rotated against fixed activations to pin lane pairing, and rows cancelling to exactly zero</td></tr>
       <tr><td><code>tb_dense_row_mac</code></td><td><b>9540/9540</b> cases, the same treatment for the 8-lane dense MAC</td></tr>
+      <tr><td><code>tb_conv5x5_pe_stream</code></td><td><b>848 pixels / 3,147 rows</b> through the PE's control logic: every shift 0&ndash;31 with ReLU off and on, both saturation rails, bias to &plusmn;2<sup>28</sup>, 48 single-beat pixels, 428 pixels started while the previous one was still requantizing, and randomized backpressure on both streams</td></tr>
       <tr><td><code>tb_lenet5_c3_connectivity</code></td><td>the exact 60-connection table, asserted in RTL</td></tr>
       <tr><td><code>tb_conv2d_engine</code></td><td><b>48 outputs</b> matched the Python golden model, pixel for pixel</td></tr>
       <tr><td><code>tb_avg_pool2x2_stream</code></td><td>12 pooled outputs matched the model</td></tr>
@@ -377,13 +378,13 @@
   <ul>
     <li>
       <b>The last line is the one to point at.</b>
-      <code>14/14 RTL testbenches passed -- full log in results/regression_summary.log</code>
+      <code>15/15 RTL testbenches passed -- full log in results/regression_summary.log</code>
       is not a hand-written banner: the script counts the <em>distinct</em> testbenches
       it actually found reporting <code>PASS</code> in the log, and exits non-zero if
-      that is not exactly fourteen. If one had failed, or had not run at all, the count
-      would not read 14 — so the summary cannot flatter the result. It counts distinct
+      that is not exactly fifteen. If one had failed, or had not run at all, the count
+      would not read 15 — so the summary cannot flatter the result. It counts distinct
       names rather than raw <code>PASS</code> lines on purpose: two testbenches now print
-      several lines each (26 in total), so a raw line count would drift every time a
+      several lines each (27 in total), so a raw line count would drift every time a
       check is added.
     </li>
     <li>

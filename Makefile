@@ -19,8 +19,8 @@ RTL := \
 	rtl/lenet5_dense_config.sv \
 	rtl/lenet5_top.sv
 
-.PHONY: all vectors golden-test demo lint sim-pe sim-requantize sim-mac-conv sim-mac-dense \
-	sim-c3 sim-engine sim-pool sim-f6 \
+.PHONY: all vectors golden-test demo lint sim-pe sim-pe-stream sim-requantize sim-mac-conv \
+	sim-mac-dense sim-c3 sim-engine sim-pool sim-f6 \
 	sim-classifier sim-classifier-tie sim-config-guard sim-robustness sim-extremes \
 	sim-top regression synth synth-pe synth-pool synth-mac \
 	equiv equiv-pe equiv-pool equiv-mac equiv-mapped equiv-mapped-requantize \
@@ -76,6 +76,17 @@ sim-mac-dense: vectors
 	$(IVERILOG) -g2012 -Wall -I. -s tb_dense_row_mac \
 		-o results/tb_mac_dense.vvp $(RTL) tb/tb_dense_row_mac.sv
 	$(VVP) results/tb_mac_dense.vvp
+
+# The PE's wrapper logic -- bias at first_i, the accumulator carried across
+# rows and restarted between pixels, requantization at last_i, output held
+# under backpressure. sim-pe drives one pixel at shift 0 with ReLU off, which
+# leaves most of that unexecuted; this drives 848 pixels of 1-8 rows across
+# every shift with both ReLU settings, both saturation rails, randomized input
+# gaps and randomized output backpressure.
+sim-pe-stream: vectors
+	$(IVERILOG) -g2012 -Wall -I. -s tb_conv5x5_pe_stream \
+		-o results/tb_pe_stream.vvp $(RTL) tb/stream_hold_check.sv tb/tb_conv5x5_pe_stream.sv
+	$(VVP) results/tb_pe_stream.vvp
 
 sim-c3:
 	$(IVERILOG) -g2012 -Wall -s tb_lenet5_c3_connectivity \
@@ -138,8 +149,8 @@ sim-top: vectors
 		-o results/tb_top.vvp $(RTL) tb/fsm_cov.sv tb/tb_lenet5_top.sv
 	$(VVP) results/tb_top.vvp
 
-regression: golden-test lint sim-pe sim-requantize sim-mac-conv sim-mac-dense sim-c3 \
-	sim-engine sim-pool sim-f6 sim-classifier sim-classifier-tie sim-config-guard \
+regression: golden-test lint sim-pe sim-pe-stream sim-requantize sim-mac-conv sim-mac-dense \
+	sim-c3 sim-engine sim-pool sim-f6 sim-classifier sim-classifier-tie sim-config-guard \
 	sim-robustness sim-extremes sim-top demo
 
 # synth-pe is the original target name kept as an alias so existing callers

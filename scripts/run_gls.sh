@@ -71,14 +71,16 @@ sources_for() {
     esac
 }
 
-# Which testbenches exercise the netlist, as <root module>:<file> pairs. More
-# than one is allowed and costs only the simulation: the mapped netlist is
-# built once per block and reused for each.
+# Which testbenches exercise the netlist, as <root module>:<file>[,<file>...]
+# pairs. More than one testbench is allowed and costs only the simulation: the
+# mapped netlist is built once per block and reused for each. Commas separate
+# the files of a single testbench (a testbench that needs a helper module
+# alongside it), spaces separate one testbench from the next.
 testbenches_for() {
     case "$1" in
         requantize)       echo "tb_requantize:tb/tb_requantize.sv" ;;
         conv5x5_row_mac)  echo "tb_conv5x5_row_mac:tb/tb_conv5x5_row_mac.sv tb_conv5x5_pe:tb/tb_conv5x5_pe.sv" ;;
-        conv5x5_pe)       echo "tb_conv5x5_pe:tb/tb_conv5x5_pe.sv" ;;
+        conv5x5_pe)       echo "tb_conv5x5_pe_stream:tb/stream_hold_check.sv,tb/tb_conv5x5_pe_stream.sv tb_conv5x5_pe:tb/tb_conv5x5_pe.sv" ;;
         avg_pool2x2_int8) echo "tb_avg_pool2x2_stream:tb/tb_avg_pool2x2_stream.sv" ;;
         dense_row_mac)    echo "tb_dense_row_mac:tb/tb_dense_row_mac.sv tb_dense_engine:tb/tb_dense_engine.sv" ;;
         *) echo "ERROR: no testbench list for block '$1'" >&2 ; return 1 ;;
@@ -160,7 +162,7 @@ EOF
 
     for entry in $tbs; do
         tbtop="${entry%%:*}"
-        tb="${entry#*:}"
+        tb="$(echo "${entry#*:}" | tr ',' ' ')"
         slog="$OUT/${block}.${tbtop}.sim.log"
 
         echo "== sim : $block  ($tbtop against the mapped netlist)"

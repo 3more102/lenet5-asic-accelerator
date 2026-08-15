@@ -49,7 +49,7 @@ fixed-point contract.
 
 ## Verification status
 
-All sixteen regression stages below pass under Icarus Verilog 12.0 and Siemens
+All seventeen regression stages below pass under Icarus Verilog 12.0 and Siemens
 ModelSim; generic synthesis passes under Yosys. Separately from simulation,
 `make equiv` proves by SAT that each synthesized netlist computes the same
 function as its RTL — 1,592 equivalence points across the three synthesizable
@@ -68,6 +68,15 @@ catches 5/5 on each; driven through their wrappers, the same netlists and the
 same mutations score 4/5 and 2/5. That comparison is the tier's real result and
 is written up in [`results/mac_stimulus_20260815.log`](results/mac_stimulus_20260815.log).
 
+The PE's *control* logic around those MACs got the same treatment, taking its
+netlist from 3/4 to **4/4** and the tier as a whole to **23 of 24**
+([`results/pe_stimulus_20260816.log`](results/pe_stimulus_20260816.log)). The one
+mutation that survives every testbench turned out not to be a coverage gap at
+all: it changes the output register only on cycles where `out_valid_o` is low,
+and [`scripts/prove_pe_output_hold.sh`](scripts/prove_pe_output_hold.sh) proves
+by SAT that no valid/ready consumer can observe it — with a cover check and a
+negative control, because a bounded proof that cannot fail proves nothing.
+
 | Check | What it proves |
 |---|---|
 | `golden.test_golden` | quantization corner cases + the full floating LeNet-5 shape chain |
@@ -76,6 +85,7 @@ is written up in [`results/mac_stimulus_20260815.log`](results/mac_stimulus_2026
 | `tb_requantize` | 5,504-case differential sweep vs the oracle: half-way rounding, both saturation boundaries, shift=0 bypass, int32 extremes, plus randomized coverage |
 | `tb_conv5x5_row_mac` | 6,592-case sweep of the 5-tap MAC: every lane across the full int8 range on both operands, the largest-magnitude product in every lane, weight rotation to pin lane pairing, and sums that cancel to exactly zero |
 | `tb_dense_row_mac` | the same for the 8-lane dense MAC, 9,540 cases |
+| `tb_conv5x5_pe_stream` | 848 pixels of 1–8 rows through the PE's control logic: every shift 0–31 with ReLU off and on, both saturation rails, bias to ±2²⁸, single-beat pixels, pixels started while the previous one is still requantizing, and randomized backpressure on both streams |
 | `tb_lenet5_c3_connectivity` | the exact 60 canonical C3 input-map connections |
 | `tb_conv2d_engine` | 48 engine outputs vs the Python int8 oracle |
 | `tb_avg_pool2x2_stream` | 12 pooling outputs vs the oracle |

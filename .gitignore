@@ -27,6 +27,11 @@ results/*.json
 # evidence is results/gls_*.log, not the netlist itself.
 results/gls/
 
+# --- SAT working files (regenerate with scripts/prove_pe_output_hold.sh) ---
+# Generated mutant, yosys scripts and solver logs; the committed evidence is
+# the write-up in docs/VERIFICATION_PLAN.md and results/pe_stimulus_*.log.
+results/pe_hold/
+
 # --- Build noise ---
 build_project.log
 

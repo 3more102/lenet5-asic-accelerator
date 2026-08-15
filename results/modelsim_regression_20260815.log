@@ -4,8 +4,8 @@
 
 # do scripts/modelsim.do
 # Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
-# Start time: 23:40:42 on Aug 15,2026
-# vlog -sv "+incdir+." rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/tb_conv5x5_pe.sv tb/tb_requantize.sv tb/tb_conv5x5_row_mac.sv tb/tb_dense_row_mac.sv tb/tb_lenet5_c3_connectivity.sv tb/tb_conv2d_engine.sv tb/tb_avg_pool2x2_stream.sv tb/tb_dense_engine.sv tb/tb_classifier_argmax.sv tb/tb_classifier_argmax_tie.sv tb/tb_config_guard.sv tb/stream_hold_check.sv tb/tb_robustness.sv tb/tb_extremes.sv tb/fsm_cov.sv tb/tb_lenet5_top.sv 
+# Start time: 00:35:23 on Aug 16,2026
+# vlog -sv "+incdir+." rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/tb_conv5x5_pe.sv tb/tb_requantize.sv tb/tb_conv5x5_row_mac.sv tb/tb_dense_row_mac.sv tb/tb_conv5x5_pe_stream.sv tb/tb_lenet5_c3_connectivity.sv tb/tb_conv2d_engine.sv tb/tb_avg_pool2x2_stream.sv tb/tb_dense_engine.sv tb/tb_classifier_argmax.sv tb/tb_classifier_argmax_tie.sv tb/tb_config_guard.sv tb/stream_hold_check.sv tb/tb_robustness.sv tb/tb_extremes.sv tb/fsm_cov.sv tb/tb_lenet5_top.sv 
 # -- Compiling module conv5x5_row_mac
 # -- Compiling module requantize
 # -- Compiling module conv5x5_pe
@@ -24,6 +24,7 @@
 # -- Compiling module tb_requantize
 # -- Compiling module tb_conv5x5_row_mac
 # -- Compiling module tb_dense_row_mac
+# -- Compiling module tb_conv5x5_pe_stream
 # -- Compiling module tb_lenet5_c3_connectivity
 # -- Compiling module tb_conv2d_engine
 # -- Compiling module tb_avg_pool2x2_stream
@@ -45,6 +46,7 @@
 # 	tb_requantize
 # 	tb_conv5x5_row_mac
 # 	tb_dense_row_mac
+# 	tb_conv5x5_pe_stream
 # 	tb_lenet5_c3_connectivity
 # 	tb_conv2d_engine
 # 	tb_avg_pool2x2_stream
@@ -55,10 +57,10 @@
 # 	tb_robustness
 # 	tb_extremes
 # 	tb_lenet5_top
-# End time: 23:40:42 on Aug 15,2026, Elapsed time: 0:00:00
+# End time: 00:35:23 on Aug 16,2026, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_conv5x5_pe 
-# Start time: 23:40:42 on Aug 15,2026
+# Start time: 00:35:23 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_conv5x5_pe
 # Loading work.conv5x5_pe
@@ -69,10 +71,10 @@
 #    Time: 140 ns  Iteration: 1  Instance: /tb_conv5x5_pe
 # Break in Module tb_conv5x5_pe at tb/tb_conv5x5_pe.sv line 88
 # Stopped at tb/tb_conv5x5_pe.sv line 88
-# End time: 23:40:43 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:24 on Aug 16,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_requantize 
-# Start time: 23:40:43 on Aug 15,2026
+# Start time: 00:35:24 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_requantize
 # Loading work.requantize
@@ -82,10 +84,10 @@
 #    Time: 5504 ns  Iteration: 0  Instance: /tb_requantize
 # Break in Module tb_requantize at tb/tb_requantize.sv line 96
 # Stopped at tb/tb_requantize.sv line 96
-# End time: 23:40:44 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:25 on Aug 16,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_conv5x5_row_mac 
-# Start time: 23:40:44 on Aug 15,2026
+# Start time: 00:35:25 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_conv5x5_row_mac
 # Loading work.conv5x5_row_mac
@@ -96,10 +98,10 @@
 #    Time: 6592 ns  Iteration: 0  Instance: /tb_conv5x5_row_mac
 # Break in Module tb_conv5x5_row_mac at tb/tb_conv5x5_row_mac.sv line 143
 # Stopped at tb/tb_conv5x5_row_mac.sv line 143
-# End time: 23:40:45 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:25 on Aug 16,2026, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_dense_row_mac 
-# Start time: 23:40:45 on Aug 15,2026
+# Start time: 00:35:25 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_dense_row_mac
 # Loading work.dense_row_mac
@@ -110,10 +112,27 @@
 #    Time: 9540 ns  Iteration: 0  Instance: /tb_dense_row_mac
 # Break in Module tb_dense_row_mac at tb/tb_dense_row_mac.sv line 134
 # Stopped at tb/tb_dense_row_mac.sv line 134
-# End time: 23:40:46 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:26 on Aug 16,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# vsim -c work.tb_conv5x5_pe_stream 
+# Start time: 00:35:26 on Aug 16,2026
+# Loading sv_std.std
+# Loading work.tb_conv5x5_pe_stream
+# Loading work.conv5x5_pe
+# Loading work.conv5x5_row_mac
+# Loading work.requantize
+# Loading work.stream_hold_check
+# PASS tb_conv5x5_pe_stream: 848/848 pixels matched the Python golden model
+#   3147 rows driven, 428 back-to-back pixels, 48 single-beat pixels
+#   32/32 shifts, 87 saturate-high, 80 saturate-low, 264 ReLU-clamped, 241 output stall cycles
+# ** Note: $finish    : tb/tb_conv5x5_pe_stream.sv(297)
+#    Time: 53560 ns  Iteration: 1  Instance: /tb_conv5x5_pe_stream
+# Break in Module tb_conv5x5_pe_stream at tb/tb_conv5x5_pe_stream.sv line 297
+# Stopped at tb/tb_conv5x5_pe_stream.sv line 297
+# End time: 00:35:27 on Aug 16,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_lenet5_c3_connectivity 
-# Start time: 23:40:46 on Aug 15,2026
+# Start time: 00:35:27 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_lenet5_c3_connectivity
 # Loading work.lenet5_c3_connectivity
@@ -122,10 +141,10 @@
 #    Time: 96 ns  Iteration: 0  Instance: /tb_lenet5_c3_connectivity
 # Break in Module tb_lenet5_c3_connectivity at tb/tb_lenet5_c3_connectivity.sv line 56
 # Stopped at tb/tb_lenet5_c3_connectivity.sv line 56
-# End time: 23:40:47 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:28 on Aug 16,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c -wlf results/conv2d_engine.wlf work.tb_conv2d_engine 
-# Start time: 23:40:47 on Aug 15,2026
+# Start time: 00:35:28 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_conv2d_engine
 # Loading work.conv2d_engine
@@ -136,10 +155,10 @@
 #    Time: 12070 ns  Iteration: 1  Instance: /tb_conv2d_engine
 # Break in Module tb_conv2d_engine at tb/tb_conv2d_engine.sv line 270
 # Stopped at tb/tb_conv2d_engine.sv line 270
-# End time: 23:40:48 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:29 on Aug 16,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_avg_pool2x2_stream 
-# Start time: 23:40:48 on Aug 15,2026
+# Start time: 00:35:29 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_avg_pool2x2_stream
 # Loading work.avg_pool2x2_stream
@@ -149,10 +168,10 @@
 #    Time: 820 ns  Iteration: 1  Instance: /tb_avg_pool2x2_stream
 # Break in Module tb_avg_pool2x2_stream at tb/tb_avg_pool2x2_stream.sv line 172
 # Stopped at tb/tb_avg_pool2x2_stream.sv line 172
-# End time: 23:40:49 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:30 on Aug 16,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_dense_engine 
-# Start time: 23:40:49 on Aug 15,2026
+# Start time: 00:35:30 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_dense_engine
 # Loading work.dense_engine
@@ -163,10 +182,10 @@
 #    Time: 900 ns  Iteration: 1  Instance: /tb_dense_engine
 # Break in Module tb_dense_engine at tb/tb_dense_engine.sv line 216
 # Stopped at tb/tb_dense_engine.sv line 216
-# End time: 23:40:50 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:31 on Aug 16,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_classifier_argmax 
-# Start time: 23:40:50 on Aug 15,2026
+# Start time: 00:35:31 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_classifier_argmax
 # Loading work.classifier_argmax
@@ -178,10 +197,10 @@
 #    Time: 520 ns  Iteration: 1  Instance: /tb_classifier_argmax
 # Break in Module tb_classifier_argmax at tb/tb_classifier_argmax.sv line 157
 # Stopped at tb/tb_classifier_argmax.sv line 157
-# End time: 23:40:50 on Aug 15,2026, Elapsed time: 0:00:00
+# End time: 00:35:33 on Aug 16,2026, Elapsed time: 0:00:02
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_classifier_argmax_tie 
-# Start time: 23:40:50 on Aug 15,2026
+# Start time: 00:35:33 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_classifier_argmax_tie
 # Loading work.classifier_argmax
@@ -193,10 +212,10 @@
 #    Time: 190 ns  Iteration: 1  Instance: /tb_classifier_argmax_tie
 # Break in Module tb_classifier_argmax_tie at tb/tb_classifier_argmax_tie.sv line 113
 # Stopped at tb/tb_classifier_argmax_tie.sv line 113
-# End time: 23:40:51 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:34 on Aug 16,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_config_guard 
-# Start time: 23:40:51 on Aug 15,2026
+# Start time: 00:35:34 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_config_guard
 # Loading work.conv2d_engine
@@ -214,10 +233,10 @@
 #    Time: 1945 ns  Iteration: 2  Instance: /tb_config_guard
 # Break in Module tb_config_guard at tb/tb_config_guard.sv line 492
 # Stopped at tb/tb_config_guard.sv line 492
-# End time: 23:40:52 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:35 on Aug 16,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_robustness 
-# Start time: 23:40:52 on Aug 15,2026
+# Start time: 00:35:35 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_robustness
 # Loading work.conv2d_engine
@@ -245,10 +264,10 @@
 #    Time: 33700 ns  Iteration: 1  Instance: /tb_robustness
 # Break in Module tb_robustness at tb/tb_robustness.sv line 763
 # Stopped at tb/tb_robustness.sv line 763
-# End time: 23:40:53 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:37 on Aug 16,2026, Elapsed time: 0:00:02
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_extremes 
-# Start time: 23:40:53 on Aug 15,2026
+# Start time: 00:35:37 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_extremes
 # Loading work.conv2d_engine
@@ -269,10 +288,10 @@
 #    Time: 31200 ns  Iteration: 1  Instance: /tb_extremes
 # Break in Module tb_extremes at tb/tb_extremes.sv line 621
 # Stopped at tb/tb_extremes.sv line 621
-# End time: 23:40:54 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 00:35:38 on Aug 16,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c -wlf results/lenet5_top.wlf work.tb_lenet5_top 
-# Start time: 23:40:54 on Aug 15,2026
+# Start time: 00:35:38 on Aug 16,2026
 # Loading sv_std.std
 # Loading work.tb_lenet5_top
 # Loading work.lenet5_top
@@ -299,5 +318,5 @@
 # Break in Module tb_lenet5_top at tb/tb_lenet5_top.sv line 407
 # Stopped at tb/tb_lenet5_top.sv line 407
 PASS: all ModelSim/Questa regressions completed
-# End time: 23:40:57 on Aug 15,2026, Elapsed time: 0:00:03
+# End time: 00:35:42 on Aug 16,2026, Elapsed time: 0:00:04
 # Errors: 0, Warnings: 0

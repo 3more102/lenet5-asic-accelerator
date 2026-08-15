@@ -1,20 +1,22 @@
 # Verification Summary
 
-Date: 2026-08-07, re-verified seven times on 2026-08-15 — after the requantize
+Date: 2026-08-07, re-verified eight times (seven on 2026-08-15, one on
+2026-08-16) — after the requantize
 pipelining change, after adding controller-FSM coverage and the
 config-validation reject tier, after adding the stall-invariance and
 reset-interruption tier, after adding the operand/dimension extremes tier, after
 adding post-synthesis formal equivalence, after extending both formal and
-simulation to the sky130hd-mapped netlist, and after giving the two
-multiply-accumulate blocks a testbench of their own. See the seven Addenda at
-the end. The body below reflects the first re-verification; **where a later
-addendum moves a number, the later one is authoritative** — that means the cycle
-figures come from the second (measured per inference rather than read off
-`$finish`) and the testbench count from the **seventh** (**14**, not 9, 10, 11
-or 12). The fifth and sixth add checks that are not testbenches at all and are
-not counted; the sixth re-runs existing testbenches against gates instead of
-RTL, which is a second run of an existing testbench rather than a new one. The
-seventh adds two genuinely new testbenches, which is why the count moves.
+simulation to the sky130hd-mapped netlist, after giving the two
+multiply-accumulate blocks a testbench of their own, and after giving the PE's
+control logic one. See the eight Addenda at the end. The body below reflects the
+first re-verification; **where a later addendum moves a number, the later one is
+authoritative** — that means the cycle figures come from the second (measured per
+inference rather than read off `$finish`) and the testbench count from the
+**eighth** (**15**, not 9, 10, 11, 12 or 14). The fifth and sixth add checks that
+are not testbenches at all and are not counted; the sixth re-runs existing
+testbenches against gates instead of RTL, which is a second run of an existing
+testbench rather than a new one. The seventh and eighth add genuinely new
+testbenches — two and one — which is why the count moves.
 
 ## Status
 
@@ -689,3 +691,107 @@ formal cover. Naming it here rather than letting a 22-of-24 headline absorb it.
 testbenches, zero failures, under both Icarus Verilog 12.0 and ModelSim ASE
 18.1. `scripts/regression_summary.sh` asserts the count of 14, so a testbench
 that stops running fails the gate rather than leaving a screen full of green.
+
+## Addendum — 2026-08-16: the PE's control logic, and a survivor that is not a gap
+
+The addendum above closed by naming what it had not closed: the wrapper logic in
+`conv5x5_pe`, where the last gate-level survivor lived. This closes it, and the
+testbench count moves from **14 to 15**.
+
+`conv5x5_pe` is the row MAC plus the control around it — bias at `first_i`, an
+int32 accumulator carried across rows and restarted between pixels,
+requantization at `last_i`, an output held under backpressure. Its only
+testbench produced **one** output pixel, at **shift 0 with ReLU off**. So the
+requantizer inside the PE was never driven at another shift, never saturated,
+never clamped; the bias was never negative or large; `first_i` and `last_i` were
+never asserted on the same beat; and no pixel ever followed another, leaving the
+accumulator restart untested.
+
+`tb_conv5x5_pe_stream.sv` drives **848 pixels / 3,147 rows**: 1 to 8 rows per
+pixel, every shift 0..31 with ReLU off and on, both saturation rails, the exact
+rounding ties, bias from zero to ±2²⁸, **48 single-beat pixels**, **428 pixels
+started while the previous one was still requantizing**, randomized gaps on the
+input stream and randomized backpressure on the output (**241 stall cycles**
+measured), with `tb/stream_hold_check.sv` policing the output protocol.
+
+**Corners are reached by choosing the accumulator and solving for the bias**
+(`bias = target − Σ row sums`), so the ties and rails are driven through genuine
+multi-row accumulations rather than one hand-picked row.
+
+**The oracle is checked rather than trusted.** Expected values compose
+`dense_int8`'s accumulator per row with `requantize`, in the order the PE's
+contract specifies. A single-channel 5×5 convolution is exactly one PE pixel of
+five rows, so `conv2d_valid_int8` must agree; the generator asserts that at
+eight (shift, ReLU) combinations and raises if it ever does not.
+
+**Proven able to fail, against both testbenches.** Five RTL mutations of the
+wrapper — bias never injected, mux arms swapped so the accumulator carries
+across pixels, requantize fed the running accumulator instead of the latched
+result, shift ignored, output register updated with no result pending:
+
+| Mutation | old `tb_conv5x5_pe` | new `tb_conv5x5_pe_stream` |
+|---|---|---|
+| P1 bias never injected | caught | caught |
+| P2 accumulator carried across pixels | caught | caught |
+| P3 requantize fed `accumulator_q` | caught | caught |
+| P4 shift ignored | **survived** | **caught** |
+| P5 output register updated with no result pending | survived | survived |
+
+P4 is the point: the old testbench drives shift = 0, so a design that ignores
+shift entirely is indistinguishable from a correct one.
+
+Worth recording about P1–P3: the old testbench catches them but reports all
+three as *"Output was not held correctly under backpressure"*, because its only
+value check sits inside the backpressure loop. The mutation harness had been
+matching on message text and scored those three as INVALID; it now treats the
+testbench's own `$fatal` as the verdict, whatever the wording.
+
+**On the netlist, same netlist and same mutations, only the driver changed:**
+
+| Netlist | Driven by | Caught |
+|---|---|---|
+| `conv5x5_pe`, 3,102 cells | `tb_conv5x5_pe_stream`, 848 pixels | **4/4** |
+| `conv5x5_pe`, 3,102 cells | `tb_conv5x5_pe`, one pixel | 3/4 |
+
+The mutation the streaming testbench catches is exactly the one that survived
+the previous addendum. Counting each block once by its strongest driver,
+`make gls` is now **23 of 24**.
+
+**P5 survives both testbenches, and it is not a coverage gap.** It drops the
+`rq_valid_q` guard on the output register, so `out_data_o` is rewritten on every
+ready cycle. `equiv_make` reports `out_data_o` as unproven — correctly, the two
+designs really do drive different values there. But they differ only on cycles
+where `out_valid_o` is **low**, which no consumer honouring valid/ready samples.
+`scripts/prove_pe_output_hold.sh` proves it rather than arguing it: a miter
+whose `bad_o` is "the handshakes differ, or the payload differs while valid is
+high" is unreachable to depth 20 from reset — with a **cover check** showing an
+output beat is reachable inside that window, and a **negative control** (payload
+inverted) confirming the miter rejects an observably wrong design.
+
+The datapath is cut away with `cutpoint`, `row_sum` and `quantized` constrained
+equal in both copies, which makes it **12,065 SAT variables instead of 591,417**
+over the real multiplier arrays — where the same query does not converge, the
+same wall unbounded equivalence hits on a mapped MAC. It also makes the result
+hold for *any* row MAC and *any* requantizer.
+
+Two harness faults were found and fixed while establishing that, both the same
+kind of error — a tool failure read as a verdict. The first negative control used
+`if (1'b0)`, so `opt` deleted the nets the `-set` arguments named and yosys
+exited non-zero on a **parse** error, which the script reported as "correctly
+rejects". And yosys's stderr from the negative run interleaved into the cover
+run's terminal output, so an expected failure appeared under the wrong heading.
+Both are guarded now.
+
+**Every surviving gate-level mutation in the project is now either caught by
+another tier or proven unobservable**: `avg_pool2x2_int8`'s dropped inverter by
+`make equiv-mapped`, and this one by the proof above.
+
+**Full regression after all of it:** 27 PASS lines across **15** distinct
+testbenches, zero failures, `MAKE_RC=0`, under both Icarus Verilog 12.0 and
+ModelSim ASE 18.1. `scripts/regression_summary.sh` asserts the count of 15.
+
+`results/icarus_regression_20260815.log` and
+`results/modelsim_regression_20260815.log` now hold **this** run, dated
+2026-08-16. The filenames are kept because earlier addenda cite them; the
+content is always the latest full regression rather than a snapshot, and git
+history holds the earlier versions.

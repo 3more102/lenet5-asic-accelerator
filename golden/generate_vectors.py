@@ -578,6 +578,206 @@ def generate_mac_vectors() -> str:
 """
 
 
+def generate_pe_vectors() -> str:
+    """Streaming stimulus for tb_conv5x5_pe_stream.sv.
+
+    `conv5x5_pe` is the row MAC plus the control around it: bias injected at
+    `first_i`, an int32 accumulator carried across rows, requantization at
+    `last_i`, and an output held under backpressure. The MAC now has its own
+    sweep (generate_mac_vectors), but until this existed the *wrapper* was
+    tested by exactly one output pixel -- five rows of all-ones activations,
+    weights 1..5, bias 5, **shift 0, ReLU off** -- so the requantizer inside the
+    PE never saw a non-zero shift, never saturated and never clamped, the bias
+    was never negative or large, and no pixel ever followed another, which
+    leaves the accumulator's restart between pixels unexercised. A gate-level
+    mutation survives in that wrapper (results/gls_20260815.log), which is what
+    an untested control path looks like from the outside.
+
+    The corners are reached by **choosing the accumulator first and solving for
+    the bias**: `bias = target - sum(row sums)`. That drives the exact
+    round-half-away-from-zero ties, both saturation rails and the ReLU clamp
+    through a genuine multi-row accumulation with non-trivial rows, rather than
+    through a single hand-picked row that would leave the accumulation itself
+    barely exercised.
+    """
+
+    int32_min, int32_max = -(1 << 31), (1 << 31) - 1
+    rng = np.random.default_rng(20260818)
+
+    pixels: list[dict] = []
+
+    def row_sum(act_row, wgt_row) -> int:
+        return int(_row_mac_reference([list(act_row)], [list(wgt_row)])[0])
+
+    def random_rows(count: int, lo: int = -128, hi: int = 128):
+        return [
+            (rng.integers(lo, hi, size=5).tolist(), rng.integers(lo, hi, size=5).tolist())
+            for _ in range(count)
+        ]
+
+    def add_pixel(rows, shift: int, relu: bool, *, bias=None, target=None) -> None:
+        total = sum(row_sum(a, w) for a, w in rows)
+        if target is not None:
+            bias = target - total
+        assert bias is not None
+        if not int32_min <= bias <= int32_max:
+            return
+        accumulator = total + bias
+        if not int32_min <= accumulator <= int32_max:
+            return
+        pixels.append(
+            {
+                "rows": rows,
+                "bias": bias,
+                "shift": shift,
+                "relu": int(relu),
+                "acc": accumulator,
+                "expected": int(requantize(np.int64(accumulator), shift, bool(relu))),
+            }
+        )
+
+    # 1. Every shift, both ReLU settings, and the tie values the rounding rule
+    #    is *defined* by. At shift s the tie sits at 2^(s-1) and must round away
+    #    from zero; the pixel either side of it pins which way.
+    for shift in range(32):
+        for relu in (False, True):
+            if shift:
+                half = 1 << (shift - 1)
+                for target in (half, -half, half - 1, -(half - 1), half + 1, -(half + 1)):
+                    add_pixel(random_rows(3), shift, relu, target=target)
+            add_pixel(random_rows(4), shift, relu, target=int(rng.integers(-40, 41)) << shift)
+
+    # 2. Both saturation rails, approached from either side, at several shifts.
+    #    Nothing in the old pixel could saturate at all.
+    for shift in (0, 1, 4, 7, 12, 20, 31):
+        for out_target in (-129, -128, -127, 126, 127, 128, 400, -400):
+            add_pixel(random_rows(2), shift, False, target=out_target << shift)
+
+    # 3. The ReLU clamp: negative accumulators with ReLU on.
+    for shift in (0, 3, 7, 16):
+        for target in (-1, -2, -1000, -(1 << 20), -(1 << 30)):
+            add_pixel(random_rows(3), shift, True, target=target)
+
+    # 4. Row counts. One row means first_i and last_i on the same beat -- a
+    #    single-beat pixel, which the original testbench never produced and
+    #    which is the shape most likely to break a first/last decode.
+    for count in (1, 2, 3, 4, 5, 6, 7, 8):
+        for shift in (0, 5, 9):
+            add_pixel(random_rows(count), shift, bool(count % 2), bias=int(rng.integers(-500, 501)))
+
+    # 5. Bias corners, including bias = 0 (pure accumulation) and a bias large
+    #    enough to dominate every row product.
+    for bias in (0, 1, -1, 1 << 20, -(1 << 20), 1 << 28, -(1 << 28)):
+        for shift in (0, 8, 24):
+            add_pixel(random_rows(5), shift, False, bias=bias)
+
+    # 6. Randomized bulk: every operand, bias, shift and ReLU setting random,
+    #    over the whole legal space.
+    for _ in range(300):
+        add_pixel(
+            random_rows(int(rng.integers(1, 9))),
+            int(rng.integers(0, 32)),
+            bool(rng.integers(0, 2)),
+            bias=int(rng.integers(-(1 << 22), 1 << 22)),
+        )
+
+    # The expected values above compose two shipped oracles -- dense_int8's
+    # accumulator for each row and requantize for the output -- in the order
+    # the PE's contract specifies. Check that composition against the *layer*
+    # oracle rather than trusting it: a genuine single-channel 5x5 convolution
+    # is exactly one PE pixel of five rows, so conv2d_valid_int8 must agree.
+    check_act = rng.integers(-128, 128, size=(1, 5, 5)).astype(np.int8)
+    check_wgt = rng.integers(-128, 128, size=(1, 1, 5, 5)).astype(np.int8)
+    for check_shift in (0, 3, 7, 15):
+        for check_relu in (False, True):
+            check_bias = np.array([int(rng.integers(-5000, 5001))], dtype=np.int64)
+            layer_out, _ = conv2d_valid_int8(
+                check_act, check_wgt, check_bias, shift=check_shift, relu=check_relu
+            )
+            rows = [
+                (check_act[0, r, :].tolist(), check_wgt[0, 0, r, :].tolist())
+                for r in range(5)
+            ]
+            composed = int(
+                requantize(
+                    np.int64(int(check_bias[0]) + sum(row_sum(a, w) for a, w in rows)),
+                    check_shift,
+                    check_relu,
+                )
+            )
+            if composed != int(layer_out[0, 0, 0]):
+                raise ValueError(
+                    "PE oracle disagrees with conv2d_valid_int8 at "
+                    f"shift={check_shift} relu={check_relu}: {composed} vs {int(layer_out[0, 0, 0])}"
+                )
+            add_pixel(rows, check_shift, check_relu, bias=int(check_bias[0]))
+
+    # Flatten to the per-row and per-pixel files the testbench reads.
+    act_words, wgt_words = [], []
+    row_counts, biases, shifts, relus, expected = [], [], [], [], []
+    for pixel in pixels:
+        for act_row, wgt_row in pixel["rows"]:
+            act_words.append(_pack_lanes(act_row))
+            wgt_words.append(_pack_lanes(wgt_row))
+        row_counts.append(len(pixel["rows"]))
+        biases.append(pixel["bias"])
+        shifts.append(pixel["shift"])
+        relus.append(pixel["relu"])
+        expected.append(pixel["expected"])
+
+    pe_dir = VECTOR_DIR / "pe"
+    write_hex(pe_dir / "act.hex", np.array(act_words, dtype=object), 40)
+    write_hex(pe_dir / "wgt.hex", np.array(wgt_words, dtype=object), 40)
+    write_hex(pe_dir / "rows.hex", np.array(row_counts, dtype=np.int64), 8)
+    write_hex(pe_dir / "bias.hex", np.array(biases, dtype=np.int64), 32)
+    write_hex(pe_dir / "shift.hex", np.array(shifts, dtype=np.int64), 8)
+    write_hex(pe_dir / "relu.hex", np.array(relus, dtype=np.int64), 8)
+    write_hex(pe_dir / "expected.hex", np.array(expected, dtype=np.int64), 8)
+
+    # Coverage the testbench asserts on, so a generator narrowed by a later
+    # edit fails the run instead of quietly testing less.
+    sat_hi = sum(1 for p in pixels if p["expected"] == 127)
+    sat_lo = sum(1 for p in pixels if p["expected"] == -128)
+    relu_clamped = sum(1 for p in pixels if p["relu"] and p["acc"] < 0 and p["expected"] == 0)
+    one_row = sum(1 for p in pixels if len(p["rows"]) == 1)
+    max_rows = max(len(p["rows"]) for p in pixels)
+    shifts_used = len(set(shifts))
+
+    # `shift_i` and `relu_en_i` are sampled by the requantizer at the cycle the
+    # output beat is registered, not at `last_i`, so they have to stay stable
+    # while a pixel is in flight -- which is how `conv2d_engine` drives them
+    # (constant for a whole layer). The testbench therefore streams a pixel
+    # straight into the previous one only when both match, and drains first
+    # otherwise. This is how many such adjacent pairs exist, and the testbench
+    # asserts it saw exactly that many: the accumulator's restart between
+    # pixels is only exercised on those, and it is the case the original
+    # single-pixel testbench could never reach.
+    back_to_back = sum(
+        1
+        for i in range(1, len(pixels))
+        if pixels[i]["shift"] == pixels[i - 1]["shift"]
+        and pixels[i]["relu"] == pixels[i - 1]["relu"]
+    )
+
+    print(
+        f"conv5x5_pe stream: {len(pixels)} pixels / {len(act_words)} rows, "
+        f"sat {sat_hi}+/{sat_lo}-, relu-clamped {relu_clamped}, "
+        f"{one_row} single-beat, {shifts_used}/32 shifts, {back_to_back} back-to-back"
+    )
+
+    return f"""// ---- tb_conv5x5_pe_stream.sv ----
+`define TV_PE_PIXELS {len(pixels)}
+`define TV_PE_ROWS_TOTAL {len(act_words)}
+`define TV_PE_MAX_ROWS {max_rows}
+`define TV_PE_SAT_HI {sat_hi}
+`define TV_PE_SAT_LO {sat_lo}
+`define TV_PE_RELU_CLAMPED {relu_clamped}
+`define TV_PE_ONE_ROW {one_row}
+`define TV_PE_SHIFTS_USED {shifts_used}
+`define TV_PE_BACK_TO_BACK {back_to_back}
+"""
+
+
 def _extreme_weight_rows(out_ch: int, taps: int, split: int) -> np.ndarray:
     """Four deliberately chosen int8-extreme weight patterns, one per row.
 
@@ -859,6 +1059,7 @@ def main() -> None:
         generate_classifier_vectors(),
         generate_requantize_vectors(),
         generate_mac_vectors(),
+        generate_pe_vectors(),
         generate_extremes_vectors(),
         generate_top_vectors(),
     ]

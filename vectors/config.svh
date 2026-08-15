@@ -60,6 +60,17 @@
 `define TV_MACD_LANES_AT_MIN 8
 `define TV_MACD_LANES_AT_MAX 8
 
+// ---- tb_conv5x5_pe_stream.sv ----
+`define TV_PE_PIXELS 848
+`define TV_PE_ROWS_TOTAL 3147
+`define TV_PE_MAX_ROWS 8
+`define TV_PE_SAT_HI 87
+`define TV_PE_SAT_LO 80
+`define TV_PE_RELU_CLAMPED 215
+`define TV_PE_ONE_ROW 48
+`define TV_PE_SHIFTS_USED 32
+`define TV_PE_BACK_TO_BACK 428
+
 // ---- tb_extremes.sv (int8-extreme operands at maximum layer size) ----
 `define TV_EX_IN_H 5
 `define TV_EX_IN_W 5

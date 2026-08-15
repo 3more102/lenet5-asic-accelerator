@@ -1,0 +1,150 @@
+LeNet-5 ASIC -- block-level stimulus for conv5x5_pe's wrapper, 2026-08-16
+==========================================================================
+
+Filtered evidence log for the tier that gives conv5x5_pe's control logic a
+testbench, and for the investigation of the one gate-level mutation that was
+still surviving after results/mac_stimulus_20260815.log.
+
+  make sim-pe-stream                 tb_conv5x5_pe_stream vs golden/quantized_conv.py
+  bash scripts/run_gls.sh conv5x5_pe the mapped netlist, both drivers
+  bash scripts/prove_pe_output_hold.sh  is the last survivor a gap or unobservable?
+
+Tools: Icarus Verilog 12.0, ModelSim ASE 18.1, Yosys 0.68, Python 3.14.4.
+PDK:   /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/
+       sky130_fd_sc_hd__tt_025C_1v80.lib
+
+------------------------------------------------------------------
+1. What was missing
+------------------------------------------------------------------
+tb_conv5x5_pe.sv produces exactly one output pixel: five rows of all-ones
+activations, weights 1..5, bias 5, shift 0, ReLU off, result 80. That leaves
+the PE's wrapper largely unexecuted -- the requantizer inside it never sees a
+non-zero shift, never saturates and never clamps; the bias is never negative or
+large; no pixel ever follows another, so the accumulator's restart at first_i
+is never tested; and first_i and last_i are never asserted on the same beat.
+
+------------------------------------------------------------------
+2. The new testbench
+------------------------------------------------------------------
+PASS tb_conv5x5_pe_stream: 848/848 pixels matched the Python golden model
+  3147 rows driven, 428 back-to-back pixels, 48 single-beat pixels
+  32/32 shifts, 87 saturate-high, 80 saturate-low, 264 ReLU-clamped, 241 output stall cycles
+
+Corners are reached by choosing the target accumulator and solving for the bias
+(bias = target - sum of row sums), so the rounding ties, both saturation rails
+and the ReLU clamp are driven through genuine multi-row accumulations rather
+than through one hand-picked row.
+
+The oracle composes two shipped functions -- dense_int8's accumulator per row,
+then requantize -- in the order the PE's contract specifies. That composition is
+checked against the *layer* oracle rather than trusted: a single-channel 5x5
+convolution is exactly one PE pixel of five rows, so conv2d_valid_int8 must
+agree, and the generator raises if it does not. Verified at 8 (shift, ReLU)
+combinations.
+
+Full regression afterwards: 27 PASS lines, 15 distinct testbenches, MAKE_RC=0.
+
+------------------------------------------------------------------
+3. RTL mutations -- same mutation, both testbenches
+------------------------------------------------------------------
+Every mutation targets the WRAPPER, not the MAC inside it. Controls first.
+
+  control tb_conv5x5_pe        : PASS
+  control tb_conv5x5_pe_stream : PASS
+
+                                                          old tb   new tb
+  P1 bias never injected (first_i arm dropped)            CAUGHT   CAUGHT
+  P2 mux arms swapped (accumulator carried across pixels) CAUGHT   CAUGHT
+  P3 requantize fed accumulator_q, not result_q           CAUGHT   CAUGHT
+  P4 shift ignored -- requantizer wired to 0              SURVIVED CAUGHT
+  P5 output register updated with no result pending       SURVIVED SURVIVED
+                                                          ------   ------
+                                                          3/5      4/5
+
+P1-P3 are caught by the old testbench, but the message it prints is "Output was
+not held correctly under backpressure" for all three: its only value check lives
+inside the backpressure loop, so every wrong result is reported as a
+backpressure fault. An earlier version of the mutation harness matched on
+message text and scored those three as INVALID; it now treats the testbench's
+own $fatal as the verdict, whatever the wording.
+
+P4 is the mutation that matters. The old testbench drives shift = 0, so a
+design that ignores shift entirely is indistinguishable from a correct one.
+
+------------------------------------------------------------------
+4. P5 -- a survivor that is not a gap
+------------------------------------------------------------------
+P5 survives BOTH testbenches, and equiv_make reports out_data_o as unproven
+(8 points), so the two designs are genuinely not signal-equivalent. The
+narrower question is whether a consumer honouring valid/ready can see the
+difference. scripts/prove_pe_output_hold.sh answers it:
+
+  PROOF     : bad_o unreachable to depth 20 -- the mutation is invisible at the interface
+              Solving problem with 12065 variables and 31691 clauses..
+  COVER     : an output beat is reachable at depth 20 -- the proof window is not vacuous
+  NEGATIVE  : an observably wrong design is rejected, as it must be
+
+  == all three hold: the surviving output-register mutation is unobservable at the
+     valid/ready interface, for any row MAC and any requantizer, to depth 20.
+
+The datapath is cut away with `cutpoint` and the two copies' row_sum and
+quantized constrained equal, so the proof holds for any MAC and any requantizer
+-- and it is 12,065 variables instead of the 591,417 the same query needs at
+depth 24 over the real multiplier arrays, which does not converge.
+
+Two harness faults were found and fixed while establishing this, both of the
+same kind -- a tool error read as a verdict:
+
+  - The first negative control used `if (1'b0)` so out_data_o is never written.
+    opt then deletes the nets the -set arguments name and yosys exits non-zero
+    on a PARSE error, which the script reported as "correctly rejects". It now
+    detects that case explicitly, and the control inverts the payload instead,
+    which keeps every net alive.
+  - The cover and negative runs write to separate logs but share a terminal;
+    yosys's stderr interleaved so the negative control's expected failure
+    appeared under the cover heading. stderr now goes to each run's own log.
+
+------------------------------------------------------------------
+5. Netlist mutations -- same netlist, both drivers
+------------------------------------------------------------------
+== map : conv5x5_pe  cells=3102 area=24323.3um2
+   PASS  PASS tb_conv5x5_pe_stream: 848/848 pixels matched the Python golden model
+   PASS  PASS tb_conv5x5_pe: accumulation, bias, and backpressure
+
+== conv5x5_pe / tb_conv5x5_pe_stream
+  M0-control-unmutated: control PASSES (harness is not stuck failing)
+  M1-drop-an-inverter: CAUGHT
+  M2-and-becomes-or: CAUGHT
+  M3-or-becomes-and: CAUGHT
+  M4-tie-an-output-low: no line matches (out_data_o is registered and
+                        in_ready_o is a whole-signal assign, so the bit-indexed
+                        pattern finds nothing -- counted as not run, not caught)
+  M5-invert-a-gate-input: CAUGHT
+  ---> 4/4
+
+== conv5x5_pe / tb_conv5x5_pe
+  M0-control-unmutated: control PASSES (harness is not stuck failing)
+  M1-drop-an-inverter: CAUGHT
+  M2-and-becomes-or: CAUGHT
+  M3-or-becomes-and: SURVIVED  <-- tier did not catch it
+  M4-tie-an-output-low: no line matches
+  M5-invert-a-gate-input: CAUGHT
+  ---> 3/4
+
+M3 is the exact mutation that survived in results/gls_20260815.log. Same
+netlist, same mutation, same tool; the driver is the only thing that changed.
+Cell count is unchanged at 3,102, so this is the same netlist as before.
+
+------------------------------------------------------------------
+6. Totals
+------------------------------------------------------------------
+RTL mutations, this tier:            4/5 new testbench, 3/5 old, both controls
+                                     passing; the shared survivor is P5, proven
+                                     unobservable rather than missed.
+gls, each block by its best driver:  23/24 caught, up from 22/24.
+
+Every surviving gate-level mutation in the project is now either caught by
+another tier or proven unobservable:
+
+  avg_pool2x2_int8 M1  a dropped inverter -- caught by make equiv-mapped.
+  conv5x5_pe       P5  proven invisible at the valid/ready interface (section 4).

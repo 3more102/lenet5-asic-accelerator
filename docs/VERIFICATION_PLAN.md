@@ -5,6 +5,10 @@
 | Feature | Golden/reference | RTL test |
 |---|---|---|
 | Signed 5-tap row MAC | `dense_int8` accumulator output | `tb_conv5x5_row_mac.sv` (6,592 cases) + `tb_conv5x5_pe.sv` |
+| PE bias injection, accumulation across rows, requantization at `last_i` | `dense_int8` accumulator + `requantize`, cross-checked against `conv2d_valid_int8` | `tb_conv5x5_pe_stream.sv` (848 pixels / 3,147 rows) |
+| A pixel of a single row (`first_i` and `last_i` on one beat) | same | same (48 such pixels) |
+| A pixel starting while the previous one is still requantizing | same | same (428 such pixels) |
+| Every shift 0..31 inside the PE, ReLU off and on, both saturation rails | same | same |
 | Signed 8-lane dense MAC | same | `tb_dense_row_mac.sv` (9,540 cases) + `tb_dense_engine.sv` |
 | Every MAC lane swept across the full int8 range, both operands | same | `tb_conv5x5_row_mac.sv`, `tb_dense_row_mac.sv` |
 | Largest-magnitude int8 product (-128 x -128) in every lane at once | same | same |
@@ -159,6 +163,44 @@ The peaks reached are the theoretical ones: +81,920 and -81,280 for five lanes,
 at least six cancelling rows, and drove **every lane individually** to both int8
 extremes — a run that quietly stopped covering a lane fails rather than passes.
 
+**The PE's wrapper, driven as a stream (`tb_conv5x5_pe_stream.sv`):**
+`conv5x5_pe` is the row MAC plus the control around it — bias injected at
+`first_i`, an int32 accumulator carried across rows and restarted between
+pixels, requantization at `last_i`, an output held under backpressure. The MAC
+inside it now has its own sweep; the wrapper had `tb_conv5x5_pe.sv`, which
+produces **one** output pixel at **shift 0 with ReLU off**. That leaves the
+requantizer inside the PE never driven at any other shift, never saturating,
+never clamping; the bias never negative or large; `first_i` and `last_i` never
+asserted on the same beat; and no pixel ever following another, so the
+accumulator restart is untested. A gate-level mutation survived in exactly that
+wrapper, which is what an untested control path looks like from the outside.
+
+848 pixels of 1 to 8 rows, every shift 0..31 with ReLU off and on, both
+saturation rails, the exact rounding ties, bias from zero to ±2²⁸ — with
+randomized gaps on the input stream and randomized backpressure on the output,
+and `tb/stream_hold_check.sv` policing the output protocol throughout.
+
+Two things about it are worth stating:
+
+1. **The corners are reached by choosing the accumulator and solving for the
+   bias** (`bias = target − Σ row sums`), so the ties and rails are driven
+   through genuine multi-row accumulations rather than one hand-picked row that
+   would leave the accumulation itself barely exercised.
+2. **The oracle is checked, not trusted.** Expected values compose two shipped
+   functions — `dense_int8`'s accumulator per row, then `requantize` — in the
+   order the PE's contract specifies. A single-channel 5×5 convolution is
+   exactly one PE pixel of five rows, so `conv2d_valid_int8` must agree with
+   that composition; the generator asserts it at eight (shift, ReLU)
+   combinations and raises if it ever does not.
+
+`shift_i` and `relu_en_i` feed the requantizer combinationally and are sampled
+when the output beat is registered, not at `last_i`, so they must hold while a
+pixel is in flight — which is how `conv2d_engine` drives them, constant for a
+whole layer. The testbench therefore streams one pixel straight into the next
+only when both match and drains otherwise, and asserts the resulting count of
+back-to-back pixels: those are the only ones that exercise the accumulator
+restart, so a change that quietly stopped producing them would otherwise pass.
+
 **Post-synthesis equivalence (`synth/equiv_*.ys`, `make equiv`):** everything
 above is RTL simulation. It compares the RTL against the Python model on
 whatever stimulus a testbench drives, and says nothing about what synthesis
@@ -255,6 +297,7 @@ a netlist exists, everything that reaches it is worth running.
 | `requantize` | `tb_requantize` (5,504 cases) | pure gate | 550 | PASS | seconds |
 | `conv5x5_row_mac` | `tb_conv5x5_row_mac` (6,592 cases) | pure gate | 1,833 | PASS | seconds |
 | `conv5x5_row_mac` | `tb_conv5x5_pe` | mixed RTL/gate | 1,833 | PASS | seconds |
+| `conv5x5_pe` (+`conv5x5_row_mac`, `requantize`) | `tb_conv5x5_pe_stream` (848 pixels) | pure gate | 3,102 | PASS | ~20 s |
 | `conv5x5_pe` (+`conv5x5_row_mac`, `requantize`) | `tb_conv5x5_pe` | pure gate | 3,102 | PASS | ~10 s |
 | `avg_pool2x2_int8` | `tb_avg_pool2x2_stream` | mixed RTL/gate | 135 | PASS | seconds |
 | `dense_row_mac` | `tb_dense_row_mac` (9,540 cases) | pure gate | 2,984 | PASS | seconds |
@@ -308,16 +351,17 @@ also be the score of a harness that fails on everything.
 | `gls` | `requantize` | `tb_requantize` | 5/5 |
 | `gls` | `conv5x5_row_mac` | `tb_conv5x5_row_mac` | **5/5** |
 | `gls` | `conv5x5_row_mac` | `tb_conv5x5_pe` | 4/5 |
-| `gls` | `conv5x5_pe` | `tb_conv5x5_pe` | 3/4 (one had no matching line in that netlist) |
+| `gls` | `conv5x5_pe` | `tb_conv5x5_pe_stream` | **4/4** (one of the five had no matching line in that netlist) |
+| `gls` | `conv5x5_pe` | `tb_conv5x5_pe` | 3/4 |
 | `gls` | `avg_pool2x2_int8` | `tb_avg_pool2x2_stream` | 4/5 |
 | `gls` | `dense_row_mac` | `tb_dense_row_mac` | **5/5** |
 | `gls` | `dense_row_mac` | `tb_dense_engine` | 2/5 |
 
 Two numbers come out of that table and they are not the same one. Counting each
 block **once, by its strongest driver** — the figure that describes what the tier
-now establishes — `gls` catches **22 of 24**, against the 14 of 19 it caught when
-every MAC was reached through a wrapper. Counting **all seven campaigns**
-including the weaker duplicate drivers, it is 28 of 34. The first is the claim;
+now establishes — `gls` catches **23 of 24**, against the 14 of 19 it caught when
+every block was reached through a wrapper. Counting **all eight campaigns**
+including the weaker duplicate drivers, it is 32 of 38. The first is the claim;
 the second is what the rows add up to, and both are here so the table can be
 checked rather than taken on trust.
 
@@ -334,27 +378,46 @@ the tool and the day fixed and change only the driver:
 | `conv5x5_row_mac`, 1,833 cells | `tb_conv5x5_pe`, wrapper | 4/5 |
 | `dense_row_mac`, 2,984 cells | `tb_dense_row_mac`, 9,540 cases | **5/5** |
 | `dense_row_mac`, 2,984 cells | `tb_dense_engine`, five F6 values | 2/5 |
+| `conv5x5_pe`, 3,102 cells | `tb_conv5x5_pe_stream`, 848 pixels | **4/4** |
+| `conv5x5_pe`, 3,102 cells | `tb_conv5x5_pe`, one pixel | 3/4 |
 
 The 2/5 reproduces the earlier measurement exactly, down to which three
 mutations survive. Nothing about the netlist changed; five vectors against a
-2,984-cell 8-lane MAC simply leave most of it undriven.
+2,984-cell 8-lane MAC simply leave most of it undriven. The `conv5x5_pe` pair is
+the same story on the last block: the mutation that survives the one-pixel
+testbench is an OR-to-AND swap on a node that stimulus never drives both ways,
+and the streaming testbench catches it.
 
-Two survivors remain, and neither is closed by this tier:
+**One survivor is left in the whole tier, and it is not a coverage gap.** The
+`avg_pool2x2_int8` survivor is a dropped inverter that `tb_avg_pool2x2_stream`'s
+twelve golden outputs never distinguish — and that `make equiv-mapped` catches
+immediately, since 8 SAT points cover every input pattern. That is exactly what
+having two tiers is for.
 
-- The `avg_pool2x2_int8` survivor is a dropped inverter that
-  `tb_avg_pool2x2_stream`'s twelve golden outputs never distinguish — and that
-  `make equiv-mapped` catches immediately, since 8 SAT points cover every input
-  pattern. That is exactly what having two tiers is for.
-- The `conv5x5_pe` survivor is an OR-to-AND swap deep inside the PE, on a node
-  `tb_conv5x5_pe`'s directed stimulus never drives both ways. `conv5x5_pe` is
-  the wrapper — its MAC now has its own testbench, but the bias/accumulate and
-  requantize path around it does not — and it has no formal cover. It stands as
-  a real gap rather than one another tier closes.
+**A survivor that no stimulus could ever catch.** While proving the streaming
+testbench could fail, one RTL mutation survived *both* PE testbenches: dropping
+the `rq_valid_q` guard on the output register, so `out_data_o` is rewritten on
+every ready cycle instead of only when a result is pending. `equiv_make` reports
+`out_data_o` as unproven — correctly, the two designs do drive different values
+on that wire. But the difference only ever appears on cycles where `out_valid_o`
+is **low**, which no consumer honouring valid/ready samples.
+`scripts/prove_pe_output_hold.sh` settles it rather than arguing it: a miter
+whose `bad_o` is "the handshakes differ, or the payload differs while valid is
+high" is proven unreachable to depth 20 from reset, with a cover check showing
+an output beat *is* reachable in that window and a negative control confirming
+the miter rejects an observably wrong design.
 
-The earlier version of this section ended by naming block-level stimulus as what
-would close the MAC blocks. That is now done and measured. What it did not close
-is the wrapper logic in `conv5x5_pe`, which is where the remaining survivor
-lives.
+The datapath is cut away for that proof — `cutpoint` makes `row_sum` and
+`quantized` free variables constrained equal in both copies — which makes it
+12,065 SAT variables instead of the 591,417 the same query needs over the real
+multiplier arrays, and makes the result hold for *any* row MAC and *any*
+requantizer rather than only these two. That is the same abstraction commercial
+LEC applies for the same reason; here it turns an apparent hole into a proof.
+
+Both earlier versions of this section ended by naming what they had not closed:
+first the MAC blocks, then the PE wrapper. Both are now done and measured. What
+remains open is stated in "Required before tapeout" below, and is no longer
+about stimulus.
 
 ## Required before tapeout
 
