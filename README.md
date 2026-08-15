@@ -49,7 +49,7 @@ fixed-point contract.
 
 ## Verification status
 
-All fourteen regression stages below pass under Icarus Verilog 12.0 and Siemens
+All sixteen regression stages below pass under Icarus Verilog 12.0 and Siemens
 ModelSim; generic synthesis passes under Yosys. Separately from simulation,
 `make equiv` proves by SAT that each synthesized netlist computes the same
 function as its RTL — 1,592 equivalence points across the three synthesizable
@@ -60,12 +60,22 @@ against those mapped netlists for the blocks where it does not — see
 [`docs/VERIFICATION_PLAN.md`](docs/VERIFICATION_PLAN.md) for which is which and
 why.
 
+The two multiply-accumulate blocks are the ones neither SAT tier can reach, so
+they now carry their own block-level testbenches — every lane swept across the
+full int8 range on both operands, weights rotated to pin lane pairing, and rows
+that cancel to exactly zero. Driven that way, gate-level mutation testing
+catches 5/5 on each; driven through their wrappers, the same netlists and the
+same mutations score 4/5 and 2/5. That comparison is the tier's real result and
+is written up in [`results/mac_stimulus_20260815.log`](results/mac_stimulus_20260815.log).
+
 | Check | What it proves |
 |---|---|
 | `golden.test_golden` | quantization corner cases + the full floating LeNet-5 shape chain |
 | `lint` | SystemVerilog elaboration of the complete RTL list, three top modules |
 | `tb_conv5x5_pe` | PE accumulation, bias injection, requantization, output backpressure |
 | `tb_requantize` | 5,504-case differential sweep vs the oracle: half-way rounding, both saturation boundaries, shift=0 bypass, int32 extremes, plus randomized coverage |
+| `tb_conv5x5_row_mac` | 6,592-case sweep of the 5-tap MAC: every lane across the full int8 range on both operands, the largest-magnitude product in every lane, weight rotation to pin lane pairing, and sums that cancel to exactly zero |
+| `tb_dense_row_mac` | the same for the 8-lane dense MAC, 9,540 cases |
 | `tb_lenet5_c3_connectivity` | the exact 60 canonical C3 input-map connections |
 | `tb_conv2d_engine` | 48 engine outputs vs the Python int8 oracle |
 | `tb_avg_pool2x2_stream` | 12 pooling outputs vs the oracle |
@@ -140,7 +150,8 @@ make equiv-mapped
 
 Re-run the existing testbenches against the sky130hd-mapped netlists instead of
 the RTL — same golden vectors, gates underneath — which is how the mapped MAC
-blocks get checked at all:
+blocks get checked at all. Each netlist is built once and driven by every
+testbench that reaches it, since mapping is the only expensive step:
 
 ```bash
 make gls

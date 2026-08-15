@@ -1,0 +1,203 @@
+LeNet-5 ASIC -- block-level stimulus for the two MAC blocks, 2026-08-15
+=======================================================================
+
+Filtered evidence log for the tier that gives conv5x5_row_mac and
+dense_row_mac a testbench of their own, and re-measures the gate-level
+mutation scores that motivated it.
+
+  make sim-mac-conv    tb_conv5x5_row_mac vs golden/quantized_conv.py
+  make sim-mac-dense   tb_dense_row_mac   vs golden/quantized_conv.py
+  make gls             both netlists, now driven by those testbenches too
+
+Tools: Icarus Verilog 12.0, ModelSim ASE 18.1, Yosys 0.68, Python 3.14.4.
+PDK:   /root/OpenROAD-flow-scripts/flow/platforms/sky130hd/lib/
+       sky130_fd_sc_hd__tt_025C_1v80.lib
+
+What was filtered: the per-vector transcripts and the yosys per-cell tables.
+Kept here are the verdict lines, the mutation campaigns in full, and the
+coverage figures each testbench asserts on. Nothing was edited.
+
+Regenerate with:
+
+  make sim-mac-conv sim-mac-dense 2>&1 | tee mac_raw.log
+  make gls                        2>&1 | tee gls_raw.log
+
+`make gls` needs the sky130hd liberty from an ORFS install and so does not run
+in CI; `make sim-mac-conv` and `make sim-mac-dense` are part of `make
+regression` and do.
+
+------------------------------------------------------------------
+1. The two new testbenches, RTL
+------------------------------------------------------------------
+PASS tb_conv5x5_row_mac: 6592/6592 cases matched the Python golden model
+  peak +81920 hit 1 times, peak -81280 hit 2 times, 7 cancelled to zero, 2676 negative
+  all 5 lanes driven to both -128 and +127
+
+PASS tb_dense_row_mac: 9540/9540 cases matched the Python golden model
+  peak +131072 hit 1 times, peak -130048 hit 2 times, 6 cancelled to zero, 3812 negative
+  all 8 lanes driven to both -128 and +127
+
+The peaks are the theoretical ones: 5 x 16,384 = 81,920 and 5 x -16,256 =
+-81,280 for the 5-tap MAC, 8 x 16,384 = 131,072 and 8 x -16,256 = -130,048 for
+the 8-lane one. Each testbench $fatals if it did not reach both, if fewer than
+six rows cancelled to zero, or if any single lane was never driven to both int8
+extremes.
+
+Under ModelSim ASE 18.1, same vectors:
+
+  # PASS tb_conv5x5_row_mac: 6592/6592 cases matched the Python golden model
+  # Errors: 0, Warnings: 0
+  # PASS tb_dense_row_mac: 9540/9540 cases matched the Python golden model
+  # Errors: 0, Warnings: 0
+
+Full regression afterwards: 26 PASS lines, 14 distinct testbenches, 0 failures.
+
+  14/14 RTL testbenches passed -- full log in results/regression_summary.log
+
+------------------------------------------------------------------
+2. RTL mutation campaigns -- proof the testbenches can fail
+------------------------------------------------------------------
+Mutations are applied to the RTL, the matching testbench is run, and the RTL is
+restored. Each campaign runs an unmutated control first, because "all caught" is
+also the score of a harness that fails on everything.
+
+A mutation that does not compile is reported INVALID, not CAUGHT. An earlier
+version of this harness scored a build break as a catch; the mutation labelled
+C-M4 was rewritten in legal Verilog and re-run rather than counted.
+
+== conv5x5_row_mac / tb_conv5x5_row_mac
+  control (unmutated): PASS tb_conv5x5_row_mac: 6592/6592 cases matched
+  C-M1 drop lane 4 from the tree:              CAUGHT
+       MISMATCH [0]: got -3675, expected -3116
+  C-M2 lane 2 takes lane 3 weight:             CAUGHT
+       MISMATCH [0]: got -3144, expected -3116
+  C-M3 zero-extend lane 1 instead of sign-extend: CAUGHT
+       MISMATCH [0]: got 62420, expected -3116
+  C-M4 tie bit 0 of the row sum low:           CAUGHT
+       MISMATCH [2]: got -3088, expected -3087
+  C-M5 lane 0 reads lane 1 activation:         CAUGHT
+       MISMATCH [0]: got 451, expected -3116
+  ---> 5/5
+
+== dense_row_mac / tb_dense_row_mac
+  control (unmutated): PASS tb_dense_row_mac: 9540/9540 cases matched
+  D-M1 leaf loop stops one lane short:         CAUGHT
+       MISMATCH [0]: got x, expected -2667
+  D-M2 lane i takes lane i+1 weight:           CAUGHT
+       MISMATCH [0]: got -5601, expected -2667
+  D-M3 tree adder becomes a subtractor:        CAUGHT
+       MISMATCH [0]: got -243, expected -2667
+  D-M4 zero-extend every product:              CAUGHT
+       MISMATCH [0]: got 259477, expected -2667
+  D-M5 tie bit 0 of the sum low:               CAUGHT
+       MISMATCH [0]: got -2668, expected -2667
+  ---> 5/5
+
+------------------------------------------------------------------
+3. The vacuity guards, proven able to fire
+------------------------------------------------------------------
+Each testbench asserts that every lane was individually driven to both int8
+extremes. That guard was tested by narrowing the *generator*, not the RTL.
+
+  Attempt 1: directed lane sweeps stopped two lanes short.
+             Result: still PASSES -- and correctly so. 3,000 uniform random
+             rows drive every lane to both extremes on their own, so coverage
+             really was achieved. The guard reports coverage, not intent.
+
+  Attempt 2: same narrowing, plus the random and whole-row classes clamped to
+             +/-100 so nothing re-covers those lanes.
+             Result: FATAL: tb_conv5x5_row_mac: only 5/5 lanes saw -128 and
+                     4/5 saw +127
+
+------------------------------------------------------------------
+4. make gls -- every block, with the new drivers
+------------------------------------------------------------------
+GLS_RC=0
+
+== map : requantize  cells=550 area=3467.1um2
+   PASS  PASS tb_requantize: 5504/5504 cases matched the Python golden model
+== map : conv5x5_row_mac  cells=1833 area=15676.3um2
+   PASS  PASS tb_conv5x5_row_mac: 6592/6592 cases matched the Python golden model
+   PASS  PASS tb_conv5x5_pe: accumulation, bias, and backpressure
+== map : conv5x5_pe  cells=3102 area=24323.3um2
+   PASS  PASS tb_conv5x5_pe: accumulation, bias, and backpressure
+== map : avg_pool2x2_int8  cells=135 area=1071.0um2
+   PASS  PASS tb_avg_pool2x2_stream: 12 outputs matched the Python golden model
+== map : dense_row_mac  cells=2984 area=25992.4um2
+   PASS  PASS tb_dense_row_mac: 9540/9540 cases matched the Python golden model
+   PASS  PASS tb_dense_engine: 5 outputs matched the Python golden model
+== gate-level simulation passed for every block
+
+Cell counts are unchanged from results/gls_20260815.log for every block that
+appeared there (550 / 3,102 / 135 / 2,984), so the netlists under test are the
+same ones. conv5x5_row_mac at 1,833 cells is new: it was previously only ever
+mapped as part of conv5x5_pe.
+
+------------------------------------------------------------------
+5. Netlist mutation campaigns -- the controlled experiment
+------------------------------------------------------------------
+Same harness, same five mutations, same netlist, same day. The only variable
+between the two runs of each pair is which testbench drives it.
+
+== conv5x5_row_mac / tb_conv5x5_row_mac
+  M0-control-unmutated: control PASSES (harness is not stuck failing)
+  M1-drop-an-inverter: CAUGHT
+  M2-and-becomes-or: CAUGHT
+  M3-or-becomes-and: CAUGHT
+  M4-tie-an-output-low: CAUGHT
+  M5-invert-a-gate-input: CAUGHT
+  ---> 5/5
+
+== conv5x5_row_mac / tb_conv5x5_pe
+  M0-control-unmutated: control PASSES (harness is not stuck failing)
+  M1-drop-an-inverter: CAUGHT
+  M2-and-becomes-or: CAUGHT
+  M3-or-becomes-and: CAUGHT
+  M4-tie-an-output-low: SURVIVED  <-- tier did not catch it
+  M5-invert-a-gate-input: CAUGHT
+  ---> 4/5
+
+== dense_row_mac / tb_dense_row_mac
+  M0-control-unmutated: control PASSES (harness is not stuck failing)
+  M1-drop-an-inverter: CAUGHT
+  M2-and-becomes-or: CAUGHT
+  M3-or-becomes-and: CAUGHT
+  M4-tie-an-output-low: CAUGHT
+  M5-invert-a-gate-input: CAUGHT
+  ---> 5/5
+
+== dense_row_mac / tb_dense_engine
+  M0-control-unmutated: control PASSES (harness is not stuck failing)
+  M1-drop-an-inverter: CAUGHT
+  M2-and-becomes-or: SURVIVED  <-- tier did not catch it
+  M3-or-becomes-and: SURVIVED  <-- tier did not catch it
+  M4-tie-an-output-low: CAUGHT
+  M5-invert-a-gate-input: SURVIVED  <-- tier did not catch it
+  ---> 2/5
+
+The 2/5 reproduces results/gls_20260815.log exactly -- same three survivors,
+M2, M3 and M5 -- so it is a reproducible property of that stimulus and not a
+noisy result. The netlist is byte-for-byte the one that scores 5/5 in the run
+directly above it.
+
+The mutation patterns are unchanged from results/gls_20260815.log, deliberately:
+changing the harness would have made the before/after incomparable.
+
+  M1  '^  assign _[0-9]+_ = ~[a-z_]'              's/ = ~/ = /'
+  M2  '^  assign _[0-9]+_ = .+ & '                's/ & / | /'
+  M3  '^  assign _[0-9]+_ = .+ \| '               's/ | / \& /'
+  M4  '^  assign [a-z][a-z_0-9]*\[[0-9]+\] = '    's/ = [^;]*;/ = 1'h0;/'
+  M5  '^  assign _[0-9]+_ = _[0-9]+_ & _'         's/ \& _/ \& ~_/'
+
+------------------------------------------------------------------
+6. Totals
+------------------------------------------------------------------
+RTL mutations, this tier:            10/10 caught, both controls passing.
+Vacuity guards:                      fire on a genuine coverage hole.
+gls, each block by its best driver:  22/24 caught, up from 14/19.
+gls, all seven campaigns:            28/34 caught.
+
+Remaining survivors, neither closed here:
+  avg_pool2x2_int8  M1  a dropped inverter -- caught by make equiv-mapped.
+  conv5x5_pe        M3  an OR-to-AND swap in the wrapper logic around the MAC,
+                        with no formal cover. A stated gap.

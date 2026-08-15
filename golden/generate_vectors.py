@@ -312,6 +312,272 @@ def generate_requantize_vectors() -> str:
 """
 
 
+# Background operands for the lane sweeps below. A sweep of one lane has to
+# leave the other lanes holding *something*, and zero would be the worst
+# possible choice: with the rest of the row zeroed, a design that dropped a
+# lane, duplicated one, or paired lane i's activation with lane j's weight
+# would produce exactly the same sum as a correct one. These are non-zero, of
+# mixed sign, and chosen so the eight lane products (87, -155, -259, 451, 559,
+# 799, 1007, -1357) all have distinct magnitudes -- so removing any single lane
+# from the sum lands on a different value than removing any other.
+_MAC_BG_ACT = (3, -5, 7, -11, 13, -17, 19, -23)
+_MAC_BG_WGT = (29, 31, -37, -41, 43, -47, 53, 59)
+
+# The int8 values a MAC lane is most likely to be wrong on: both ends of the
+# range, the neighbours of both ends, both units, and zero. -128 matters twice
+# over -- it has no positive counterpart, so (-128)*(-128) = 16,384 is the
+# largest-magnitude int8 product and the one a 127-based bound misses.
+_MAC_CORNERS = (-128, -127, -1, 0, 1, 126, 127)
+
+
+def _pack_lanes(values) -> int:
+    """Pack per-lane int8 values into one word, lane 0 in the low byte."""
+
+    word = 0
+    for index, value in enumerate(values):
+        word |= (int(value) & 0xFF) << (8 * index)
+    return word
+
+
+def _row_mac_reference(acts: list[list[int]], wgts: list[list[int]]) -> np.ndarray:
+    """Expected lane sum for each (activation row, weight row) pair.
+
+    Taken from golden/quantized_conv.py's dense_int8 accumulator output rather
+    than recomputed here. One lane group of a dense layer with zero bias *is* a
+    row MAC, so this reuses the same model every other testbench in the suite
+    is checked against, instead of standing up a second implementation of the
+    arithmetic the DUT is being compared against.
+    """
+
+    zero_bias = np.zeros(1, dtype=np.int64)
+    sums = []
+    for act_row, wgt_row in zip(acts, wgts):
+        _, accumulator = dense_int8(
+            np.array(act_row, dtype=np.int8),
+            np.array(wgt_row, dtype=np.int8).reshape(1, -1),
+            zero_bias,
+            shift=0,
+        )
+        sums.append(int(accumulator[0]))
+    return np.array(sums, dtype=np.int64)
+
+
+def _mac_stimulus(lanes: int, seed: int, random_count: int):
+    """Directed then randomized (activation, weight) rows for an N-lane MAC."""
+
+    acts: list[list[int]] = []
+    wgts: list[list[int]] = []
+    background_act = list(_MAC_BG_ACT[:lanes])
+    background_wgt = list(_MAC_BG_WGT[:lanes])
+
+    def add(act_row, wgt_row) -> None:
+        acts.append(list(act_row))
+        wgts.append(list(wgt_row))
+
+    # 1. Per-lane full int8 sweep, one lane at a time against the background.
+    #    Every lane is swept on both operands, so a lane that is stuck, tied
+    #    off, sign-extended wrongly or missing entirely cannot hide behind the
+    #    other four (or seven) carrying the sum.
+    for lane in range(lanes):
+        for value in range(-128, 128):
+            act_row = list(background_act)
+            act_row[lane] = value
+            add(act_row, background_wgt)
+
+            wgt_row = list(background_wgt)
+            wgt_row[lane] = value
+            add(background_act, wgt_row)
+
+    # 2. Per-lane corner grid: both operands of one lane at their extremes
+    #    simultaneously, which the single-operand sweeps above never reach.
+    for lane in range(lanes):
+        for act_value in _MAC_CORNERS:
+            for wgt_value in _MAC_CORNERS:
+                act_row = list(background_act)
+                wgt_row = list(background_wgt)
+                act_row[lane] = act_value
+                wgt_row[lane] = wgt_value
+                add(act_row, wgt_row)
+
+    # 3. Weight rotation against fixed activations. Rotating *both* rows would
+    #    leave the multiset of products unchanged and so leave the sum
+    #    unchanged -- a test that passes on a mis-wired lane pairing. Rotating
+    #    the weights alone re-pairs every lane, so lane i's activation must
+    #    meet lane i's weight to reproduce these sums.
+    rotation_bases = [
+        ([1, 2, 4, 8, 16, 32, 64, 127][:lanes], [1, 3, 9, 27, 81, 121, 5, 17][:lanes]),
+        ([-128, 127, -64, 63, -32, 31, -16, 15][:lanes], [2, -3, 5, -7, 11, -13, 17, -19][:lanes]),
+    ]
+    for base_act, base_wgt in rotation_bases:
+        for rotation in range(lanes):
+            add(base_act, base_wgt[rotation:] + base_wgt[:rotation])
+
+    # 4. Whole-row extremes: the four corners of the sum's range, plus one lane
+    #    driven to an extreme while the rest hold the background, which is the
+    #    case that tells a lane-local sign-extension bug from a tree-wide one.
+    for act_value, wgt_value in (
+        (-128, -128),  # +16,384 per lane -- the largest positive sum
+        (-128, 127),   # -16,256 per lane -- the largest negative sum
+        (127, 127),
+        (127, -128),
+        (-128, 1),
+        (1, -128),
+    ):
+        add([act_value] * lanes, [wgt_value] * lanes)
+
+    for lane in range(lanes):
+        for act_value, wgt_value in ((-128, -128), (-128, 127), (127, 127)):
+            act_row = list(background_act)
+            wgt_row = list(background_wgt)
+            act_row[lane] = act_value
+            wgt_row[lane] = wgt_value
+            add(act_row, wgt_row)
+
+    # 5. Products that cancel to exactly zero, with a distinct magnitude in
+    #    every lane. A zero sum is where a wrong sign, a lost carry or a
+    #    dropped lane shows up most plainly -- the correct answer has no bits
+    #    set, so any error is the whole output. But that only holds if the
+    #    cancellation is asymmetric: a row whose lanes all carry the same
+    #    product still sums correctly under a bug that swaps or duplicates
+    #    them, and a lane left at zero is a lane not being tested at all. Each
+    #    set below is written as explicit (activation, weight) pairs per lane
+    #    and cannot be built by truncating a longer one, since dropping a lane
+    #    would destroy the cancellation. Set A anchors on the two extreme
+    #    products, (-128)*(-128) = +16,384 and 127*(-128) = -16,256.
+    cancelling_pairs = {
+        5: [
+            [(-128, -128), (127, -128), (10, -10), (4, -5), (2, -4)],
+            [(25, 40), (-25, 32), (-15, 10), (12, -5), (2, 5)],
+        ],
+        8: [
+            [(-128, -128), (127, -128), (10, -10), (4, -5), (2, -4),
+             (9, 7), (3, -7), (6, -7)],
+            [(25, 40), (-25, 32), (-15, 10), (12, -5), (2, 5),
+             (11, 11), (-11, 10), (-1, 11)],
+        ],
+    }
+    for pairs in cancelling_pairs[lanes]:
+        act_row = [pair[0] for pair in pairs]
+        wgt_row = [pair[1] for pair in pairs]
+        products = [a * w for a, w in zip(act_row, wgt_row)]
+        # Assert the two properties the set is here for, rather than trusting
+        # the arithmetic above to stay right through an edit.
+        if sum(products) != 0:
+            raise ValueError(f"cancelling set for {lanes} lanes sums to {sum(products)}")
+        if 0 in products or len(set(abs(p) for p in products)) != lanes:
+            raise ValueError(f"cancelling set for {lanes} lanes has a zero or repeated product")
+        add(act_row, wgt_row)
+        add(wgt_row, act_row)
+        # The same products re-paired across lanes: still zero if the lanes are
+        # summed, but a different set of per-lane values reaching each
+        # multiplier.
+        add(act_row[::-1], wgt_row[::-1])
+
+    # 6. Uniform random over the whole int8 x int8 lane space, plus a mixed
+    #    distribution that pins half the lanes to extremes and leaves the rest
+    #    small -- uniform sampling almost never produces that shape, and it is
+    #    the shape a real quantized layer produces after ReLU.
+    rng = np.random.default_rng(seed)
+    for _ in range(random_count):
+        add(
+            rng.integers(-128, 128, size=lanes).tolist(),
+            rng.integers(-128, 128, size=lanes).tolist(),
+        )
+    for _ in range(random_count // 4):
+        act_row = rng.integers(-128, 128, size=lanes).tolist()
+        wgt_row = rng.integers(-4, 5, size=lanes).tolist()
+        for lane in rng.choice(lanes, size=max(1, lanes // 2), replace=False):
+            act_row[int(lane)] = int(rng.choice([-128, 127]))
+            wgt_row[int(lane)] = int(rng.choice([-128, 127]))
+        add(act_row, wgt_row)
+
+    return acts, wgts
+
+
+def _mac_lane_extreme_coverage(acts, wgts, lanes: int) -> tuple[int, int]:
+    """How many lanes were driven to -128 and to +127 on either operand.
+
+    Reported so the generator cannot quietly narrow to a subset of lanes while
+    the testbench keeps passing; the testbenches assert on these counts.
+    """
+
+    saw_min = 0
+    saw_max = 0
+    for lane in range(lanes):
+        values = {row[lane] for row in acts} | {row[lane] for row in wgts}
+        saw_min += -128 in values
+        saw_max += 127 in values
+    return saw_min, saw_max
+
+
+def generate_mac_vectors() -> str:
+    """Direct differential vectors for tb_conv5x5_row_mac and tb_dense_row_mac.
+
+    Both MAC blocks were reachable only through a wrapper: conv5x5_row_mac
+    through tb_conv5x5_pe, dense_row_mac through tb_dense_engine's five F6
+    output values. For a combinational block with five or eight independent
+    multiply lanes that is thin stimulus, and the gate-level tier measured
+    exactly how thin -- mutation scores of 3/4 and 2/5 against 5/5 for the
+    blocks that have a testbench of their own (results/gls_20260815.log).
+    These are also the two blocks unbounded equivalence cannot reach
+    (synth/equiv_mapped_requantize.ys explains why), so simulation is the only
+    evidence they have and it needs to be the good kind.
+
+    Both rows are packed lane 0 in the low byte, matching the RTL's comment.
+    """
+
+    conv_acts, conv_wgts = _mac_stimulus(lanes=5, seed=20260816, random_count=3000)
+    dense_acts, dense_wgts = _mac_stimulus(lanes=8, seed=20260817, random_count=4000)
+
+    conv_expected = _row_mac_reference(conv_acts, conv_wgts)
+    dense_expected = _row_mac_reference(dense_acts, dense_wgts)
+
+    # The ports are 32 bits wide; a reference value outside that range would be
+    # truncated on the way into the hex file and then reported as a mismatch
+    # against correct RTL. Five or eight int8 products cannot get near it, but
+    # assert rather than assume, because LANES is a parameter.
+    for name, expected in (("conv", conv_expected), ("dense", dense_expected)):
+        if expected.min() < -(1 << 31) or expected.max() > (1 << 31) - 1:
+            raise ValueError(f"{name} row MAC reference overflows the 32-bit port")
+
+    mac_dir = VECTOR_DIR / "mac"
+    write_hex(mac_dir / "conv_act.hex", np.array([_pack_lanes(r) for r in conv_acts], dtype=object), 40)
+    write_hex(mac_dir / "conv_wgt.hex", np.array([_pack_lanes(r) for r in conv_wgts], dtype=object), 40)
+    write_hex(mac_dir / "conv_expected.hex", conv_expected, 32)
+    write_hex(mac_dir / "dense_act.hex", np.array([_pack_lanes(r) for r in dense_acts], dtype=object), 64)
+    write_hex(mac_dir / "dense_wgt.hex", np.array([_pack_lanes(r) for r in dense_wgts], dtype=object), 64)
+    write_hex(mac_dir / "dense_expected.hex", dense_expected, 32)
+
+    conv_min_lanes, conv_max_lanes = _mac_lane_extreme_coverage(conv_acts, conv_wgts, 5)
+    dense_min_lanes, dense_max_lanes = _mac_lane_extreme_coverage(dense_acts, dense_wgts, 8)
+
+    print(
+        f"conv5x5_row_mac: {len(conv_acts)} differential cases, "
+        f"peak {conv_expected.max()} / {conv_expected.min()}"
+    )
+    print(
+        f"dense_row_mac: {len(dense_acts)} differential cases, "
+        f"peak {dense_expected.max()} / {dense_expected.min()}"
+    )
+
+    return f"""// ---- tb_conv5x5_row_mac.sv ----
+`define TV_MACC_COUNT {len(conv_acts)}
+`define TV_MACC_LANES 5
+`define TV_MACC_PEAK_POS {conv_expected.max()}
+`define TV_MACC_PEAK_NEG {conv_expected.min()}
+`define TV_MACC_LANES_AT_MIN {conv_min_lanes}
+`define TV_MACC_LANES_AT_MAX {conv_max_lanes}
+
+// ---- tb_dense_row_mac.sv ----
+`define TV_MACD_COUNT {len(dense_acts)}
+`define TV_MACD_LANES 8
+`define TV_MACD_PEAK_POS {dense_expected.max()}
+`define TV_MACD_PEAK_NEG {dense_expected.min()}
+`define TV_MACD_LANES_AT_MIN {dense_min_lanes}
+`define TV_MACD_LANES_AT_MAX {dense_max_lanes}
+"""
+
+
 def _extreme_weight_rows(out_ch: int, taps: int, split: int) -> np.ndarray:
     """Four deliberately chosen int8-extreme weight patterns, one per row.
 
@@ -592,6 +858,7 @@ def main() -> None:
         generate_f6_vectors(),
         generate_classifier_vectors(),
         generate_requantize_vectors(),
+        generate_mac_vectors(),
         generate_extremes_vectors(),
         generate_top_vectors(),
     ]

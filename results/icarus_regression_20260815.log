@@ -16,7 +16,7 @@ test_hand_calculated_convolution (golden.test_golden.GoldenModelTests.test_hand_
 test_requantize_rounding_and_saturation (golden.test_golden.GoldenModelTests.test_requantize_rounding_and_saturation) ... ok
 
 ----------------------------------------------------------------------
-Ran 15 tests in 1.159s
+Ran 15 tests in 0.671s
 
 OK
 iverilog -g2012 -Wall -tnull -s conv2d_engine rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv
@@ -128,6 +128,8 @@ pool: 2x4x6 -> 2x2x3
 dense_engine (F6 config): 10 -> 5
 classifier_argmax: 6 -> 4 classes, winner=3
 requantize: 5504 differential cases
+conv5x5_row_mac: 6592 differential cases, peak 81920 / -81280
+dense_row_mac: 9540 differential cases, peak 131072 / -130048
 extremes: conv 16x5x5 -> 2x1x1 (peak |acc| 7,502,600), dense 120 -> 4 (peak |acc| 2,950,780)
 lenet5_top: 1x32x32 -> class 6
 iverilog -g2012 -Wall -I. -s tb_requantize -o results/tb_requantize.vvp \
@@ -139,6 +141,35 @@ vvp results/tb_requantize.vvp
 PASS tb_requantize: 5504/5504 cases matched the Python golden model
   corners hit: 1659 saturate-high, 821 saturate-low, 1270 ReLU-clamped
 tb/tb_requantize.sv:96: $finish called at 5504000 (1ps)
+iverilog -g2012 -Wall -I. -s tb_conv5x5_row_mac \
+	-o results/tb_mac_conv.vvp rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/tb_conv5x5_row_mac.sv
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+vvp results/tb_mac_conv.vvp
+PASS tb_conv5x5_row_mac: 6592/6592 cases matched the Python golden model
+  peak +81920 hit 1 times, peak -81280 hit 2 times, 7 cancelled to zero, 2676 negative
+  all 5 lanes driven to both -128 and +127
+tb/tb_conv5x5_row_mac.sv:143: $finish called at 6592000 (1ps)
+iverilog -g2012 -Wall -I. -s tb_dense_row_mac \
+	-o results/tb_mac_dense.vvp rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/tb_dense_row_mac.sv
+vvp results/tb_mac_dense.vvp
+PASS tb_dense_row_mac: 9540/9540 cases matched the Python golden model
+  peak +131072 hit 1 times, peak -130048 hit 2 times, 6 cancelled to zero, 3812 negative
+  all 8 lanes driven to both -128 and +127
+tb/tb_dense_row_mac.sv:132: $finish called at 9540000 (1ps)
 iverilog -g2012 -Wall -s tb_lenet5_c3_connectivity \
 	-o results/tb_c3.vvp rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/tb_lenet5_c3_connectivity.sv
 vvp results/tb_c3.vvp

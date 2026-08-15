@@ -44,6 +44,22 @@
 // ---- tb_requantize.sv ----
 `define TV_RQ_COUNT 5504
 
+// ---- tb_conv5x5_row_mac.sv ----
+`define TV_MACC_COUNT 6592
+`define TV_MACC_LANES 5
+`define TV_MACC_PEAK_POS 81920
+`define TV_MACC_PEAK_NEG -81280
+`define TV_MACC_LANES_AT_MIN 5
+`define TV_MACC_LANES_AT_MAX 5
+
+// ---- tb_dense_row_mac.sv ----
+`define TV_MACD_COUNT 9540
+`define TV_MACD_LANES 8
+`define TV_MACD_PEAK_POS 131072
+`define TV_MACD_PEAK_NEG -130048
+`define TV_MACD_LANES_AT_MIN 8
+`define TV_MACD_LANES_AT_MAX 8
+
 // ---- tb_extremes.sv (int8-extreme operands at maximum layer size) ----
 `define TV_EX_IN_H 5
 `define TV_EX_IN_W 5

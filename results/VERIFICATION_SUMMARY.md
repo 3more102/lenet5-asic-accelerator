@@ -1,18 +1,20 @@
 # Verification Summary
 
-Date: 2026-08-07, re-verified six times on 2026-08-15 — after the requantize
+Date: 2026-08-07, re-verified seven times on 2026-08-15 — after the requantize
 pipelining change, after adding controller-FSM coverage and the
 config-validation reject tier, after adding the stall-invariance and
 reset-interruption tier, after adding the operand/dimension extremes tier, after
-adding post-synthesis formal equivalence, and after extending both formal and
-simulation to the sky130hd-mapped netlist. See the six Addenda at the end.
-The body below reflects the first re-verification; **where a later addendum
-moves a number, the later one is authoritative** — that means the cycle figures
-come from the second (measured per inference rather than read off `$finish`) and
-the testbench count from the fourth (**12**, not 9, 10 or 11). The fifth and
-sixth add checks that are not testbenches at all and are not counted among the
-twelve; the sixth re-runs three of the twelve against gates instead of RTL,
-which is a second run of an existing testbench and not a thirteenth.
+adding post-synthesis formal equivalence, after extending both formal and
+simulation to the sky130hd-mapped netlist, and after giving the two
+multiply-accumulate blocks a testbench of their own. See the seven Addenda at
+the end. The body below reflects the first re-verification; **where a later
+addendum moves a number, the later one is authoritative** — that means the cycle
+figures come from the second (measured per inference rather than read off
+`$finish`) and the testbench count from the **seventh** (**14**, not 9, 10, 11
+or 12). The fifth and sixth add checks that are not testbenches at all and are
+not counted; the sixth re-runs existing testbenches against gates instead of
+RTL, which is a second run of an existing testbench rather than a new one. The
+seventh adds two genuinely new testbenches, which is why the count moves.
 
 ## Status
 
@@ -590,3 +592,100 @@ zero-delay gates, no SDF, no back-annotation. And neither target runs in CI:
 both need the sky130hd liberty from an ORFS install, which the CI runner does
 not have, so the committed evidence is `results/gls_20260815.log` rather than a
 job badge.
+
+## Addendum — 2026-08-15: the two MAC blocks get a testbench of their own
+
+The addendum above closed by naming its own weakest point: the MAC blocks are
+where simulation is thinnest and where formal cannot reach, and block-level
+stimulus rather than layer vectors replayed through a wrapper is what would fix
+it. This is that fix, and the testbench count moves from **12 to 14** because
+these are two genuinely new testbenches rather than existing ones re-run.
+
+`conv5x5_row_mac` and `dense_row_mac` are where every multiplication in the
+design happens. Until now the 5-tap MAC was reached only through
+`tb_conv5x5_pe` and the 8-lane MAC only through `tb_dense_engine`'s five F6
+output values.
+
+**The oracle is not new code.** One lane group of a dense layer with zero bias
+*is* a row MAC, so both testbenches take their expected values from
+`dense_int8`'s accumulator output — the same model the rest of the suite is
+checked against, not a second implementation of the arithmetic being compared.
+
+**The stimulus is built for a lane MAC's failure modes**, not for size:
+
+- Every lane swept across all 256 int8 values on both operands, with the other
+  lanes held at a non-zero background whose products have distinct magnitudes.
+  Zeroing them would be the worst available choice: with the rest of the row
+  zeroed, dropping a lane, duplicating one, or pairing lane *i*'s activation
+  with lane *j*'s weight all produce the same sum as a correct design.
+- Weights rotated against fixed activations. Rotating *both* rows leaves the
+  multiset of products, and therefore the sum, unchanged — a test that passes
+  on a mis-wired lane pairing.
+- Products cancelling to exactly zero with a distinct magnitude per lane, one
+  set anchored on both extreme products `(-128)*(-128) = +16,384` and
+  `127*(-128) = -16,256`. The correct answer has no bits set, so any error is
+  the whole output.
+- Uniform random, plus a mixed distribution pinning half the lanes to extremes
+  and leaving the rest small — the shape a quantized layer produces after ReLU.
+
+6,592 and 9,540 cases, reaching the theoretical peaks exactly: +81,920/-81,280
+for five lanes, +131,072/-130,048 for eight.
+
+**The first draft of the cancelling class was wrong, and is worth recording.**
+It produced five *identical* products summing to -640 — neither cancelling nor
+asymmetric, and precisely the symmetric shape `tb_extremes.sv` had already
+learned to avoid. Only one vector in 6,592 landed on zero, and it did so by
+accident out of the random class. The generator now asserts each cancelling set
+sums to zero and contains no repeated or zero product, and each testbench
+requires at least six such rows rather than merely "not zero".
+
+**The vacuity guards were proven able to fire.** Each testbench asserts it drove
+every lane individually to both int8 extremes. Narrowing the directed sweeps by
+two lanes does *not* fail it — 3,000 random rows genuinely do cover every lane,
+and the guard reports coverage rather than intent. Narrowing the directed
+classes *and* clamping the random class away from the rails fails it with
+"only 4/5 lanes saw +127", which is the check working.
+
+**Proven able to fail.** Five RTL mutations per block, each behind a passing
+unmutated control: drop a lane from the tree, re-pair a lane's weight, turn a
+tree adder into a subtractor, zero-extend instead of sign-extend, tie the low
+bit low. **5/5 and 5/5.** One further attempt was thrown out rather than
+counted — it was not legal Verilog, and the harness had been scoring the
+compile error as a catch. A build break proves nothing about a testbench.
+
+**The controlled experiment the previous addendum could only approximate.**
+`make gls` now maps a block once and simulates every testbench that reaches it,
+since mapping is the only expensive step. That allows the same netlist to be
+mutated identically and driven two different ways:
+
+| Netlist | Driven by | Caught |
+|---|---|---|
+| `conv5x5_row_mac` (1,833 cells) | `tb_conv5x5_row_mac` (6,592 cases) | **5/5** |
+| `conv5x5_row_mac` (1,833 cells) | `tb_conv5x5_pe` (wrapper) | 4/5 |
+| `dense_row_mac` (2,984 cells) | `tb_dense_row_mac` (9,540 cases) | **5/5** |
+| `dense_row_mac` (2,984 cells) | `tb_dense_engine` (five F6 values) | 2/5 |
+
+Same netlist, same five mutations, same tool, same run. The only variable is the
+stimulus, and it is the whole of the difference — which is the claim the
+previous addendum made across *different* blocks and could not isolate.
+
+The 2/5 reproduces the previous addendum's measurement exactly, down to which
+three mutations survive, so it is a reproducible property of that stimulus
+rather than a noisy result. Counting each block once by its strongest driver,
+`make gls` now catches **22 of 24** against the 14 of 19 it caught before.
+
+**All five GLS blocks still pass**, at unchanged cell counts — `requantize` 550,
+`conv5x5_row_mac` 1,833, `conv5x5_pe` 3,102, `avg_pool2x2_int8` 135,
+`dense_row_mac` 2,984 — with the two MAC netlists now checked both pure-gate
+against their own testbench and in place inside their RTL wrapper.
+
+**What this does not close.** Two survivors remain. The `avg_pool2x2_int8` one is
+covered by `make equiv-mapped`, which catches it instantly. The `conv5x5_pe` one
+is not: that block is the *wrapper* — its MAC now has a testbench of its own,
+but the bias/accumulate and requantize path around it does not, and it has no
+formal cover. Naming it here rather than letting a 22-of-24 headline absorb it.
+
+**Full regression after all of it:** 26 PASS lines across **14** distinct
+testbenches, zero failures, under both Icarus Verilog 12.0 and ModelSim ASE
+18.1. `scripts/regression_summary.sh` asserts the count of 14, so a testbench
+that stops running fails the gate rather than leaving a screen full of green.

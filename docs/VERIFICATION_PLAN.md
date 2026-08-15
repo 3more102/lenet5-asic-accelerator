@@ -4,7 +4,11 @@
 
 | Feature | Golden/reference | RTL test |
 |---|---|---|
-| Signed 5-tap row MAC | hand calculation | `tb_conv5x5_pe.sv` |
+| Signed 5-tap row MAC | `dense_int8` accumulator output | `tb_conv5x5_row_mac.sv` (6,592 cases) + `tb_conv5x5_pe.sv` |
+| Signed 8-lane dense MAC | same | `tb_dense_row_mac.sv` (9,540 cases) + `tb_dense_engine.sv` |
+| Every MAC lane swept across the full int8 range, both operands | same | `tb_conv5x5_row_mac.sv`, `tb_dense_row_mac.sv` |
+| Largest-magnitude int8 product (-128 x -128) in every lane at once | same | same |
+| Lane pairing: activation *i* must meet weight *i* | same (weights rotated against fixed activations) | same |
 | Bias and multi-row accumulation | hand calculation | `tb_conv5x5_pe.sv` |
 | Output backpressure/hold | protocol expectation | PE and engine tests |
 | Round-nearest-away-from-zero | NumPy | Python unit tests + engine comparison |
@@ -113,6 +117,48 @@ of the cases measured. The width is now exercised rather than assumed, though
 the argument that no legal configuration can exceed it remains an argument,
 not a proof.
 
+**The two MAC blocks, driven directly (`tb_conv5x5_row_mac.sv`,
+`tb_dense_row_mac.sv`):** `conv5x5_row_mac` and `dense_row_mac` are where every
+multiplication in the design happens, and until these existed neither had a
+testbench of its own. They were reached only through a wrapper — the 5-tap MAC
+through `tb_conv5x5_pe`, the 8-lane MAC through `tb_dense_engine`'s five F6
+output values. The gate-level tier put a number on how thin that is: mutation
+scores of 3/4 and 2/5 where blocks with their own testbench scored 5/5. They are
+also the two blocks unbounded equivalence cannot reach, so simulation is the
+only evidence they have.
+
+Both testbenches take their expected values from `dense_int8`'s accumulator
+output rather than a second implementation of the arithmetic: one lane group of
+a dense layer with zero bias *is* a row MAC, so the oracle is the same model the
+rest of the suite is checked against. The stimulus is built to make a lane MAC's
+specific failure modes observable rather than to be large:
+
+1. **Every lane swept across all 256 int8 values, on both operands**, with the
+   other lanes held at a non-zero background. Zeroing them would be the worst
+   available choice: with the rest of the row zeroed, a design that dropped a
+   lane, duplicated one, or paired lane *i*'s activation with lane *j*'s weight
+   would produce the same sum as a correct one. The background products
+   (87, -155, -259, 451, 559, 799, 1007, -1357) have distinct magnitudes, so
+   removing any single lane lands on a different value than removing any other.
+2. **Weights rotated against fixed activations.** Rotating *both* rows leaves
+   the multiset of products unchanged and therefore the sum unchanged — a test
+   that passes on a mis-wired lane pairing. Rotating the weights alone re-pairs
+   every lane, so lane *i*'s activation must meet lane *i*'s weight.
+3. **Products that cancel to exactly zero, with a distinct magnitude per lane.**
+   The correct answer has no bits set, so any error is the whole output. One
+   set anchors on both extreme products, `(-128)*(-128) = +16,384` and
+   `127*(-128) = -16,256`. The generator asserts each set sums to zero and has
+   no repeated or zero product, for the reason `tb_extremes.sv` learned the hard
+   way: a symmetric cancellation cancels the bug as neatly as the products.
+4. **Uniform random, plus a mixed distribution** that pins half the lanes to
+   extremes and leaves the rest small — the shape a real quantized layer
+   produces after ReLU, which uniform sampling almost never generates.
+
+The peaks reached are the theoretical ones: +81,920 and -81,280 for five lanes,
++131,072 and -130,048 for eight. Each testbench asserts it reached both, reached
+at least six cancelling rows, and drove **every lane individually** to both int8
+extremes — a run that quietly stopped covering a lane fails rather than passes.
+
 **Post-synthesis equivalence (`synth/equiv_*.ys`, `make equiv`):** everything
 above is RTL simulation. It compares the RTL against the Python model on
 whatever stimulus a testbench drives, and says nothing about what synthesis
@@ -200,21 +246,33 @@ block with the same flow `asic/sta/run_ppa.sh` uses — same liberty, same
 the *existing* testbenches against the netlist instead of the RTL. Same golden
 vectors, same PASS lines, gates underneath.
 
+A block may be driven by more than one testbench. Mapping is what costs the time
+— `abc` on `dense_row_mac` is ~35 minutes, the simulations are seconds — so once
+a netlist exists, everything that reaches it is worth running.
+
 | Block | Testbench | Mode | Cells | Result | Runtime |
 |---|---|---|---|---|---|
 | `requantize` | `tb_requantize` (5,504 cases) | pure gate | 550 | PASS | seconds |
+| `conv5x5_row_mac` | `tb_conv5x5_row_mac` (6,592 cases) | pure gate | 1,833 | PASS | seconds |
+| `conv5x5_row_mac` | `tb_conv5x5_pe` | mixed RTL/gate | 1,833 | PASS | seconds |
 | `conv5x5_pe` (+`conv5x5_row_mac`, `requantize`) | `tb_conv5x5_pe` | pure gate | 3,102 | PASS | ~10 s |
 | `avg_pool2x2_int8` | `tb_avg_pool2x2_stream` | mixed RTL/gate | 135 | PASS | seconds |
-| `dense_row_mac` | `tb_dense_engine` (F6 layer) | mixed RTL/gate | 2,984 | PASS | ~35 min |
+| `dense_row_mac` | `tb_dense_row_mac` (9,540 cases) | pure gate | 2,984 | PASS | seconds |
+| `dense_row_mac` | `tb_dense_engine` (F6 layer) | mixed RTL/gate | 2,984 | PASS | seconds |
 
 `dense_row_mac` dominates the wall-clock, and all of it is `abc`: 2,099 s of a
 2,102 s Yosys run. The same block maps in a fraction of that under Yosys 0.52
 (`asic/sta/results/`), so this is a tool-version cost rather than anything about
 the design. It is why `make gls` is not part of `make regression`.
 
-The last two run *mixed*: those blocks have no testbench of their own, so the
-mapped leaf sits inside its RTL wrapper and the wrapper's testbench drives it.
-`tb/gls_shim_*.sv` is what makes that substitution work — a gate netlist has no
+The *mixed* runs put the mapped leaf inside its RTL wrapper and let the
+wrapper's testbench drive it. For `avg_pool2x2_int8` that is the only option —
+its stream interface lives in the wrapper. For the two MAC blocks it is now a
+second check rather than the only one: each is run pure-gate against its own
+testbench *and* in place inside its wrapper, so the netlist is checked both for
+its arithmetic and for still fitting where it has to fit.
+
+`tb/gls_shim_*.sv` is what makes the substitution work — a gate netlist has no
 parameters, but every wrapper instantiates these blocks with parameter
 overrides, so each shim presents the RTL's parameterized interface and
 `$fatal`s if a caller ever asks for a configuration the netlist was not
@@ -243,37 +301,55 @@ becomes OR, OR becomes AND, tie an output bit low, invert a gate input. Each
 campaign ran a passing unmutated control first — without it, "all caught" would
 also be the score of a harness that fails on everything.
 
-| Tier | Block | Caught |
+| Tier | Netlist | Driven by | Caught |
+|---|---|---|---|
+| `equiv-mapped` | `requantize` | — (SAT) | 5/5 |
+| `equiv-mapped` | `avg_pool2x2_int8` | — (SAT) | 5/5 |
+| `gls` | `requantize` | `tb_requantize` | 5/5 |
+| `gls` | `conv5x5_row_mac` | `tb_conv5x5_row_mac` | **5/5** |
+| `gls` | `conv5x5_row_mac` | `tb_conv5x5_pe` | 4/5 |
+| `gls` | `conv5x5_pe` | `tb_conv5x5_pe` | 3/4 (one had no matching line in that netlist) |
+| `gls` | `avg_pool2x2_int8` | `tb_avg_pool2x2_stream` | 4/5 |
+| `gls` | `dense_row_mac` | `tb_dense_row_mac` | **5/5** |
+| `gls` | `dense_row_mac` | `tb_dense_engine` | 2/5 |
+
+Counting each block once, by its strongest driver, `gls` now catches **22 of 24**
+against the 14 of 19 it caught when every MAC was reached through a wrapper.
+
+**The two rows that share a netlist are the point of the table.** A mutation
+survives when the testbench's stimulus never drives that node into an observable
+difference, so the score measures the *stimulus*, not the netlist. Until now
+that claim rested on comparing different blocks, which cannot separate "thin
+stimulus" from "harder block". These two pairs hold the netlist, the mutations,
+the tool and the day fixed and change only the driver:
+
+| Netlist | Driven by | Caught |
 |---|---|---|
-| `equiv-mapped` | `requantize` | 5/5 |
-| `equiv-mapped` | `avg_pool2x2_int8` | 5/5 |
-| `gls` | `requantize` | 5/5 |
-| `gls` | `avg_pool2x2_int8` | 4/5 |
-| `gls` | `conv5x5_pe` | 3/4 (one had no matching line in that netlist) |
-| `gls` | `dense_row_mac` | 2/5 |
+| `conv5x5_row_mac`, 1,833 cells | `tb_conv5x5_row_mac`, 6,592 cases | **5/5** |
+| `conv5x5_row_mac`, 1,833 cells | `tb_conv5x5_pe`, wrapper | 4/5 |
+| `dense_row_mac`, 2,984 cells | `tb_dense_row_mac`, 9,540 cases | **5/5** |
+| `dense_row_mac`, 2,984 cells | `tb_dense_engine`, five F6 values | 2/5 |
 
-**The five `gls` survivors say more than the score does.** A mutation survives
-when the testbench's stimulus never drives that node into an observable
-difference, so this measures the *stimulus*, not the netlist — and it degrades
-exactly where the stimulus is thinnest.
+The 2/5 reproduces the earlier measurement exactly, down to which three
+mutations survive. Nothing about the netlist changed; five vectors against a
+2,984-cell 8-lane MAC simply leave most of it undriven.
 
-- `dense_row_mac` is the extreme case at 2/5. `tb_dense_engine` checks five F6
-  output values, and five vectors against a 2,984-cell 8-lane MAC leave most of
-  it untouched. Stated plainly: `make gls` establishes that this netlist
-  computes the F6 layer correctly, and not much beyond that.
+Two survivors remain, and neither is closed by this tier:
+
 - The `avg_pool2x2_int8` survivor is a dropped inverter that
   `tb_avg_pool2x2_stream`'s twelve golden outputs never distinguish — and that
   `make equiv-mapped` catches immediately, since 8 SAT points cover every input
   pattern. That is exactly what having two tiers is for.
 - The `conv5x5_pe` survivor is an OR-to-AND swap deep inside the PE, on a node
-  `tb_conv5x5_pe`'s directed stimulus never drives both ways. That block has no
-  formal cover, so it stands as a real gap rather than one another tier closes.
+  `tb_conv5x5_pe`'s directed stimulus never drives both ways. `conv5x5_pe` is
+  the wrapper — its MAC now has its own testbench, but the bias/accumulate and
+  requantize path around it does not — and it has no formal cover. It stands as
+  a real gap rather than one another tier closes.
 
-The pattern is consistent and worth stating rather than smoothing over: the
-blocks formal can reach are the ones simulation already covers well, and the MAC
-blocks — the ones formal cannot reach — are exactly where simulation is weakest.
-Block-level constrained-random stimulus, rather than replaying layer vectors
-through a wrapper, is what would close it.
+The earlier version of this section ended by naming block-level stimulus as what
+would close the MAC blocks. That is now done and measured. What it did not close
+is the wrapper logic in `conv5x5_pe`, which is where the remaining survivor
+lives.
 
 ## Required before tapeout
 
@@ -296,8 +372,10 @@ through a wrapper, is what would close it.
   synthesizable leaf blocks, and `make equiv-mapped` proves RTL == sky130hd
   netlist for `requantize` and `avg_pool2x2_int8` -- see the equivalence notes
   above. The five ROM/scratch-array modules still have no netlist at all, and
-  the mapped MAC blocks are beyond `equiv_simple`, so they hold simulation
-  evidence only);
+  the mapped MAC blocks are beyond `equiv_simple`. Those two now hold
+  *thorough* simulation evidence rather than incidental -- their own
+  testbenches sweep every lane and catch 5/5 gate-level mutations each -- but
+  simulation on chosen inputs is still not a proof over all of them);
 - scan/MBIST verification;
 - **SDF** gate-level simulations, and gate-level reset simulation (`make gls`
   now runs every mapped leaf block against the golden vectors, but with

@@ -19,7 +19,8 @@ RTL := \
 	rtl/lenet5_dense_config.sv \
 	rtl/lenet5_top.sv
 
-.PHONY: all vectors golden-test demo lint sim-pe sim-requantize sim-c3 sim-engine sim-pool sim-f6 \
+.PHONY: all vectors golden-test demo lint sim-pe sim-requantize sim-mac-conv sim-mac-dense \
+	sim-c3 sim-engine sim-pool sim-f6 \
 	sim-classifier sim-classifier-tie sim-config-guard sim-robustness sim-extremes \
 	sim-top regression synth synth-pe synth-pool synth-mac \
 	equiv equiv-pe equiv-pool equiv-mac equiv-mapped equiv-mapped-requantize \
@@ -58,6 +59,23 @@ sim-requantize: vectors
 	$(IVERILOG) -g2012 -Wall -I. -s tb_requantize -o results/tb_requantize.vvp \
 		$(RTL) tb/tb_requantize.sv
 	$(VVP) results/tb_requantize.vvp
+
+# The two multiply-accumulate blocks, driven directly instead of through a
+# wrapper. Both were previously reached only incidentally -- conv5x5_row_mac
+# through tb_conv5x5_pe, dense_row_mac through tb_dense_engine's five F6
+# output values -- and both are beyond what `make equiv-mapped` can prove, so
+# simulation is the only evidence they have. Each vector set sweeps every lane
+# across the full int8 range on both operands and asserts it reached the sum's
+# extremes, a cancelling case, and both int8 extremes on every lane.
+sim-mac-conv: vectors
+	$(IVERILOG) -g2012 -Wall -I. -s tb_conv5x5_row_mac \
+		-o results/tb_mac_conv.vvp $(RTL) tb/tb_conv5x5_row_mac.sv
+	$(VVP) results/tb_mac_conv.vvp
+
+sim-mac-dense: vectors
+	$(IVERILOG) -g2012 -Wall -I. -s tb_dense_row_mac \
+		-o results/tb_mac_dense.vvp $(RTL) tb/tb_dense_row_mac.sv
+	$(VVP) results/tb_mac_dense.vvp
 
 sim-c3:
 	$(IVERILOG) -g2012 -Wall -s tb_lenet5_c3_connectivity \
@@ -120,8 +138,9 @@ sim-top: vectors
 		-o results/tb_top.vvp $(RTL) tb/fsm_cov.sv tb/tb_lenet5_top.sv
 	$(VVP) results/tb_top.vvp
 
-regression: golden-test lint sim-pe sim-requantize sim-c3 sim-engine sim-pool sim-f6 \
-	sim-classifier sim-classifier-tie sim-config-guard sim-robustness sim-extremes sim-top demo
+regression: golden-test lint sim-pe sim-requantize sim-mac-conv sim-mac-dense sim-c3 \
+	sim-engine sim-pool sim-f6 sim-classifier sim-classifier-tie sim-config-guard \
+	sim-robustness sim-extremes sim-top demo
 
 # synth-pe is the original target name kept as an alias so existing callers
 # of `make synth-pe`/`synth/yosys.ys` keep working; `synth` now means
@@ -177,16 +196,18 @@ equiv-mapped-pool:
 	$(YOSYS) -s synth/equiv_mapped_avg_pool2x2_int8.ys
 
 # Gate-level simulation: re-run the existing testbenches against the
-# sky130hd-mapped netlists instead of the RTL, two of them pure-gate and two as
-# mixed RTL/gate runs. This is how the blocks `equiv-mapped` cannot prove get
-# their netlists checked. Same golden vectors, same PASS lines, gates
-# underneath. Needs yosys, iverilog and the sky130hd liberty; see
-# scripts/run_gls.sh for the flow and docs/VERIFICATION_PLAN.md for its scope.
+# sky130hd-mapped netlists instead of the RTL, some pure-gate and some as mixed
+# RTL/gate runs. This is how the blocks `equiv-mapped` cannot prove get their
+# netlists checked. Same golden vectors, same PASS lines, gates underneath.
+# Needs yosys, iverilog and the sky130hd liberty; see scripts/run_gls.sh for the
+# flow and docs/VERIFICATION_PLAN.md for its scope.
 #
-# Budget ~36 minutes, of which dense_row_mac is 35 and abc is essentially all
-# of it (2,099 s of a 2,102 s yosys run under 0.68; far quicker under 0.52).
-# The simulations themselves take seconds. Pass block names to skip it:
-#   bash scripts/run_gls.sh requantize conv5x5_pe avg_pool2x2_int8
+# A block may list several testbenches; each netlist is built once and reused,
+# because mapping is the only expensive step here. Budget ~40 minutes, of which
+# dense_row_mac is ~35 and abc is essentially all of it (2,099 s of a 2,102 s
+# yosys run under 0.68; far quicker under 0.52). The simulations themselves take
+# seconds. Pass block names to run a subset:
+#   bash scripts/run_gls.sh requantize conv5x5_row_mac avg_pool2x2_int8
 gls: vectors
 	bash scripts/run_gls.sh
 

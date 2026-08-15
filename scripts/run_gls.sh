@@ -25,10 +25,16 @@
 # heredoc rather than checking one in per block follows run_ppa.sh for the same
 # reason it does: the flow is one thing, and it should be edited in one place.
 #
-# Two blocks run pure-gate (the netlist is the whole DUT) and two run mixed
-# RTL/gate (a mapped leaf inside an RTL wrapper), because avg_pool2x2_int8 and
-# dense_row_mac have no testbench of their own -- see docs/SEMICUSTOM_FLOW.md
-# for why their wrappers are not synthesizable yet.
+# Some blocks run pure-gate (the netlist is the whole DUT) and some run mixed
+# RTL/gate (a mapped leaf inside an RTL wrapper), because avg_pool2x2_int8's
+# wrapper is where its stream interface lives -- see docs/SEMICUSTOM_FLOW.md
+# for why those wrappers are not synthesizable yet.
+#
+# A block may list more than one testbench. Mapping is what costs the time here
+# (abc on dense_row_mac is ~35 minutes; the simulations are seconds), so once a
+# netlist exists it is worth running everything that reaches it: the two MAC
+# blocks get both their own direct testbench, which sweeps every lane, and the
+# wrapper testbench that exercises them in place.
 
 set -euo pipefail
 
@@ -57,6 +63,7 @@ done
 sources_for() {
     case "$1" in
         requantize)       echo "rtl/requantize.sv" ;;
+        conv5x5_row_mac)  echo "rtl/conv5x5_row_mac.sv" ;;
         conv5x5_pe)       echo "rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv" ;;
         avg_pool2x2_int8) echo "rtl/avg_pool2x2_int8.sv" ;;
         dense_row_mac)    echo "rtl/dense_row_mac.sv" ;;
@@ -64,26 +71,21 @@ sources_for() {
     esac
 }
 
-# Which testbench exercises the netlist, and its root module.
-testbench_for() {
+# Which testbenches exercise the netlist, as <root module>:<file> pairs. More
+# than one is allowed and costs only the simulation: the mapped netlist is
+# built once per block and reused for each.
+testbenches_for() {
     case "$1" in
-        requantize)       echo "tb/tb_requantize.sv" ;;
-        conv5x5_pe)       echo "tb/tb_conv5x5_pe.sv" ;;
-        avg_pool2x2_int8) echo "tb/tb_avg_pool2x2_stream.sv" ;;
-        dense_row_mac)    echo "tb/tb_dense_engine.sv" ;;
+        requantize)       echo "tb_requantize:tb/tb_requantize.sv" ;;
+        conv5x5_row_mac)  echo "tb_conv5x5_row_mac:tb/tb_conv5x5_row_mac.sv tb_conv5x5_pe:tb/tb_conv5x5_pe.sv" ;;
+        conv5x5_pe)       echo "tb_conv5x5_pe:tb/tb_conv5x5_pe.sv" ;;
+        avg_pool2x2_int8) echo "tb_avg_pool2x2_stream:tb/tb_avg_pool2x2_stream.sv" ;;
+        dense_row_mac)    echo "tb_dense_row_mac:tb/tb_dense_row_mac.sv tb_dense_engine:tb/tb_dense_engine.sv" ;;
+        *) echo "ERROR: no testbench list for block '$1'" >&2 ; return 1 ;;
     esac
 }
 
-tbtop_for() {
-    case "$1" in
-        requantize)       echo "tb_requantize" ;;
-        conv5x5_pe)       echo "tb_conv5x5_pe" ;;
-        avg_pool2x2_int8) echo "tb_avg_pool2x2_stream" ;;
-        dense_row_mac)    echo "tb_dense_engine" ;;
-    esac
-}
-
-BLOCKS="${*:-requantize conv5x5_pe avg_pool2x2_int8 dense_row_mac}"
+BLOCKS="${*:-requantize conv5x5_row_mac conv5x5_pe avg_pool2x2_int8 dense_row_mac}"
 
 mkdir -p "$OUT"
 cd "$PROJECT_HOME"
@@ -91,12 +93,10 @@ cd "$PROJECT_HOME"
 fails=0
 for block in $BLOCKS; do
     srcs="$(sources_for "$block")"
-    tb="$(testbench_for "$block")"
-    tbtop="$(tbtop_for "$block")"
+    tbs="$(testbenches_for "$block")"
     netlist="$OUT/${block}_gls.v"
     shim="tb/gls_shim_${block}.sv"
     ylog="$OUT/${block}.yosys.log"
-    slog="$OUT/${block}.sim.log"
 
     [ -f "$shim" ] || { echo "ERROR: missing $shim" >&2; exit 1; }
 
@@ -156,21 +156,30 @@ EOF
         rtl_list="$rtl_list $f"
     done
 
-    echo "== sim : $block  ($tbtop against the mapped netlist)"
-    "$IVERILOG" -g2012 -Wall -I. -s "$tbtop" -o "$OUT/${block}.vvp" \
-        $rtl_list "$shim" "$netlist" $tb
-    "$VVP" "$OUT/${block}.vvp" > "$slog" 2>&1 || true
+    echo "== map : $block  cells=$cells area=${area}um2"
 
-    # The testbenches self-check and $fatal on mismatch, but a netlist can also
-    # fail by producing nothing at all -- X-propagation that trips an early
-    # $finish leaves a clean exit and an empty verdict. Require the PASS line.
-    if grep -q "^PASS $tbtop" "$slog"; then
-        echo "   PASS  cells=$cells area=${area}um2  $(grep -m1 "^PASS $tbtop" "$slog")"
-    else
-        echo "   FAIL  no 'PASS $tbtop' line in $slog"
-        tail -5 "$slog" | sed 's/^/        /'
-        fails=$((fails + 1))
-    fi
+    for entry in $tbs; do
+        tbtop="${entry%%:*}"
+        tb="${entry#*:}"
+        slog="$OUT/${block}.${tbtop}.sim.log"
+
+        echo "== sim : $block  ($tbtop against the mapped netlist)"
+        "$IVERILOG" -g2012 -Wall -I. -s "$tbtop" -o "$OUT/${block}.${tbtop}.vvp" \
+            $rtl_list "$shim" "$netlist" $tb
+        "$VVP" "$OUT/${block}.${tbtop}.vvp" > "$slog" 2>&1 || true
+
+        # The testbenches self-check and $fatal on mismatch, but a netlist can
+        # also fail by producing nothing at all -- X-propagation that trips an
+        # early $finish leaves a clean exit and an empty verdict. Require the
+        # PASS line.
+        if grep -q "^PASS $tbtop" "$slog"; then
+            echo "   PASS  cells=$cells area=${area}um2  $(grep -m1 "^PASS $tbtop" "$slog")"
+        else
+            echo "   FAIL  no 'PASS $tbtop' line in $slog"
+            tail -5 "$slog" | sed 's/^/        /'
+            fails=$((fails + 1))
+        fi
+    done
 done
 
 echo
