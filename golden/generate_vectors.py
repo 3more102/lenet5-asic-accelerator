@@ -271,8 +271,12 @@ def generate_requantize_vectors() -> str:
             add(acc, shift)
 
     # Worst-case real accumulation from the architecture: C5 is 16 channels x
-    # 25 taps x 127 x 127 (docs/ARCHITECTURE.md), so bracket that magnitude.
-    worst = 16 * 25 * 127 * 127
+    # 25 taps, and the largest-magnitude int8 product is (-128) * (-128) =
+    # 16,384 rather than 127 * 127 = 16,129, because -128 has no positive
+    # counterpart (docs/ARCHITECTURE.md). Bracketing 127^2 instead -- as this
+    # did until 2026-08-15 -- leaves the true architectural worst case, and the
+    # 102,000 above it, untested.
+    worst = 16 * 25 * 128 * 128
     for shift in (0, 1, 7, 15, 31):
         for acc in (worst, -worst, worst + 1, -worst - 1):
             add(acc, shift)

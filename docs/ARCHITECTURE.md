@@ -112,18 +112,30 @@ conversion from calibration data; the RTL deliberately avoids embedding
 unverified scale constants.
 
 The worst canonical convolution accumulation with full-scale int8 operands is
-C5:
+C5. The bound must be taken over `[-128, 127]`, not `[-127, 127]`: the largest
+magnitude an int8 product can reach is `(-128) * (-128) = 16,384`, which is
+larger than `127 * 127 = 16,129`, because -128 has no positive counterpart.
 
-`16 * 25 * 127 * 127 = 6,451,600`
+`16 * 25 * 128 * 128 = 6,553,600`
 
-F6's worst case is `120 * 127 * 127 = 1,935,480` and the classifier's is
-`84 * 127 * 127 = 1,354,836`. All three are well inside signed int32, leaving
-substantial bias headroom -- `dense_engine`/`classifier_argmax` reuse
-`ACC_WIDTH=32` unchanged from `conv2d_engine`, and `classifier_argmax`
-compares this raw pre-shift accumulator directly (via `dense_engine`'s
-`out_acc_o`) rather than the shift/ReLU/saturate output, avoiding
-saturation-induced misclassification -- see `docs/INTERFACES.md`'s
-Classifier section for why.
+F6's worst case is `120 * 128 * 128 = 1,966,080` and the classifier's is
+`84 * 128 * 128 = 1,376,256`. All three are well inside signed int32's
+2,147,483,647 -- a 327x margin on C5 -- leaving substantial bias headroom.
+
+Two qualifications on "cannot overflow". It is a statement about the
+*products*: the accumulator holds `sum(a*w) + bias` and `bias` is a full int32,
+so a large enough bias overflows regardless; the products alone cannot. And
+until 2026-08-15 it was a bound and nothing else, since no vector drove -128 or
++127 at any operand position. `tb_extremes.sv` now drives exactly these
+operands at C5's shape and measures a peak of 7,502,600 (products plus a
+deliberately large bias) with the output still bit-exact against the golden
+model.
+
+`dense_engine`/`classifier_argmax` reuse `ACC_WIDTH=32` unchanged from
+`conv2d_engine`, and `classifier_argmax` compares this raw pre-shift
+accumulator directly (via `dense_engine`'s `out_acc_o`) rather than the
+shift/ReLU/saturate output, avoiding saturation-induced misclassification --
+see `docs/INTERFACES.md`'s Classifier section for why.
 
 ## 5. Nominal compute cost
 

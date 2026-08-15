@@ -16,7 +16,7 @@ test_hand_calculated_convolution (golden.test_golden.GoldenModelTests.test_hand_
 test_requantize_rounding_and_saturation (golden.test_golden.GoldenModelTests.test_requantize_rounding_and_saturation) ... ok
 
 ----------------------------------------------------------------------
-Ran 15 tests in 1.914s
+Ran 15 tests in 1.159s
 
 OK
 iverilog -g2012 -Wall -tnull -s conv2d_engine rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv
