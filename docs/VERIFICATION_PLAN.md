@@ -313,8 +313,13 @@ also be the score of a harness that fails on everything.
 | `gls` | `dense_row_mac` | `tb_dense_row_mac` | **5/5** |
 | `gls` | `dense_row_mac` | `tb_dense_engine` | 2/5 |
 
-Counting each block once, by its strongest driver, `gls` now catches **22 of 24**
-against the 14 of 19 it caught when every MAC was reached through a wrapper.
+Two numbers come out of that table and they are not the same one. Counting each
+block **once, by its strongest driver** — the figure that describes what the tier
+now establishes — `gls` catches **22 of 24**, against the 14 of 19 it caught when
+every MAC was reached through a wrapper. Counting **all seven campaigns**
+including the weaker duplicate drivers, it is 28 of 34. The first is the claim;
+the second is what the rows add up to, and both are here so the table can be
+checked rather than taken on trust.
 
 **The two rows that share a netlist are the point of the table.** A mutation
 survives when the testbench's stimulus never drives that node into an observable
