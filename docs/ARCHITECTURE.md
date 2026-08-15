@@ -151,7 +151,16 @@ non-overlapped posture.
 `lenet5_top` measured end to end (ModelSim, full canonical 32x32x1 input,
 including every per-layer weight/bias/connectivity ROM load): **209,290
 cycles** (2,092,900 ns at 100 MHz, about 2.09 ms), dominated by the C5 weight
-load (48,000 words) and the C1/C3 convolution compute. This is a
+load (48,000 words) and the C1/C3 convolution compute.
+
+That figure is the **cold path**: the host writing all 62,730 ROM words
+followed by one inference. The **steady-state** cost of an inference with the
+ROMs already resident, measured `start_i` to `done_o`, is **146,544 cycles**
+(1.47 ms at 100 MHz) -- the number that matters for a device streaming images
+rather than being programmed once per picture. `tb_lenet5_top` measures both,
+runs the accelerator twice back to back without a reset, and fails the
+regression if either the absolute count moves or the second run costs a
+different number of cycles than the first. This is a
 verification-oriented, resource-shared, non-overlapped sequencing baseline,
 not a throughput target -- overlapping ROM loads with the previous stage's
 compute, and pipelining the pooling/dense controllers, are the obvious first

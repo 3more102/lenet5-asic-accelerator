@@ -19,6 +19,9 @@
 | S2/S4 average-pool streaming | NumPy `avg_pool2x2_int8` | `tb_avg_pool2x2_stream.sv` |
 | Output classifier (dense+argmax) | NumPy `argmax_classifier` | `tb_classifier_argmax.sv` + `tb_classifier_argmax_tie.sv` |
 | Full C1->S2->C3->S4->C5->F6->classifier pipeline | `golden/deploy.py:deploy_forward_int8` | `tb_lenet5_top.sv` |
+| Config validation reject path (22 conditions) | RTL guard conditions, enumerated | `tb_config_guard.sv` |
+| Re-runnability: back-to-back inference, no reset | `deploy_forward_int8` (same image twice) | `tb_lenet5_top.sv` |
+| Control-FSM state and transition coverage | declared legal edge set | `tb/fsm_cov.sv` in `tb_lenet5_top.sv` |
 
 The main engine test generates activations, weights, biases, a sparse mask, raw
 accumulators, and expected int8 outputs from a deterministic seed. RTL output is
@@ -42,10 +45,17 @@ avoids_saturation_misclassification` in `golden/test_golden.py` and
 - min/max and near-overflow accumulator vectors;
 - every shift from 0 through the supported deployment maximum;
 - negative ties, positive ties, saturation boundaries, and ReLU boundaries;
-- all-valid, all-invalid (error), and extreme legal dimension configurations;
+- extreme *legal* dimension configurations (the invalid ones are covered:
+  `tb_config_guard.sv` drives all 22 reject conditions across the four engines
+  that implement config validation, checks each is inert, and proves the error
+  clears on the next legal config);
 - random output stalls and reset interruption policy;
 - assertions for stable output under stall and legal counter ranges;
-- functional and code coverage goals;
+- functional and code coverage goals beyond the top-level controller
+  (`tb/fsm_cov.sv` enforces 20/20 states and 33/33 transitions on
+  `lenet5_top`'s FSM every run; the five engines sequence with nested counters
+  rather than an enumerated state register, so they have no equivalent
+  structural target and remain covered behaviourally by their oracles);
 - post-synthesis equivalence checking;
 - scan/MBIST verification;
 - gate-level reset and SDF simulations;
@@ -76,8 +86,12 @@ A passing run must show:
 - `dense_engine` (F6 configuration) outputs matching `dense_int8`;
 - `classifier_argmax` predicted class matching `argmax_classifier`, and the
   tie-break case resolving to the lowest index;
+- all 22 config-validation reject conditions flagged and inert, and all four
+  engines accepting a legal config afterwards;
 - `lenet5_top` predicted class matching `deploy_forward_int8` on the full
-  canonical 32x32x1 input;
+  canonical 32x32x1 input, and the same class again on a second back-to-back
+  inference with no reset and no weight reload;
+- `lenet5_top` control FSM reporting 20/20 states and 33/33 transitions;
 - canonical NumPy shapes through F6;
 - no elaboration failure.
 

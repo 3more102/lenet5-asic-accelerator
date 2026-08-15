@@ -64,7 +64,8 @@ ModelSim; generic synthesis passes under Yosys.
 | `tb_dense_engine` | 5 F6 outputs vs the oracle |
 | `tb_classifier_argmax` | predicted class vs the oracle |
 | `tb_classifier_argmax_tie` | tied max score resolves to the lowest index |
-| `tb_lenet5_top` | full 32x32 image end-to-end vs `deploy_forward_int8` |
+| `tb_config_guard` | all 22 config-validation reject conditions across the four engines, each proven inert, plus recovery on a legal config |
+| `tb_lenet5_top` | full 32x32 image end-to-end vs `deploy_forward_int8`, twice back-to-back with no reset, plus 20/20 state and 33/33 transition coverage of the control FSM |
 
 ## Nominal cost
 
@@ -75,6 +76,12 @@ ModelSim; generic synthesis passes under Yosys.
 | MACs across C1/C3/C5 | 315,600 |
 | PE row cycles across C1/C3/C5 | 63,120 |
 | End-to-end measured cycles (`lenet5_top`, ModelSim) | 209,290 |
+| Steady-state cycles per inference (ROMs already resident) | 146,544 |
+
+The 209,290 figure is the cold path: the host writing all 62,730 ROM words plus
+one inference. 146,544 is the per-image cost once the weights are resident,
+measured `start_i` to `done_o`; `tb_lenet5_top` runs two inferences back to back
+with no reset and fails if either count moves.
 
 The end-to-end figure includes every per-layer weight/bias ROM load and is a
 non-overlapped, resource-shared sequencing baseline — not a throughput target.

@@ -1,8 +1,11 @@
 # Verification Summary
 
-Date: 2026-08-07 (re-verified 2026-08-15 after the requantize pipelining
-change — see "Addendum" at the end; figures in this document reflect the
-re-verified state, not the original 2026-08-07 run)
+Date: 2026-08-07, re-verified twice on 2026-08-15 — first after the requantize
+pipelining change, then again after adding controller-FSM coverage and the
+config-validation reject tier. See the two Addenda at the end. The body below
+reflects the first re-verification; where the second moved a number (the
+testbench count, and the cycle figures, which are now measured per inference
+rather than read off `$finish`), **the second addendum is authoritative**.
 
 ## Status
 
@@ -134,3 +137,79 @@ synthesizable, so its improvement is inferred by structural analogy, not
 measured. And `results/screenshots/07_end_to_end_cycles.png` still shows the
 old 2,028,660 ns timestamp — it predates this change and needs re-capturing.
 
+
+## Addendum — 2026-08-15: controller-FSM coverage and the config reject path
+
+Two verification tiers were added and both simulators re-run from scratch.
+Everything below is real tool output; logs are
+`results/icarus_regression_20260815.log` and
+`results/modelsim_regression_20260815.log`.
+
+**New: `tb/fsm_cov.sv` + `tb_lenet5_top` FSM coverage.** A portable
+state/transition collector watches `lenet5_top`'s 20-state controller and
+fails the run on any unvisited state, any declared-legal transition never
+exercised, or any transition outside the declared set. Reported: **20/20
+states, 33/33 legal transitions**, in both simulators. It is plain Verilog
+rather than a covergroup because Icarus — which runs CI — does not implement
+covergroups, and a coverage tier that silently stops collecting still reads as
+a pass.
+
+The collector found a real stimulus hole on its first run: `S_RUN_CLS ->
+S_IDLE` was never taken, because the testbench had never let the accelerator
+return to idle. Closing it meant running a **second inference with no reset and
+no weight reload**, which turned out to be the more valuable check of the two.
+
+**New: `tb/tb_config_guard.sv`.** All **22** config-validation reject
+conditions (conv 8, pool 8, dense 4, classifier 2) are now driven. Before this,
+every testbench only ever asserted `config_error_o` stayed *low* — the
+rejection logic had been written, elaborated and synthesized without a single
+stimulus reaching it. Each reject is also checked to be inert (`busy_o` low,
+`done_o` never pulses), and each engine is then given a legal config to prove
+the error clears rather than latching.
+
+**Cycle counts, now measured directly rather than derived.** `tb_lenet5_top`
+counts `start_i -> done_o` and asserts the result:
+
+- **146,544 cycles** per inference with the ROMs resident (1.47 ms @ 100 MHz);
+- **identical** on the second back-to-back run — asserted, so a one-cycle drift
+  fails the regression;
+- **209,290 cycles** remains correct as the *cold* path (host writing all
+  62,730 ROM words, then one inference): 146,544 + 62,746;
+- whole simulation now finishes at 3,558,350 ns = 355,835 cycles, leaving
+  **244,165 cycles** of the 600,000-cycle watchdog budget unused, with two
+  complete inferences inside it.
+
+Icarus 12.0 and ModelSim/Questa 10.5b produce these numbers independently and
+identically.
+
+**Both tiers were proven able to fail before being trusted.** Seven mutations
+were injected; all seven were caught:
+
+| Mutation | Caught by |
+| --- | --- |
+| `dense_engine` start does not clear `out_idx_q` | back-to-back inference — **run 1 still passed** |
+| `S_KICK_C1` held two cycles | start-pulse-width check + illegal self-edge |
+| `allow(3,3)` removed from the declared legal set | illegal-transition report |
+| `NSTAGES=21` (a state the design cannot reach) | unvisited-state check |
+| conv `in_ch == 0` reject condition deleted | `REJECT MISSED [conv in_ch == 0]` |
+| conv never clears `config_error_o` | recovery check — **all 22 rejects still passed** |
+| conv asserts `busy_o` despite the config error | `REJECT UNSAFE` inertness check |
+
+The first and sixth are the ones worth noting. `dense_engine` and
+`classifier_argmax` each run once per image, so their start-time state clears
+were only ever exercised by reset until the testbench ran two images back to
+back — the entire pre-existing suite was blind to that mutation. And the sticky
+`config_error_o` mutation left all 22 reject checks passing, which is precisely
+why the recovery half of `tb_config_guard` exists: without it that tier would
+have been vacuous.
+
+**Counts that changed:** 9 testbenches -> **10**; `scripts/regression_summary.sh`
+now counts distinct testbenches (it previously divided a PASS-*line* count by a
+hardcoded 8, which would have printed `15/8`) and fails if any of the ten stops
+reporting.
+
+**Still needing re-capture:** `results/screenshots/03_icarus_regression.png`
+(shows nine testbenches / eight PASS lines) and
+`results/screenshots/07_end_to_end_cycles.png` (shows the old 2,028,660 ns
+timestamp; the `$finish` timestamp is no longer the right thing to photograph —
+screenshot the printed `inference 1: 146544 cycles` line instead).

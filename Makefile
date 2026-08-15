@@ -20,7 +20,7 @@ RTL := \
 	rtl/lenet5_top.sv
 
 .PHONY: all vectors golden-test demo lint sim-pe sim-requantize sim-c3 sim-engine sim-pool sim-f6 \
-	sim-classifier sim-classifier-tie sim-top regression synth synth-pe synth-pool \
+	sim-classifier sim-classifier-tie sim-config-guard sim-top regression synth synth-pe synth-pool \
 	synth-mac ppa check-ppa orfs clean
 
 all: regression
@@ -87,13 +87,26 @@ sim-classifier-tie:
 		-o results/tb_classifier_tie.vvp $(RTL) tb/tb_classifier_argmax_tie.sv
 	$(VVP) results/tb_classifier_tie.vvp
 
+# Drives all 22 config-validation reject conditions across the four engines
+# that implement one, then proves each engine still accepts a legal config
+# afterwards. Every other testbench only ever asserts config_error_o stays
+# low, so without this target the whole reject path ships unexecuted.
+sim-config-guard:
+	$(IVERILOG) -g2012 -Wall -s tb_config_guard \
+		-o results/tb_config_guard.vvp $(RTL) tb/tb_config_guard.sv
+	$(VVP) results/tb_config_guard.vvp
+
+# tb/fsm_cov.sv is a testbench-side coverage collector, not RTL, so it is
+# listed here rather than in $(RTL). It enforces full state and transition
+# coverage of lenet5_top's 20-state control FSM and fails the run on any
+# unvisited state, unexercised legal edge, or illegal edge.
 sim-top: vectors
 	$(IVERILOG) -g2012 -Wall -I. -s tb_lenet5_top \
-		-o results/tb_top.vvp $(RTL) tb/tb_lenet5_top.sv
+		-o results/tb_top.vvp $(RTL) tb/fsm_cov.sv tb/tb_lenet5_top.sv
 	$(VVP) results/tb_top.vvp
 
 regression: golden-test lint sim-pe sim-requantize sim-c3 sim-engine sim-pool sim-f6 \
-	sim-classifier sim-classifier-tie sim-top demo
+	sim-classifier sim-classifier-tie sim-config-guard sim-top demo
 
 # synth-pe is the original target name kept as an alias so existing callers
 # of `make synth-pe`/`synth/yosys.ys` keep working; `synth` now means

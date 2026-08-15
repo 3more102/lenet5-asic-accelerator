@@ -28,6 +28,8 @@ vlog -sv +incdir+. \
     tb/tb_dense_engine.sv \
     tb/tb_classifier_argmax.sv \
     tb/tb_classifier_argmax_tie.sv \
+    tb/tb_config_guard.sv \
+    tb/fsm_cov.sv \
     tb/tb_lenet5_top.sv
 
 vsim -c work.tb_conv5x5_pe
@@ -66,6 +68,11 @@ run -all
 quit -sim
 
 vsim -c work.tb_classifier_argmax_tie
+onfinish stop
+run -all
+quit -sim
+
+vsim -c work.tb_config_guard
 onfinish stop
 run -all
 quit -sim

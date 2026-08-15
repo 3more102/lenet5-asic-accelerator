@@ -322,11 +322,23 @@
   <h3>What is on screen</h3>
   <p>
     The wrapper script runs the entire <code>make regression</code> target — Python
-    unit tests, lint/elaboration, all nine RTL testbenches and the canonical demo —
+    unit tests, lint/elaboration, every RTL testbench and the canonical demo —
     then prints <b>only the verdict lines</b>, so the whole result fits on one screen
     instead of scrolling past thousands of compile lines. The full transcript stays
     in <code>results/regression_summary.log</code>.
   </p>
+
+  <div class="note caution">
+    <span class="h">This capture is superseded — re-capture before presenting</span>
+    The image above predates two testbenches that did not exist when it was taken:
+    <code>tb_config_guard</code> (the config-validation reject path) and the FSM
+    coverage and back-to-back inference checks now inside
+    <code>tb_lenet5_top</code>. The regression is <b>10</b> testbenches now, not nine,
+    and prints 15 <code>PASS</code> lines rather than eight. Re-run
+    <code>wsl -e bash scripts/regression_summary.sh</code> and re-shoot it; the script
+    now counts distinct testbenches and <b>fails</b> if any of the ten stops reporting,
+    so the screen cannot quietly show fewer tests than it claims.
+  </div>
 
   <h3>The eight lines, and what each one is actually checking</h3>
   <div class="scroll">
@@ -362,10 +374,12 @@
     </li>
     <li>
       <b>The run takes a few minutes</b>, dominated by <code>tb_lenet5_top</code>,
-      which simulates <b>209,290 cycles</b>. A watchdog fires <code>$fatal</code> at
-      600,000 cycles, so the test finishes inside <b>35%</b> of its budget — a hang
-      cannot masquerade as a pass. Screen A7 shows that arithmetic being derived from
-      the simulator's own timestamp.
+      which now simulates <b>355,835 cycles</b> because it runs the accelerator
+      <b>twice</b> — the same image, with no reset and no weight reload between the
+      two. A watchdog fires <code>$fatal</code> at 600,000 cycles, so the test still
+      finishes inside <b>59%</b> of its budget, and that budget now covers two full
+      inferences — a hang cannot masquerade as a pass. Screen A7 shows the
+      per-inference cost the testbench measures and asserts directly.
     </li>
   </ul>
 </section>
@@ -668,28 +682,37 @@
   <table>
     <thead><tr><th>Step</th><th class="num">Value</th><th>Where it comes from</th></tr></thead>
     <tbody>
-      <tr><td>Simulated time at <code>$finish</code></td><td class="num">2,092,900 ns</td><td>ModelSim's own timestamp — not a number we chose</td></tr>
-      <tr><td>Clock period</td><td class="num">10 ns</td><td>the stated 100 MHz reference</td></tr>
-      <tr><td>Cycles</td><td class="num">209,290</td><td>2,092,900 &divide; 10</td></tr>
-      <tr><td>Wall-clock equivalent</td><td class="num">2.09 ms</td><td>209,290 &times; 10 ns</td></tr>
+      <tr><td>Cycles per inference</td><td class="num">146,544</td><td>counted <code>start_i</code>&rarr;<code>done_o</code> by the testbench and printed, not derived</td></tr>
+      <tr><td>Second inference</td><td class="num">146,544</td><td>identical — asserted, so a drift of one cycle fails the run</td></tr>
+      <tr><td>Wall-clock equivalent</td><td class="num">1.47 ms</td><td>146,544 &times; 10 ns at the stated 100 MHz</td></tr>
+      <tr><td>Cold path (host ROM load + 1 inference)</td><td class="num">209,290</td><td>146,544 compute + 62,746 loading all 62,730 ROM words</td></tr>
+      <tr><td>Simulated time at <code>$finish</code></td><td class="num">3,558,350 ns</td><td>the simulator's own timestamp, covering both inferences</td></tr>
       <tr><td>Watchdog budget</td><td class="num">600,000</td><td><code>vectors/config.svh</code></td></tr>
-      <tr><td>Margin</td><td class="num">390,710</td><td>600,000 &minus; 209,290 — finished at 35% of budget</td></tr>
+      <tr><td>Margin</td><td class="num">244,165</td><td>600,000 &minus; 355,835 — finished at 59% of budget, with two inferences inside it</td></tr>
     </tbody>
   </table>
   </div>
 
   <div class="note">
     <span class="h">Why this screen is worth its slot</span>
-    The end-to-end cycle count — currently <b>209,290</b> — is the single most quotable
-    number in the project, and the one an examiner is most likely to ask you to justify.
-    This screen answers that before it is asked: the figure is a division performed on a
-    timestamp the simulator printed, with every intermediate value visible. There is
-    nothing to take on faith. That is also why the number moving did not damage the
-    claim: when <code>conv2d_engine</code> was pipelined, the same derivation simply ran
-    on a new timestamp, and <i>both</i> simulators produced it independently. It also
-    shows the run finishing with <b>390,710 cycles of margin</b> against the watchdog —
-    so the pass is a real completion, not a test that ran out of time in a way that
-    happened to look successful.
+    The cycle count is the single most quotable number in the project, and the one an
+    examiner is most likely to ask you to justify. This screen answers that before it is
+    asked — and it now answers it better than it used to. The figure used to be a
+    division performed on the simulator's <code>$finish</code> timestamp. It is now
+    <b>counted directly</b> by the testbench between <code>start_i</code> and
+    <code>done_o</code>, printed, and <b>asserted</b>: if a scheduling change moves it by
+    a single cycle, the regression fails and tells you to update the documents. A number
+    that fails the build when it drifts is worth more than a number derived correctly
+    once.
+    <br><br>
+    It also separates two figures that were previously conflated. <b>209,290</b> is the
+    cold path — the host writing all 62,730 ROM words, then one inference.
+    <b>146,544</b> is what an image actually costs once the weights are resident, which
+    is the number that matters for a device processing a stream. Both are real; they
+    answer different questions. And the run finishes with <b>244,165 cycles of margin</b>
+    against the watchdog while fitting <i>two</i> complete inferences inside it — so the
+    pass is a real completion, not a test that ran out of time in a way that happened to
+    look successful.
   </div>
 
   <div class="note caution">
