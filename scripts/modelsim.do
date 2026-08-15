@@ -29,6 +29,8 @@ vlog -sv +incdir+. \
     tb/tb_classifier_argmax.sv \
     tb/tb_classifier_argmax_tie.sv \
     tb/tb_config_guard.sv \
+    tb/stream_hold_check.sv \
+    tb/tb_robustness.sv \
     tb/fsm_cov.sv \
     tb/tb_lenet5_top.sv
 
@@ -73,6 +75,11 @@ run -all
 quit -sim
 
 vsim -c work.tb_config_guard
+onfinish stop
+run -all
+quit -sim
+
+vsim -c work.tb_robustness
 onfinish stop
 run -all
 quit -sim

@@ -19,7 +19,7 @@ PY=$(python3 -V 2>&1 | awk '{print $2}')
 # rather than printed, because a testbench that silently stops running still
 # leaves a screen full of green PASS lines -- the failure mode this summary
 # screen would otherwise hide.
-EXPECTED_TBS=10
+EXPECTED_TBS=11
 
 echo "+ make regression   (Icarus $IVL, Python $PY)"
 echo "  ... running, a few minutes: sim-top alone simulates ~356,000 cycles"
@@ -36,9 +36,9 @@ grep -E '^(Ran [0-9]+ tests|OK)$' "$LOG"
 grep -E '^PASS ' "$LOG"
 
 echo
-# Count distinct testbenches, not PASS lines: tb_lenet5_top and
-# tb_config_guard each report several, so counting lines would print a
-# nonsense fraction like 15/10.
+# Count distinct testbenches, not PASS lines: tb_lenet5_top, tb_config_guard
+# and tb_robustness each report several, so counting lines would print a
+# nonsense fraction like 19/11.
 TBS=$(grep -Eo '^PASS [a-zA-Z0-9_]+' "$LOG" | sort -u | wc -l)
 echo "$TBS/$EXPECTED_TBS RTL testbenches passed -- full log in $LOG"
 

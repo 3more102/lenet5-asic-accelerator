@@ -48,9 +48,11 @@ this is the same anti-drift guard the vectors get — CI runs it on every push,
 and it needs only Python, not a PDK.
 
 `make regression` runs, in order: the golden-model unit tests, SystemVerilog
-elaboration/lint of the full RTL list, all nine self-checking testbenches, and
-the end-to-end demo. Every testbench prints an explicit `PASS <name>` line; a
-silent finish is a failure, not a pass.
+elaboration/lint of the full RTL list, every self-checking testbench, and the
+end-to-end demo. Every testbench prints an explicit `PASS <name>` line; a
+silent finish is a failure, not a pass. `scripts/regression_summary.sh` owns
+the expected testbench total and fails if one stops reporting, so add a new
+`sim-*` target to `regression` and bump `EXPECTED_TBS` in the same change.
 
 ## The rule that matters: golden model first
 

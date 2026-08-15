@@ -310,7 +310,7 @@
 <!-- ============================== A3 ============================== -->
 <section class="shot" id="a3">
   <h2><span class="tag">A3</span>Full open-source regression — Icarus Verilog 12.0</h2>
-  <p class="claim">Proves: all nine self-checking testbenches pass, end to end, in a freely reproducible toolchain.</p>
+  <p class="claim">Proves: all eleven self-checking testbenches pass, end to end, in a freely reproducible toolchain.</p>
 
   <div class="cmd">wsl -e bash scripts/regression_summary.sh</div>
 
@@ -330,29 +330,33 @@
 
   <div class="note caution">
     <span class="h">This capture is superseded — re-capture before presenting</span>
-    The image above predates two testbenches that did not exist when it was taken:
-    <code>tb_config_guard</code> (the config-validation reject path) and the FSM
+    The image above predates three testbenches that did not exist when it was taken:
+    <code>tb_config_guard</code> (the config-validation reject path),
+    <code>tb_robustness</code> (stall invariance and reset interruption), and the FSM
     coverage and back-to-back inference checks now inside
-    <code>tb_lenet5_top</code>. The regression is <b>10</b> testbenches now, not nine,
-    and prints 15 <code>PASS</code> lines rather than eight. Re-run
+    <code>tb_lenet5_top</code>. The regression is <b>11</b> testbenches now, not nine,
+    and prints 19 <code>PASS</code> lines rather than eight. Re-run
     <code>wsl -e bash scripts/regression_summary.sh</code> and re-shoot it; the script
-    now counts distinct testbenches and <b>fails</b> if any of the ten stops reporting,
-    so the screen cannot quietly show fewer tests than it claims.
+    now counts distinct testbenches and <b>fails</b> if any of the eleven stops
+    reporting, so the screen cannot quietly show fewer tests than it claims.
   </div>
 
-  <h3>The eight lines, and what each one is actually checking</h3>
+  <h3>The eleven testbenches, and what each one is actually checking</h3>
   <div class="scroll">
   <table>
     <thead><tr><th>PASS line</th><th>What it verifies</th></tr></thead>
     <tbody>
       <tr><td><code>tb_conv5x5_pe</code></td><td>accumulation, bias injection and backpressure at the processing-element level</td></tr>
+      <tr><td><code>tb_requantize</code></td><td><b>5504/5504</b> shift/round/saturate cases matched the model — exhaustive over the legal input range</td></tr>
       <tr><td><code>tb_lenet5_c3_connectivity</code></td><td>the exact 60-connection table, asserted in RTL</td></tr>
       <tr><td><code>tb_conv2d_engine</code></td><td><b>48 outputs</b> matched the Python golden model, pixel for pixel</td></tr>
       <tr><td><code>tb_avg_pool2x2_stream</code></td><td>12 pooled outputs matched the model</td></tr>
       <tr><td><code>tb_dense_engine</code></td><td>5 dense outputs matched the model (F6 configuration)</td></tr>
       <tr><td><code>tb_classifier_argmax</code></td><td>predicted class 3 matched the model</td></tr>
       <tr><td><code>tb_classifier_argmax_tie</code></td><td>a tied maximum resolved to the lowest index</td></tr>
-      <tr><td><code>tb_lenet5_top</code></td><td><b>predicted class 6, bit-exact against <code>golden/deploy.py</code> end to end</b></td></tr>
+      <tr><td><code>tb_config_guard</code></td><td>all <b>22</b> config-validation reject conditions flag and leave the engine inert, and a legal config is still accepted afterwards</td></tr>
+      <tr><td><code>tb_robustness</code></td><td>the three streaming engines are <b>stall-invariant</b> and recover from a <b>mid-stream reset</b> — each run three times over identical operands, the stalled and aborted runs matching the reference beat for beat</td></tr>
+      <tr><td><code>tb_lenet5_top</code></td><td><b>predicted class 6, bit-exact against <code>golden/deploy.py</code> end to end</b>, twice back to back with no reset or weight reload, at exactly 146,544 cycles each, with full control-FSM state and transition coverage</td></tr>
     </tbody>
   </table>
   </div>
@@ -367,10 +371,14 @@
   <ul>
     <li>
       <b>The last line is the one to point at.</b>
-      <code>9/9 RTL testbenches passed -- full log in results/regression_summary.log</code>
-      is not a hand-written banner: the script counts the <code>PASS</code> lines it
-      actually found in the log. If a testbench had failed, or had not run at all, the
-      count would not read 8 — so the summary cannot flatter the result.
+      <code>11/11 RTL testbenches passed -- full log in results/regression_summary.log</code>
+      is not a hand-written banner: the script counts the <em>distinct</em> testbenches
+      it actually found reporting <code>PASS</code> in the log, and exits non-zero if
+      that is not exactly eleven. If one had failed, or had not run at all, the count
+      would not read 11 — so the summary cannot flatter the result. It counts distinct
+      names rather than raw <code>PASS</code> lines on purpose: two testbenches now print
+      several lines each (19 in total), so a raw line count would drift every time a
+      check is added.
     </li>
     <li>
       <b>The run takes a few minutes</b>, dominated by <code>tb_lenet5_top</code>,
@@ -401,19 +409,33 @@
     Three things stacked on one screen. First <code>golden/generate_vectors.py</code>
     writes the stimulus <em>and</em> the expected results for every testbench, echoing
     the configuration of each as it goes. Then ModelSim/Questa Intel FPGA Edition
-    10.5b replays all nine testbenches, finishing on
+    10.5b replays the whole testbench suite — nine of them on the day of this
+    capture, eleven now — finishing on
     <b><code>PASS: all ModelSim/Questa regressions completed</code></b>. Finally the
-    eight <code>#&nbsp;PASS</code> verdicts are pulled back out of ModelSim's own
+    <code>#&nbsp;PASS</code> verdicts are pulled back out of ModelSim's own
     transcript, so the individual results and the completion banner are visible
     together rather than one scrolling away above the other.
   </p>
   <p>
-    The closing line carries the compile evidence too:
-    <b><code>9/9 testbenches PASS; '# Errors: 0, Warnings: 0' on all 9
-    compile/sim steps</code></b>. That is the &ldquo;0 errors, 0 warnings across all 14
-    RTL and 8 testbench files&rdquo; claim from page 1 of the presentation guide, shown
-    rather than asserted.
+    The closing line carries the compile evidence too — <b><code>9/9 testbenches
+    PASS; '# Errors: 0, Warnings: 0' on all 9 compile/sim steps</code></b> as
+    captured, and <b>11/11</b> with a clean <code>#&nbsp;Errors: 0, Warnings: 0</code>
+    on all <b>12</b> compile/sim steps in today's
+    <code>results/modelsim_regression_20260815.log</code>. That is the &ldquo;0 errors,
+    0 warnings&rdquo; claim from page 1 of the presentation guide — now across all 14
+    RTL and 13 testbench files — shown rather than asserted.
   </p>
+
+  <div class="note caution">
+    <span class="h">Counts on this capture are historical — the argument still holds</span>
+    The <b>9/9</b> on screen was correct when the shot was taken. Two tiers have been
+    added since: <code>tb_config_guard</code> and <code>tb_robustness</code>, taking the
+    regression to <b>11</b> testbenches. Both were re-run under the same ModelSim/Questa
+    10.5b with the same <code># Errors: 0, Warnings: 0</code> result — see
+    <code>results/modelsim_regression_20260815.log</code>. The point this screen makes
+    (two independent simulators, identical verdicts) is unaffected; only the totals
+    moved. Re-shoot it if you want the current numbers on screen.
+  </div>
 
   <h3>Those five configuration lines are more useful than they look</h3>
   <p>

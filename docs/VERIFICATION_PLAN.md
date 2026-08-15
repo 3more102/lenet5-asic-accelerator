@@ -22,6 +22,9 @@
 | Config validation reject path (22 conditions) | RTL guard conditions, enumerated | `tb_config_guard.sv` |
 | Re-runnability: back-to-back inference, no reset | `deploy_forward_int8` (same image twice) | `tb_lenet5_top.sv` |
 | Control-FSM state and transition coverage | declared legal edge set | `tb/fsm_cov.sv` in `tb_lenet5_top.sv` |
+| Stall invariance under pseudorandom backpressure | the engine's own unstalled run | `tb_robustness.sv` |
+| valid/ready hold and payload stability | AXI-style stream protocol rules | `tb/stream_hold_check.sv`, instantiated in `tb_robustness.sv` |
+| Reset interruption mid-stream, and restart | the engine's own uninterrupted run | `tb_robustness.sv` |
 
 The main engine test generates activations, weights, biases, a sparse mask, raw
 accumulators, and expected int8 outputs from a deterministic seed. RTL output is
@@ -39,6 +42,28 @@ model; a strict `>` comparator in the RTL). `test_argmax_classifier_
 avoids_saturation_misclassification` in `golden/test_golden.py` and
 `tb_classifier_argmax_tie.sv` are the regressions that pin this down.
 
+**Robustness (`tb_robustness.sv`):** each of `conv2d_engine`,
+`avg_pool2x2_stream` and `dense_engine` is run three times over identical
+operands -- unstalled, with pseudorandom backpressure from a seeded LFSR, and
+with `rst_ni` asserted mid-stream and the operation restarted. The unstalled
+run is checked against the golden vectors; the other two must reproduce it
+beat for beat, side-band included. `tb/stream_hold_check.sv` runs continuously
+alongside all three and fails the cycle a producer withdraws `valid_o` before
+its beat is accepted, or advances the payload while stalled.
+
+Two properties this pins down that are easy to lose by accident. First, every
+engine re-initialises its full sequencing state from `start_i` rather than
+relying on reset, which is what makes a mid-stream abort behaviourally
+identical to an idle period; the restart comparison is what stops a future
+change from quietly moving that initialisation into the reset branch alone.
+Second, the aborts are deliberately taken while a beat is *announced but not
+yet accepted* -- with `out_ready_i` tied high `out_valid_o` is high for only
+one cycle per beat, so an abort taken at an arbitrary moment finds it already
+low and the `out_valid_o` half of the quiet check never tests anything. That
+was not hypothetical: a mutation deleting `out_valid_o` from
+`conv2d_engine`'s reset branch survived the entire regression until the abort
+was pinned to that state.
+
 ## Required before tapeout
 
 - trained-network C1, C3, and C5 layer tests;
@@ -49,8 +74,9 @@ avoids_saturation_misclassification` in `golden/test_golden.py` and
   `tb_config_guard.sv` drives all 22 reject conditions across the four engines
   that implement config validation, checks each is inert, and proves the error
   clears on the next legal config);
-- random output stalls and reset interruption policy;
-- assertions for stable output under stall and legal counter ranges;
+- legal counter ranges (random output stalls, stable-output-under-stall
+  assertions and reset interruption policy are now covered -- see the
+  robustness note above);
 - functional and code coverage goals beyond the top-level controller
   (`tb/fsm_cov.sv` enforces 20/20 states and 33/33 transitions on
   `lenet5_top`'s FSM every run; the five engines sequence with nested counters
@@ -88,6 +114,10 @@ A passing run must show:
   tie-break case resolving to the lowest index;
 - all 22 config-validation reject conditions flagged and inert, and all four
   engines accepting a legal config afterwards;
+- all three streaming engines reproducing their unstalled output beat for beat
+  under pseudorandom backpressure and after a mid-stream reset, with the
+  protocol checker reporting no withdrawn `valid` and no payload movement
+  while stalled;
 - `lenet5_top` predicted class matching `deploy_forward_int8` on the full
   canonical 32x32x1 input, and the same class again on a second back-to-back
   inference with no reset and no weight reload;

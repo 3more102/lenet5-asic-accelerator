@@ -1,11 +1,11 @@
-﻿Reading C:/intelFPGA/18.1/modelsim_ase/tcl/vsim/pref.tcl
+Reading C:/intelFPGA/18.1/modelsim_ase/tcl/vsim/pref.tcl
 
 # 10.5b
 
 # do scripts/modelsim.do
 # Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
-# Start time: 13:14:43 on Aug 15,2026
-# vlog -sv "+incdir+." rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/tb_conv5x5_pe.sv tb/tb_requantize.sv tb/tb_lenet5_c3_connectivity.sv tb/tb_conv2d_engine.sv tb/tb_avg_pool2x2_stream.sv tb/tb_dense_engine.sv tb/tb_classifier_argmax.sv tb/tb_classifier_argmax_tie.sv tb/tb_config_guard.sv tb/fsm_cov.sv tb/tb_lenet5_top.sv 
+# Start time: 14:13:53 on Aug 15,2026
+# vlog -sv "+incdir+." rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/tb_conv5x5_pe.sv tb/tb_requantize.sv tb/tb_lenet5_c3_connectivity.sv tb/tb_conv2d_engine.sv tb/tb_avg_pool2x2_stream.sv tb/tb_dense_engine.sv tb/tb_classifier_argmax.sv tb/tb_classifier_argmax_tie.sv tb/tb_config_guard.sv tb/stream_hold_check.sv tb/tb_robustness.sv tb/fsm_cov.sv tb/tb_lenet5_top.sv 
 # -- Compiling module conv5x5_row_mac
 # -- Compiling module requantize
 # -- Compiling module conv5x5_pe
@@ -29,6 +29,8 @@
 # -- Compiling module tb_classifier_argmax
 # -- Compiling module tb_classifier_argmax_tie
 # -- Compiling module tb_config_guard
+# -- Compiling module stream_hold_check
+# -- Compiling module tb_robustness
 # -- Compiling module fsm_cov
 # -- Compiling module tb_lenet5_top
 # 
@@ -45,11 +47,12 @@
 # 	tb_classifier_argmax
 # 	tb_classifier_argmax_tie
 # 	tb_config_guard
+# 	tb_robustness
 # 	tb_lenet5_top
-# End time: 13:14:43 on Aug 15,2026, Elapsed time: 0:00:00
+# End time: 14:13:53 on Aug 15,2026, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_conv5x5_pe 
-# Start time: 13:14:43 on Aug 15,2026
+# Start time: 14:13:53 on Aug 15,2026
 # Loading sv_std.std
 # Loading work.tb_conv5x5_pe
 # Loading work.conv5x5_pe
@@ -60,10 +63,10 @@
 #    Time: 140 ns  Iteration: 1  Instance: /tb_conv5x5_pe
 # Break in Module tb_conv5x5_pe at tb/tb_conv5x5_pe.sv line 88
 # Stopped at tb/tb_conv5x5_pe.sv line 88
-# End time: 13:14:44 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 14:13:55 on Aug 15,2026, Elapsed time: 0:00:02
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_requantize 
-# Start time: 13:14:44 on Aug 15,2026
+# Start time: 14:13:55 on Aug 15,2026
 # Loading sv_std.std
 # Loading work.tb_requantize
 # Loading work.requantize
@@ -73,10 +76,10 @@
 #    Time: 5504 ns  Iteration: 0  Instance: /tb_requantize
 # Break in Module tb_requantize at tb/tb_requantize.sv line 96
 # Stopped at tb/tb_requantize.sv line 96
-# End time: 13:14:44 on Aug 15,2026, Elapsed time: 0:00:00
+# End time: 14:13:57 on Aug 15,2026, Elapsed time: 0:00:02
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_lenet5_c3_connectivity 
-# Start time: 13:14:44 on Aug 15,2026
+# Start time: 14:13:57 on Aug 15,2026
 # Loading sv_std.std
 # Loading work.tb_lenet5_c3_connectivity
 # Loading work.lenet5_c3_connectivity
@@ -85,10 +88,10 @@
 #    Time: 96 ns  Iteration: 0  Instance: /tb_lenet5_c3_connectivity
 # Break in Module tb_lenet5_c3_connectivity at tb/tb_lenet5_c3_connectivity.sv line 56
 # Stopped at tb/tb_lenet5_c3_connectivity.sv line 56
-# End time: 13:14:45 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 14:13:58 on Aug 15,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c -wlf results/conv2d_engine.wlf work.tb_conv2d_engine 
-# Start time: 13:14:45 on Aug 15,2026
+# Start time: 14:13:58 on Aug 15,2026
 # Loading sv_std.std
 # Loading work.tb_conv2d_engine
 # Loading work.conv2d_engine
@@ -99,10 +102,10 @@
 #    Time: 12070 ns  Iteration: 1  Instance: /tb_conv2d_engine
 # Break in Module tb_conv2d_engine at tb/tb_conv2d_engine.sv line 270
 # Stopped at tb/tb_conv2d_engine.sv line 270
-# End time: 13:14:45 on Aug 15,2026, Elapsed time: 0:00:00
+# End time: 14:13:59 on Aug 15,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_avg_pool2x2_stream 
-# Start time: 13:14:45 on Aug 15,2026
+# Start time: 14:13:59 on Aug 15,2026
 # Loading sv_std.std
 # Loading work.tb_avg_pool2x2_stream
 # Loading work.avg_pool2x2_stream
@@ -112,10 +115,10 @@
 #    Time: 820 ns  Iteration: 1  Instance: /tb_avg_pool2x2_stream
 # Break in Module tb_avg_pool2x2_stream at tb/tb_avg_pool2x2_stream.sv line 172
 # Stopped at tb/tb_avg_pool2x2_stream.sv line 172
-# End time: 13:14:45 on Aug 15,2026, Elapsed time: 0:00:00
+# End time: 14:14:01 on Aug 15,2026, Elapsed time: 0:00:02
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_dense_engine 
-# Start time: 13:14:45 on Aug 15,2026
+# Start time: 14:14:01 on Aug 15,2026
 # Loading sv_std.std
 # Loading work.tb_dense_engine
 # Loading work.dense_engine
@@ -126,10 +129,10 @@
 #    Time: 900 ns  Iteration: 1  Instance: /tb_dense_engine
 # Break in Module tb_dense_engine at tb/tb_dense_engine.sv line 216
 # Stopped at tb/tb_dense_engine.sv line 216
-# End time: 13:14:45 on Aug 15,2026, Elapsed time: 0:00:00
+# End time: 14:14:02 on Aug 15,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_classifier_argmax 
-# Start time: 13:14:45 on Aug 15,2026
+# Start time: 14:14:02 on Aug 15,2026
 # Loading sv_std.std
 # Loading work.tb_classifier_argmax
 # Loading work.classifier_argmax
@@ -141,10 +144,10 @@
 #    Time: 520 ns  Iteration: 1  Instance: /tb_classifier_argmax
 # Break in Module tb_classifier_argmax at tb/tb_classifier_argmax.sv line 157
 # Stopped at tb/tb_classifier_argmax.sv line 157
-# End time: 13:14:46 on Aug 15,2026, Elapsed time: 0:00:01
+# End time: 14:14:03 on Aug 15,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_classifier_argmax_tie 
-# Start time: 13:14:46 on Aug 15,2026
+# Start time: 14:14:03 on Aug 15,2026
 # Loading sv_std.std
 # Loading work.tb_classifier_argmax_tie
 # Loading work.classifier_argmax
@@ -156,10 +159,10 @@
 #    Time: 190 ns  Iteration: 1  Instance: /tb_classifier_argmax_tie
 # Break in Module tb_classifier_argmax_tie at tb/tb_classifier_argmax_tie.sv line 113
 # Stopped at tb/tb_classifier_argmax_tie.sv line 113
-# End time: 13:14:46 on Aug 15,2026, Elapsed time: 0:00:00
+# End time: 14:14:04 on Aug 15,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c work.tb_config_guard 
-# Start time: 13:14:46 on Aug 15,2026
+# Start time: 14:14:04 on Aug 15,2026
 # Loading sv_std.std
 # Loading work.tb_config_guard
 # Loading work.conv2d_engine
@@ -177,10 +180,41 @@
 #    Time: 1945 ns  Iteration: 2  Instance: /tb_config_guard
 # Break in Module tb_config_guard at tb/tb_config_guard.sv line 492
 # Stopped at tb/tb_config_guard.sv line 492
-# End time: 13:14:46 on Aug 15,2026, Elapsed time: 0:00:00
+# End time: 14:14:06 on Aug 15,2026, Elapsed time: 0:00:02
+# Errors: 0, Warnings: 0
+# vsim -c work.tb_robustness 
+# Start time: 14:14:06 on Aug 15,2026
+# Loading sv_std.std
+# Loading work.tb_robustness
+# Loading work.conv2d_engine
+# Loading work.conv5x5_row_mac
+# Loading work.requantize
+# Loading work.stream_hold_check
+# Loading work.avg_pool2x2_stream
+# Loading work.avg_pool2x2_int8
+# Loading work.dense_engine
+# Loading work.dense_row_mac
+#   conv2d_engine REF: 48 beats, oracle-checked against vectors/expected.hex
+#   conv2d_engine STALL: 48 beats identical to REF across 115 stalled cycles
+#   conv2d_engine ABORT: reset at beat 20 of 48, restarted run identical to REF
+# PASS tb_robustness: conv2d_engine is stall-invariant and recovers from a mid-stream reset
+#   avg_pool2x2_stream REF: 12 beats, oracle-checked against vectors/pool/expected.hex
+#   avg_pool2x2_stream STALL: 12 beats identical to REF across 17 stalled cycles
+#   avg_pool2x2_stream ABORT: reset at beat 5 of 12, restarted run identical to REF
+# PASS tb_robustness: avg_pool2x2_stream is stall-invariant and recovers from a mid-stream reset
+#   dense_engine REF: 5 beats, oracle-checked against vectors/f6/expected.hex
+#   dense_engine STALL: 5 beats identical to REF across 15 stalled cycles
+#   dense_engine ABORT: reset at beat 2 of 5, restarted run identical to REF
+# PASS tb_robustness: dense_engine is stall-invariant and recovers from a mid-stream reset
+# PASS tb_robustness: 3 engines x {unstalled, randomly stalled, reset mid-stream} all agree beat for beat
+# ** Note: $finish    : tb/tb_robustness.sv(763)
+#    Time: 33700 ns  Iteration: 1  Instance: /tb_robustness
+# Break in Module tb_robustness at tb/tb_robustness.sv line 763
+# Stopped at tb/tb_robustness.sv line 763
+# End time: 14:14:07 on Aug 15,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -c -wlf results/lenet5_top.wlf work.tb_lenet5_top 
-# Start time: 13:14:46 on Aug 15,2026
+# Start time: 14:14:07 on Aug 15,2026
 # Loading sv_std.std
 # Loading work.tb_lenet5_top
 # Loading work.lenet5_top
@@ -207,5 +241,5 @@
 # Break in Module tb_lenet5_top at tb/tb_lenet5_top.sv line 407
 # Stopped at tb/tb_lenet5_top.sv line 407
 PASS: all ModelSim/Questa regressions completed
-# End time: 13:14:49 on Aug 15,2026, Elapsed time: 0:00:03
+# End time: 14:14:15 on Aug 15,2026, Elapsed time: 0:00:08
 # Errors: 0, Warnings: 0

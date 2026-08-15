@@ -1,11 +1,13 @@
 # Verification Summary
 
-Date: 2026-08-07, re-verified twice on 2026-08-15 — first after the requantize
-pipelining change, then again after adding controller-FSM coverage and the
-config-validation reject tier. See the two Addenda at the end. The body below
-reflects the first re-verification; where the second moved a number (the
-testbench count, and the cycle figures, which are now measured per inference
-rather than read off `$finish`), **the second addendum is authoritative**.
+Date: 2026-08-07, re-verified three times on 2026-08-15 — after the requantize
+pipelining change, after adding controller-FSM coverage and the
+config-validation reject tier, and after adding the stall-invariance and
+reset-interruption tier. See the three Addenda at the end. The body below
+reflects the first re-verification; **where a later addendum moves a number,
+the later one is authoritative** — that means the cycle figures come from the
+second (measured per inference rather than read off `$finish`) and the
+testbench count from the third (**11**, not 9 or 10).
 
 ## Status
 
@@ -213,3 +215,89 @@ reporting.
 `results/screenshots/07_end_to_end_cycles.png` (shows the old 2,028,660 ns
 timestamp; the `$finish` timestamp is no longer the right thing to photograph —
 screenshot the printed `inference 1: 146544 cycles` line instead).
+
+
+## Addendum — 2026-08-15: stall invariance and reset interruption
+
+A third tier was added and both simulators re-run from scratch. Logs are
+`results/icarus_regression_20260815.log` and
+`results/modelsim_regression_20260815.log`.
+
+**New: `tb/tb_robustness.sv` + `tb/stream_hold_check.sv`.** This closes three
+items from `docs/VERIFICATION_PLAN.md`'s "Required before tapeout" list: random
+output stalls, reset interruption policy, and assertions for stable output
+under stall.
+
+Each of `conv2d_engine`, `avg_pool2x2_stream` and `dense_engine` is run three
+times over identical operands:
+
+| Run | `out_ready_i` | Checked against |
+| --- | --- | --- |
+| REF | tied high | the golden vectors (`vectors/expected.hex` and friends) |
+| STALL | seeded 16-bit LFSR, ~1-in-4 duty | REF, beat for beat, side-band included |
+| ABORT | `rst_ni` asserted mid-stream, then restarted | REF, beat for beat |
+
+Using REF as the oracle for the other two is the design of the tier, not a
+shortcut: a functional error that moved REF as well would be caught by the
+per-module testbenches, which compare against Python. What is asserted here is
+*invariance* — that backpressure and reset cannot change the answer.
+
+Measured under Icarus 12.0:
+
+- `conv2d_engine` — 48 beats, **127 stalled cycles**, abort at beat 20 of 48;
+- `avg_pool2x2_stream` — 12 beats, **17 stalled cycles**, abort at beat 5 of 12;
+- `dense_engine` — 5 beats, **15 stalled cycles**, abort at beat 2 of 5.
+
+The beat counts and abort points are identical under ModelSim/Questa 10.5b, but
+`conv2d_engine` stalls for **115** cycles there rather than 127, and the whole
+testbench ends at 33,700 ns rather than 33,830 ns. This is expected, not a
+discrepancy to reconcile: the LFSR free-runs from the power-on reset and is
+never re-seeded per run, so its phase when a stalled run begins depends on every
+cycle that came before it, and the two simulators resolve a `wait` on a
+non-blocking-assigned counter a delta apart. The stall *pattern* therefore
+differs between the two while the property under test does not — the stalled run
+still reproduces the reference beat for beat in both. Only `> 0` is ever
+asserted about these counts, as an anti-vacuity guard; the numbers themselves are
+reported, not checked. Two independent backpressure patterns agreeing is
+stronger evidence than one fixed pattern repeated, so this is left as it is
+rather than pinned to a per-run seed.
+
+`stream_hold_check` runs continuously alongside all three and fails the cycle a
+producer withdraws `valid` before its beat is accepted, or moves the payload
+while stalled. Neither rule was checked anywhere in this project before, and
+`dense_engine` had never been stalled at all — `tb_dense_engine` holds
+`out_ready_i` high for its whole run.
+
+**Both tiers were proven able to fail.** Seven further mutations were injected
+(fourteen across the three campaigns to date); all seven were caught, and all
+seven by the specific assertion they target rather than by the watchdog:
+
+| Mutation | Caught by |
+| --- | --- |
+| conv drops `out_valid_o` while stalled | protocol checker: valid withdrawn |
+| conv advances `out_data_o` while stalled | protocol checker: payload changed |
+| reset does not clear `busy_o` | abort "went quiet" check |
+| reset does not clear `out_valid_o` | abort "went quiet" check — **initially missed** |
+| reset corrupts a loaded operand | restarted run diverges from REF |
+| backpressure that never actually stalls | stall-cycle vacuity guard |
+| abort point moved past the end of the stream | not-busy-at-abort vacuity guard |
+
+The fourth is the one worth recording. It was **missed on the first campaign**,
+and the fault was in the test, not the design: with `out_ready_i` tied high,
+`out_valid_o` is high for only one cycle per beat, so an abort taken at an
+arbitrary moment finds it already low and the `out_valid_o` half of the quiet
+check passes without testing anything. The aborts are now pinned to a cycle
+where a beat is *announced but not yet accepted*, and the mutation dies
+immediately. Two of the seven mutations target the tier's own anti-vacuity
+guards for the same reason.
+
+One property this tier pins down that is easy to lose by accident: every engine
+re-initialises its full sequencing state from `start_i` rather than relying on
+reset, which is what makes a mid-stream abort behaviourally identical to an
+idle period. The restart comparison is what stops a future change from quietly
+moving that initialisation into the reset branch alone.
+
+**Counts that changed:** 10 testbenches -> **11**, 15 `PASS` lines -> **19**.
+`scripts/regression_summary.sh`'s expected total was updated to match and still
+fails if any of the eleven stops reporting. `tb_robustness` carries its own
+50,000-cycle watchdog; `tb_lenet5_top`'s 600,000-cycle budget is unchanged.

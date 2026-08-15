@@ -49,7 +49,7 @@ fixed-point contract.
 
 ## Verification status
 
-All eleven regression stages pass under Icarus Verilog 12.0 and Siemens
+All thirteen regression stages below pass under Icarus Verilog 12.0 and Siemens
 ModelSim; generic synthesis passes under Yosys.
 
 | Check | What it proves |
@@ -65,6 +65,7 @@ ModelSim; generic synthesis passes under Yosys.
 | `tb_classifier_argmax` | predicted class vs the oracle |
 | `tb_classifier_argmax_tie` | tied max score resolves to the lowest index |
 | `tb_config_guard` | all 22 config-validation reject conditions across the four engines, each proven inert, plus recovery on a legal config |
+| `tb_robustness` | the three streaming engines reproduce their unstalled output beat for beat under pseudorandom backpressure and after a mid-stream reset; a continuous protocol checker catches withdrawn `valid` and payload movement while stalled |
 | `tb_lenet5_top` | full 32x32 image end-to-end vs `deploy_forward_int8`, twice back-to-back with no reset, plus 20/20 state and 33/33 transition coverage of the control FSM |
 
 ## Nominal cost
