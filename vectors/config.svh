@@ -44,6 +44,51 @@
 // ---- tb_requantize.sv ----
 `define TV_RQ_COUNT 5504
 
+// ---- tb_extremes.sv (int8-extreme operands at maximum layer size) ----
+`define TV_EX_IN_H 5
+`define TV_EX_IN_W 5
+`define TV_EX_IN_CH 16
+`define TV_EX_OUT_CH 2
+`define TV_EX_SHIFT 16
+`define TV_EX_RELU 1'b0
+`define TV_EX_ACT_COUNT 400
+`define TV_EX_WGT_COUNT 800
+`define TV_EX_BIAS_COUNT 2
+`define TV_EX_CONN_COUNT 32
+`define TV_EX_OUT_COUNT 2
+`define TV_EX_PEAK_ACC 7502600
+
+// Same DUT and same activations, weights cancelling to zero, shift 0, so the
+// output is the accumulator itself and one wrong product is visible.
+`define TV_EXC_SHIFT 0
+`define TV_EXC_WGT_COUNT 800
+`define TV_EXC_BIAS_COUNT 2
+`define TV_EXC_OUT_COUNT 2
+
+// Minimum legal conv configuration: 1 channel, 5x5 -> 1x1, one output beat.
+`define TV_EXMIN_IN_H 5
+`define TV_EXMIN_IN_W 5
+`define TV_EXMIN_IN_CH 1
+`define TV_EXMIN_OUT_CH 1
+`define TV_EXMIN_SHIFT 12
+`define TV_EXMIN_RELU 1'b0
+`define TV_EXMIN_ACT_COUNT 25
+`define TV_EXMIN_WGT_COUNT 25
+`define TV_EXMIN_BIAS_COUNT 1
+`define TV_EXMIN_CONN_COUNT 1
+`define TV_EXMIN_OUT_COUNT 1
+
+// ---- tb_extremes.sv dense case ----
+`define TV_EXD_IN_LEN 120
+`define TV_EXD_OUT_LEN 4
+`define TV_EXD_SHIFT 16
+`define TV_EXD_RELU 1'b0
+`define TV_EXD_ACT_COUNT 120
+`define TV_EXD_WGT_COUNT 480
+`define TV_EXD_BIAS_COUNT 4
+`define TV_EXD_OUT_COUNT 4
+`define TV_EXD_PEAK_ACC 2950780
+
 // ---- tb_lenet5_top.sv ----
 `define TV_TOP_EXPECTED_CLASS 6
 `define TV_TOP_WATCHDOG_CYCLES 600000

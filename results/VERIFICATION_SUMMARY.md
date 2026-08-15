@@ -1,13 +1,14 @@
 # Verification Summary
 
-Date: 2026-08-07, re-verified three times on 2026-08-15 — after the requantize
+Date: 2026-08-07, re-verified four times on 2026-08-15 — after the requantize
 pipelining change, after adding controller-FSM coverage and the
-config-validation reject tier, and after adding the stall-invariance and
-reset-interruption tier. See the three Addenda at the end. The body below
-reflects the first re-verification; **where a later addendum moves a number,
-the later one is authoritative** — that means the cycle figures come from the
-second (measured per inference rather than read off `$finish`) and the
-testbench count from the third (**11**, not 9 or 10).
+config-validation reject tier, after adding the stall-invariance and
+reset-interruption tier, and after adding the operand/dimension extremes tier.
+See the four Addenda at the end. The body below reflects the first
+re-verification; **where a later addendum moves a number, the later one is
+authoritative** — that means the cycle figures come from the second (measured
+per inference rather than read off `$finish`) and the testbench count from the
+fourth (**12**, not 9, 10 or 11).
 
 ## Status
 
@@ -301,3 +302,97 @@ moving that initialisation into the reset branch alone.
 `scripts/regression_summary.sh`'s expected total was updated to match and still
 fails if any of the eleven stops reporting. `tb_robustness` carries its own
 50,000-cycle watchdog; `tb_lenet5_top`'s 600,000-cycle budget is unchanged.
+
+---
+
+## Fourth addendum -- 2026-08-15: operand and dimension extremes
+
+`tb/tb_extremes.sv` closes the "min/max and near-overflow accumulator vectors"
+and "extreme legal dimension configurations" items from
+`docs/VERIFICATION_PLAN.md`.
+
+**The gap it closes.** Every other engine-level vector set in this repo draws
+activations from `[-32, 32)` and weights from `[-16, 16)`. The largest
+accumulator any of them produced was about 39,000 -- roughly 0.002% of the
+32-bit range it is stored in -- and the int8 extremes -128 and +127 were never
+driven at any operand position. -128 is exactly where a signed multiplier is
+most likely to be wrong, because its negation is not representable in int8.
+
+| Run | Shape | Shift | What it establishes |
+|---|---|---|---|
+| conv magnitude | 16x5x5 -> 2x1x1, 400 MACs/output | 16 | peak accumulator 7,502,600 carried without wrapping |
+| conv cancelling | same operands, weights summing to zero | 0 | a single wrong product is visible, not just a wrong magnitude |
+| conv minimum | 1x5x5 -> 1x1x1, one beat | 12 | smallest legal shape; output position asserted as 0/0/0 |
+| dense | 120 -> 4 at `MAX_IN_LEN` | 16 | `out_acc_o` bit-exact against the model, peak 2,950,780 |
+
+**Two passes, because one is not enough.** The magnitude run proves the
+accumulator holds 7.5 million without wrapping, but at shift 16 one output LSB
+is worth 65,536, so it cannot resolve a small per-product error -- measured, not
+assumed: a multiplier mutation that reads -128 as -127 moves that accumulator by
+5,120 and the output not at all. The cancelling run fixes the resolution by
+making the weights sum to zero so the bias *is* the accumulator, read out at
+shift 0 where any error of 1 or more fails the comparison.
+
+**The cancelling weights had to be made asymmetric.** The first arrangement used
+three equal contiguous blocks, which put an equal share of every weight group in
+each of the five row columns -- so a mutation confined to one column cancelled
+exactly as neatly as the products did, and it survived the whole regression a
+second time. The weights are now assigned per row column
+(`-128 + 127 + 1 - 1 + 1 = 0`), with no column summing to zero, so a bug in any
+one of the five products shifts the result. Leaving a column at zero would
+reopen the same hole from the other side: a wrong product times a zero weight is
+still zero.
+
+**A signal that had never been checked.** `golden/generate_vectors.py` has always
+written `vectors/accumulator.hex` and `vectors/f6/accumulator.hex`, and no
+testbench ever read either. `tb_dense_engine.sv` connects `out_acc_o` and then
+ignores it. That is not an incidental output: `classifier_argmax` decides the
+predicted class from `out_acc_o` rather than the requantized score, precisely so
+two classes that both saturate cannot tie -- the "non-obvious correctness call"
+recorded in `docs/ARCHITECTURE.md`. A wrong-but-self-consistent accumulator
+would have passed every check in this project. It is now compared against the
+golden model beat for beat, and a mutation that corrupts only `out_acc_o` while
+leaving `out_data_o` correct is caught by nothing else in the regression.
+
+The conv-side file is a different case, and worth recording rather than
+quietly leaving generated: `conv2d_engine` has **no** accumulator port at all
+(`out_data_o`, `out_channel_o`, `out_y_o`, `out_x_o` and the status flags are
+the whole output side), so `vectors/accumulator.hex` cannot be compared against
+anything by any testbench. It is dead data by construction, not an oversight
+this tier fixes. Only `dense_engine` exposes the raw accumulator, because
+`classifier_argmax` is the one consumer that needs it.
+
+**Accumulator headroom.** The margin quoted is **286x** -- 7,502,600 through
+`conv2d_engine` against the 2,147,483,647 an int32 holds -- and it is taken
+from `conv2d_engine` because it is the larger of the two peaks: headroom is set
+by the worst case, and quoting `dense_engine`'s 2,950,780 instead would report
+727x for the same measurement.
+
+The two peaks are known to different standards, which the phrase "measured
+peak" would blur. `dense_engine`'s 2,950,780 is *measured*: the testbench
+watches `out_acc_o`, compares every beat against the model, and asserts the
+observed peak equals the expected one, so the RTL demonstrably carried that
+value. `conv2d_engine`'s 7,502,600 is the model's figure, and with no
+accumulator port the RTL can only be constrained through the requantized
+output -- to within one output LSB, 65,536 at shift 16. That is loose, but it
+is far tighter than the failure being excluded: a 32-bit wrap displaces the
+accumulator by 2^32 and the output by 65,536 LSBs, which cannot hide inside a
+bit-exact comparison. So *no wrap* is established for both engines; *the exact
+peak* is established only for dense. That the width is sufficient for every
+legal configuration remains an argument rather than a proof, but it is no
+longer an untested one.
+
+**Proven able to fail.** Nine mutations were injected (twenty-three across the
+four campaigns to date); all nine were caught. Eight fired the assertion they
+target; the ninth is a deliberate control -- the same -128 multiplier bug scored
+against the magnitude pass alone, which does *not* catch it, which is the
+measurement that justifies the cancelling pass existing at all. Two of the nine
+attack the tier's own anti-vacuity guards: one makes the generator stop emitting
+int8 extremes, the other reverts it to the deployment shift so every output
+saturates. Both are caught, so the testbench cannot quietly stop testing what it
+claims to test.
+
+**Counts that changed:** 11 testbenches -> **12**, 19 `PASS` lines -> **24**.
+`scripts/regression_summary.sh`'s expected total was updated to match and still
+fails if any of the twelve stops reporting. `tb_extremes` carries its own
+50,000-cycle watchdog and finishes in about 3,100 cycles.

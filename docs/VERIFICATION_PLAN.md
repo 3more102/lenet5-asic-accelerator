@@ -9,6 +9,9 @@
 | Output backpressure/hold | protocol expectation | PE and engine tests |
 | Round-nearest-away-from-zero | NumPy | Python unit tests + engine comparison |
 | Saturation and optional ReLU | NumPy | Python unit tests + generated vectors |
+| Every shift 0..31, each with ReLU off and on | NumPy `requantize` | `tb_requantize.sv` (5,504 cases) |
+| Rounding ties either side of zero, and +-1 around each | same | `tb_requantize.sv` |
+| Both saturation boundaries, approached from both sides | same | `tb_requantize.sv` |
 | Sparse input-channel skipping | NumPy mask | engine comparison |
 | C3 exact connectivity | 1998 Table I | Python + dedicated RTL test |
 | Runtime H/W/C configuration | generated config | engine comparison |
@@ -25,6 +28,10 @@
 | Stall invariance under pseudorandom backpressure | the engine's own unstalled run | `tb_robustness.sv` |
 | valid/ready hold and payload stability | AXI-style stream protocol rules | `tb/stream_hold_check.sv`, instantiated in `tb_robustness.sv` |
 | Reset interruption mid-stream, and restart | the engine's own uninterrupted run | `tb_robustness.sv` |
+| int8 operand extremes (-128/+127) at every position | `conv2d_valid_int8`, `dense_int8` | `tb_extremes.sv` |
+| Near-maximum accumulator magnitude, and no wrap | same | `tb_extremes.sv` |
+| Raw pre-requantization accumulator (`out_acc_o`) | `dense_int8` accumulator output | `tb_extremes.sv` |
+| Largest and smallest legal layer dimensions | same | `tb_extremes.sv` |
 
 The main engine test generates activations, weights, biases, a sparse mask, raw
 accumulators, and expected int8 outputs from a deterministic seed. RTL output is
@@ -64,16 +71,53 @@ was not hypothetical: a mutation deleting `out_valid_o` from
 `conv2d_engine`'s reset branch survived the entire regression until the abort
 was pinned to that state.
 
+**Operand and dimension extremes (`tb_extremes.sv`):** every other engine-level
+vector set in this repo draws activations from `[-32, 32)` and weights from
+`[-16, 16)`, so no accumulator ever exceeded about 39,000 of a 32-bit range and
+the int8 extremes -128 and +127 were never driven at any operand position.
+`tb_extremes.sv` runs `conv2d_engine` at `MAX_IN_CH` (16 channels x 25 taps =
+400 MACs per output, the C5 cost and the most the engine accepts) and
+`dense_engine` at `MAX_IN_LEN`, with -128 and +127 at every position.
+
+Three things make this test say something rather than merely run:
+
+1. **Shift is 16, not the deployment 6/7.** At shift 7 an accumulator of
+   several million requantizes far past the int8 rails and every output pins to
+   +-127, insensitive to the accumulator beneath it -- the arithmetic could be
+   wrong by millions and the comparison would still hold. The testbench asserts
+   that no expected output sits at a rail, so this cannot silently regress.
+2. **A second pass with weights that cancel to exactly zero, at shift 0.** The
+   magnitude pass proves the accumulator carries 7.5 million without wrapping,
+   but one output LSB is worth 65,536 there, so it cannot resolve a small
+   per-product error. In the cancelling pass the output *is* the accumulator,
+   so a single wrong product moves it. The cancelling weights are arranged
+   across the five row columns (`-128 + 127 + 1 - 1 + 1 = 0`) rather than in
+   equal blocks: an earlier blocked arrangement cancelled the *bug* as neatly
+   as it cancelled the products, and a multiplier mutation survived the whole
+   regression until the columns were made asymmetric.
+3. **`out_acc_o` is compared against the golden model.** It never was before.
+   `golden/generate_vectors.py` had always written `vectors/f6/accumulator.hex`
+   and no testbench read it; `tb_dense_engine.sv` connects `out_acc_o` and
+   ignores it. That signal is what `classifier_argmax` votes on -- deliberately,
+   so two saturating classes cannot tie -- so a wrong-but-self-consistent
+   accumulator would have passed every check in the project.
+
+The measured peak is 2,950,780 on `dense_engine`'s `out_acc_o` and 7,502,600
+through `conv2d_engine`, against the 2,147,483,647 a 32-bit accumulator holds.
+The margin quoted is the one from the *larger* of the two -- **286x**, from
+`conv2d_engine` -- because headroom is set by the worst case, not the average
+of the cases measured. The width is now exercised rather than assumed, though
+the argument that no legal configuration can exceed it remains an argument,
+not a proof.
+
 ## Required before tapeout
 
 - trained-network C1, C3, and C5 layer tests;
-- min/max and near-overflow accumulator vectors;
-- every shift from 0 through the supported deployment maximum;
-- negative ties, positive ties, saturation boundaries, and ReLU boundaries;
-- extreme *legal* dimension configurations (the invalid ones are covered:
-  `tb_config_guard.sv` drives all 22 reject conditions across the four engines
-  that implement config validation, checks each is inert, and proves the error
-  clears on the next legal config);
+- extreme *legal* dimension configurations beyond the largest and smallest
+  (`tb_config_guard.sv` covers the invalid ones -- all 22 reject conditions
+  across the four engines that implement config validation, each proven inert
+  and clearing on the next legal config -- and `tb_extremes.sv` now covers both
+  ends of the legal range, but not the interior);
 - legal counter ranges (random output stalls, stable-output-under-stall
   assertions and reset interruption policy are now covered -- see the
   robustness note above);
@@ -118,6 +162,9 @@ A passing run must show:
   under pseudorandom backpressure and after a mid-stream reset, with the
   protocol checker reporting no withdrawn `valid` and no payload movement
   while stalled;
+- `conv2d_engine` and `dense_engine` bit-exact with -128 and +127 at every
+  operand position, at both the largest and smallest legal layer shapes, and
+  `dense_engine`'s raw `out_acc_o` matching the golden model beat for beat;
 - `lenet5_top` predicted class matching `deploy_forward_int8` on the full
   canonical 32x32x1 input, and the same class again on a second back-to-back
   inference with no reset and no weight reload;

@@ -16,7 +16,7 @@ test_hand_calculated_convolution (golden.test_golden.GoldenModelTests.test_hand_
 test_requantize_rounding_and_saturation (golden.test_golden.GoldenModelTests.test_requantize_rounding_and_saturation) ... ok
 
 ----------------------------------------------------------------------
-Ran 15 tests in 1.417s
+Ran 15 tests in 1.914s
 
 OK
 iverilog -g2012 -Wall -tnull -s conv2d_engine rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv
@@ -128,6 +128,7 @@ pool: 2x4x6 -> 2x2x3
 dense_engine (F6 config): 10 -> 5
 classifier_argmax: 6 -> 4 classes, winner=3
 requantize: 5504 differential cases
+extremes: conv 16x5x5 -> 2x1x1 (peak |acc| 7,502,600), dense 120 -> 4 (peak |acc| 2,950,780)
 lenet5_top: 1x32x32 -> class 6
 iverilog -g2012 -Wall -I. -s tb_requantize -o results/tb_requantize.vvp \
 	rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/tb_requantize.sv
@@ -280,6 +281,58 @@ PASS tb_robustness: avg_pool2x2_stream is stall-invariant and recovers from a mi
 PASS tb_robustness: dense_engine is stall-invariant and recovers from a mid-stream reset
 PASS tb_robustness: 3 engines x {unstalled, randomly stalled, reset mid-stream} all agree beat for beat
 tb/tb_robustness.sv:763: $finish called at 33830000 (1ps)
+iverilog -g2012 -Wall -I. -s tb_extremes \
+	-o results/tb_extremes.vvp rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/tb_extremes.sv
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+vvp results/tb_extremes.vvp
+  conv2d_engine 16x5x5 -> 2x1x1: 2 beats at int8 extremes, 400 MACs each, peak |acc| 7502600
+PASS tb_extremes: conv2d_engine is bit-exact at the largest layer it accepts, with -128 and +127 at every operand position
+  same operands, weights cancelling to zero, shift 0: 2 beats, output equals the accumulator so one wrong product moves it by >= 128
+PASS tb_extremes: conv2d_engine resolves a single wrong product, not just a wrong magnitude
+  minimum config 1x5x5 -> 1x1x1: 1 beat, position 0/0/0 confirmed
+PASS tb_extremes: conv2d_engine is bit-exact at the smallest legal configuration
+  dense_engine 120 -> 4: 4 beats, out_acc_o matched the model exactly, peak |acc| 2950780 of the 2147483647 an int32 accumulator holds (727x headroom)
+PASS tb_extremes: dense_engine raw accumulator matches the golden model -- the signal classifier_argmax votes on, previously unchecked
+PASS tb_extremes: int8 extremes and both dimension limits are bit-exact against the golden model
+tb/tb_extremes.sv:621: $finish called at 31200000 (1ps)
 iverilog -g2012 -Wall -I. -s tb_lenet5_top \
 	-o results/tb_top.vvp rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/fsm_cov.sv tb/tb_lenet5_top.sv
 rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).

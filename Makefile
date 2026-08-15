@@ -20,8 +20,8 @@ RTL := \
 	rtl/lenet5_top.sv
 
 .PHONY: all vectors golden-test demo lint sim-pe sim-requantize sim-c3 sim-engine sim-pool sim-f6 \
-	sim-classifier sim-classifier-tie sim-config-guard sim-robustness sim-top regression synth \
-	synth-pe synth-pool synth-mac ppa check-ppa orfs clean
+	sim-classifier sim-classifier-tie sim-config-guard sim-robustness sim-extremes \
+	sim-top regression synth synth-pe synth-pool synth-mac ppa check-ppa orfs clean
 
 all: regression
 
@@ -101,6 +101,14 @@ sim-robustness: vectors
 		-o results/tb_robustness.vvp $(RTL) tb/stream_hold_check.sv tb/tb_robustness.sv
 	$(VVP) results/tb_robustness.vvp
 
+# The extremes vectors are the only ones that drive -128/+127 at every operand
+# position and the largest/smallest layer shapes the engines accept; see the
+# header of tb/tb_extremes.sv for why the shifts differ from deployment.
+sim-extremes: vectors
+	$(IVERILOG) -g2012 -Wall -I. -s tb_extremes \
+		-o results/tb_extremes.vvp $(RTL) tb/tb_extremes.sv
+	$(VVP) results/tb_extremes.vvp
+
 # tb/fsm_cov.sv is a testbench-side coverage collector, not RTL, so it is
 # listed here rather than in $(RTL). It enforces full state and transition
 # coverage of lenet5_top's 20-state control FSM and fails the run on any
@@ -111,7 +119,7 @@ sim-top: vectors
 	$(VVP) results/tb_top.vvp
 
 regression: golden-test lint sim-pe sim-requantize sim-c3 sim-engine sim-pool sim-f6 \
-	sim-classifier sim-classifier-tie sim-config-guard sim-robustness sim-top demo
+	sim-classifier sim-classifier-tie sim-config-guard sim-robustness sim-extremes sim-top demo
 
 # synth-pe is the original target name kept as an alias so existing callers
 # of `make synth-pe`/`synth/yosys.ys` keep working; `synth` now means
