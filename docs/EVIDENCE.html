@@ -634,12 +634,15 @@
     <b>574 cells per multiplier</b>, so 8 &times; 574 &asymp; 4,592, plus one extra
     reduction level &asymp; 4,672. The number falls straight out of the lane count.<br><br>
     <b>2. <code>requantize</code> is a third of the PE — and it is the first thing we
-    would optimise.</b> <code>shift_i</code> is a runtime <code>[5:0]</code> input, so
-    Yosys must infer a full barrel shifter. Every layer actually uses
-    <b>shift = 7</b>. Fixing the shift at elaboration time would collapse most of
-    those 917 cells for zero functional change. Offer this when asked &ldquo;what
-    would you improve?&rdquo; — it is specific, measured, and it shows you read your own
-    synthesis report rather than just its last line.
+    would look at.</b> <code>shift_i</code> is a runtime <code>[5:0]</code> input, so
+    Yosys must infer a full barrel shifter. The random-weight tiers all run at
+    <b>shift = 7</b>, which makes that look like free area to reclaim — but the
+    trained network calibrates to <b>9/8/9/9</b>, so <code>tb_trained_mnist</code>
+    drives four distinct shifts through the same hardware. Specialising the shift at
+    elaboration time would collapse most of those 917 cells, at the price of the
+    per-layer calibration. Offer this when asked &ldquo;what would you improve?&rdquo;
+    — and that it is a trade rather than a freebie is the better half of the answer,
+    because it shows you read your own synthesis report against your own testbenches.
   </div>
 
   <h3>The story this screen exists to tell</h3>

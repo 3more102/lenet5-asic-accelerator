@@ -196,12 +196,19 @@ pipeline register in the previous section, the PE went **26.759 → 14.568 ns
 overall — 37.4 → 68.6 MHz, 1.84×** — from two independent, separately
 measured fixes.
 
-**Still not done:** constant-folding `shift_i`. Every layer uses shift = 7
-([`golden/deploy.py:28`](../golden/deploy.py#L28)), so the barrel shifter is
-generality nothing currently exercises. That would shrink area further, but
-unlike the change above it is not free — `conv2d_engine` drives `shift_i`
-from a runtime config register, so fixing it means giving up per-layer
-configurability. That is an architectural decision, not a local optimization.
+**Still not done:** constant-folding `shift_i`. The random-weight tiers all run
+at `DEFAULT_SHIFTS`, a flat 7
+([`golden/deploy.py:28`](../golden/deploy.py#L28)), which once made the barrel
+shifter look like generality nothing exercised. That is no longer true. The
+trained network calibrates to **9/8/9/9**, and `tb_trained_mnist` instantiates
+`lenet5_top` at those parameters — four distinct shift values, and deliberately
+not the same one in every layer. The runtime shifter is now load-bearing for
+the one tier that classifies real digits, so specialising it at elaboration
+time would cost the per-layer calibration that buys back 0.02 accuracy points
+against float. The area is still there to be had, and the conclusion is
+unchanged — this is an architectural trade, not a local optimization — but it
+is worth noting the conclusion now holds for the opposite reason it did when
+this section was written.
 
 ## `conv5x5_pe`: a measured bottleneck, fixed and re-measured
 

@@ -250,11 +250,17 @@ Waveforms are written to `results/conv2d_engine.vcd` by Icarus and to
 
 ## Important project boundary
 
-The supplied vectors use **deterministic random values to verify arithmetic;
-they are not trained MNIST weights**. No accuracy number is claimed anywhere in
-this repository. A classifier tapeout additionally requires training,
-quantization-aware calibration, exported weights/scales, SRAM integration, DFT,
-physical implementation, and PVT sign-off.
+Wherever the vectors carry weights, they are **deterministic random values
+chosen to verify arithmetic, not trained MNIST weights**, and no accuracy claim
+rests on them — a predicted class from those tiers is an arithmetic result, not
+a recognition result. `tb_trained_mnist` is the sole exception and the only
+source of an accuracy figure in this repository: it runs a genuinely trained,
+calibrated, quantized network at **99.11% INT8**, measured once on the MNIST
+test set with the per-layer shifts fitted to *training* images only. Do not
+generalize that figure to the other tiers, and do not generalize their random
+weights to it. A classifier tapeout still additionally requires SRAM
+integration, DFT, physical implementation, and PVT sign-off, none of which
+exist here.
 
 ## Key references
 
