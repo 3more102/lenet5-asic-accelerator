@@ -22,7 +22,7 @@ RTL := \
 .PHONY: all vectors golden-test demo lint sim-pe sim-pe-stream sim-requantize sim-mac-conv \
 	sim-mac-dense sim-c3 sim-engine sim-pool sim-f6 \
 	sim-classifier sim-classifier-tie sim-config-guard sim-robustness sim-extremes \
-	sim-top regression synth synth-pe synth-pool synth-mac \
+	sim-layer-shapes sim-top regression synth synth-pe synth-pool synth-mac \
 	equiv equiv-pe equiv-pool equiv-mac equiv-mapped equiv-mapped-requantize \
 	equiv-mapped-pool gls ppa check-ppa orfs clean
 
@@ -140,6 +140,15 @@ sim-extremes: vectors
 		-o results/tb_extremes.vvp $(RTL) tb/tb_extremes.sv
 	$(VVP) results/tb_extremes.vvp
 
+# conv2d_engine and dense_engine reconfigured across the real network's own
+# C1/C3/C5/F6/classifier shapes, each layer's beat stream checked against
+# deploy_forward_int8 directly rather than only the final predicted class.
+# See the header of tb/tb_layer_shapes.sv.
+sim-layer-shapes: vectors
+	$(IVERILOG) -g2012 -Wall -I. -s tb_layer_shapes \
+		-o results/tb_layer_shapes.vvp $(RTL) tb/tb_layer_shapes.sv
+	$(VVP) results/tb_layer_shapes.vvp
+
 # tb/fsm_cov.sv is a testbench-side coverage collector, not RTL, so it is
 # listed here rather than in $(RTL). It enforces full state and transition
 # coverage of lenet5_top's 20-state control FSM and fails the run on any
@@ -151,7 +160,7 @@ sim-top: vectors
 
 regression: golden-test lint sim-pe sim-pe-stream sim-requantize sim-mac-conv sim-mac-dense \
 	sim-c3 sim-engine sim-pool sim-f6 sim-classifier sim-classifier-tie sim-config-guard \
-	sim-robustness sim-extremes sim-top demo
+	sim-robustness sim-extremes sim-layer-shapes sim-top demo
 
 # synth-pe is the original target name kept as an alias so existing callers
 # of `make synth-pe`/`synth/yosys.ys` keep working; `synth` now means

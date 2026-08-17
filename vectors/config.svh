@@ -119,3 +119,53 @@
 // ---- tb_lenet5_top.sv ----
 `define TV_TOP_EXPECTED_CLASS 6
 `define TV_TOP_WATCHDOG_CYCLES 600000
+
+// ---- tb_layer_shapes.sv ----
+// C1: 1x32x32 -> 6x28x28, full connectivity
+`define TV_LS_C1_ACT_COUNT 1024
+`define TV_LS_C1_WGT_COUNT 150
+`define TV_LS_C1_BIAS_COUNT 6
+`define TV_LS_C1_OUT_COUNT 4704
+`define TV_LS_C1_IN_CH 1
+`define TV_LS_C1_OUT_CH 6
+`define TV_LS_C1_IN_H 32
+`define TV_LS_C1_IN_W 32
+
+// C3: 6x14x14 -> 16x10x10, real sparse LeCun-98 connectivity
+`define TV_LS_C3_ACT_COUNT 1176
+`define TV_LS_C3_WGT_COUNT 2400
+`define TV_LS_C3_BIAS_COUNT 16
+`define TV_LS_C3_OUT_COUNT 1600
+`define TV_LS_C3_IN_CH 6
+`define TV_LS_C3_OUT_CH 16
+`define TV_LS_C3_IN_H 14
+`define TV_LS_C3_IN_W 14
+`define TV_LS_C3_CONN_ONES 60
+
+// C5: 16x5x5 -> 120x1x1, full connectivity -- MAX_OUT_CH reached standalone
+`define TV_LS_C5_ACT_COUNT 400
+`define TV_LS_C5_WGT_COUNT 48000
+`define TV_LS_C5_BIAS_COUNT 120
+`define TV_LS_C5_OUT_COUNT 120
+`define TV_LS_C5_IN_CH 16
+`define TV_LS_C5_OUT_CH 120
+`define TV_LS_C5_IN_H 5
+`define TV_LS_C5_IN_W 5
+
+// F6: dense_engine 120 -> 84 -- MAX_OUT_LEN reached standalone
+`define TV_LS_F6_ACT_COUNT 120
+`define TV_LS_F6_WGT_COUNT 10080
+`define TV_LS_F6_BIAS_COUNT 84
+`define TV_LS_F6_OUT_COUNT 84
+`define TV_LS_F6_IN_LEN 120
+`define TV_LS_F6_OUT_LEN 84
+
+// classifier stage: dense_engine 84 -> 10, shift 0 / relu off, same instance
+// as F6 reconfigured -- out_acc_o is the signal classifier_argmax votes on
+`define TV_LS_CLS_ACT_COUNT 84
+`define TV_LS_CLS_WGT_COUNT 840
+`define TV_LS_CLS_BIAS_COUNT 10
+`define TV_LS_CLS_OUT_COUNT 10
+`define TV_LS_CLS_IN_LEN 84
+`define TV_LS_CLS_OUT_LEN 10
+`define TV_LS_EXPECTED_CLASS 6

@@ -36,7 +36,8 @@ vlog -sv +incdir+. \
     tb/tb_robustness.sv \
     tb/tb_extremes.sv \
     tb/fsm_cov.sv \
-    tb/tb_lenet5_top.sv
+    tb/tb_lenet5_top.sv \
+    tb/tb_layer_shapes.sv
 
 vsim -c work.tb_conv5x5_pe
 onfinish stop
@@ -109,6 +110,11 @@ run -all
 quit -sim
 
 vsim -c -wlf results/lenet5_top.wlf work.tb_lenet5_top
+onfinish stop
+run -all
+quit -sim
+
+vsim -c work.tb_layer_shapes
 onfinish stop
 run -all
 quit -sim

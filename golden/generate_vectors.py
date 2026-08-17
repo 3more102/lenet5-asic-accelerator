@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from golden.deploy import DEFAULT_SHIFTS, deploy_forward_int8, random_deploy_parameters
+from golden.lenet5 import c3_connectivity
 from golden.quantized_conv import (
     argmax_classifier,
     avg_pool2x2_int8,
@@ -1049,6 +1050,142 @@ def generate_extremes_vectors() -> str:
 """
 
 
+def generate_layer_shapes_vectors() -> str:
+    """tb_layer_shapes.sv -- conv2d_engine/dense_engine reconfigured across
+    the real network's own C1/C3/C5/F6/classifier dimensions, each layer's
+    beat stream checked against the golden model directly.
+
+    What every existing standalone conv2d_engine/dense_engine testbench uses
+    is either a tiny synthetic shape (7x8x3->4, 10->5) or a channel/operand
+    *extreme* (16 in-channels, MAX_IN_LEN=120) -- never the shapes the real
+    network is actually built from. C1 (1->6, 32x32), C3 (6->16, 14x14, real
+    sparse connectivity), C5 (16->120, 5x5), F6 (120->84) and classifier
+    (84->10) are only ever driven by tb_lenet5_top.sv, and there the only
+    oracle is "did the final 10-way argmax pick the same class" -- which
+    tolerates a great deal of intermediate error. This reuses the exact same
+    image and weights tb_lenet5_top.sv checks (same seed, same
+    random_deploy_parameters) but compares every layer's own beat stream
+    against deploy_forward_int8's intermediate C1/C3/C5/F6 arrays, and
+    reconfigures one conv2d_engine instance and one dense_engine instance
+    from shape to shape -- something no existing testbench does, since every
+    other multi-run testbench (tb_lenet5_top's two back-to-back inferences)
+    reruns the *same* shape both times.
+
+    Not claimed: this is not a trained network. random_deploy_parameters is
+    explicit that its weights are shape-correct and not trained on MNIST --
+    docs/VERIFICATION_PLAN.md's "trained-network C1/C3/C5" item stays open.
+    This closes the dimension-coverage half of that gap, not the training
+    half.
+    """
+
+    SEED = 3004  # same seed as generate_top_vectors(): bit-identical stimulus
+    rng = np.random.default_rng(SEED)
+    image = rng.integers(-16, 16, size=(32, 32), dtype=np.int8)
+    params = random_deploy_parameters(seed=SEED)
+    result = deploy_forward_int8(image, params, shifts=DEFAULT_SHIFTS)
+
+    cls_expected, cls_acc = dense_int8(
+        result["F6"], params["cls_w"], params["cls_b"], shift=0, relu=False
+    )
+    if not np.array_equal(cls_acc, result["classifier_accumulators"]):
+        raise ValueError(
+            "layer_shapes classifier oracle disagrees with "
+            "deploy_forward_int8's own classifier_accumulators"
+        )
+    if int(np.argmax(cls_acc)) != result["prediction"]:
+        raise ValueError("layer_shapes classifier argmax disagrees with deploy prediction")
+
+    conn = c3_connectivity()
+    if conn.shape != (16, 6):
+        raise ValueError(f"c3_connectivity shape {conn.shape}, expected (16, 6)")
+    conn_ones = int(conn.sum())
+
+    ls_dir = VECTOR_DIR / "layer_shapes"
+
+    write_hex(ls_dir / "c1_act.hex", image.reshape(1, 32, 32), 8)
+    write_hex(ls_dir / "c1_wgt.hex", params["c1_w"], 8)
+    write_hex(ls_dir / "c1_bias.hex", params["c1_b"], 32)
+    write_hex(ls_dir / "c1_expected.hex", result["C1"], 8)
+
+    write_hex(ls_dir / "c3_act.hex", result["S2"], 8)
+    write_hex(ls_dir / "c3_wgt.hex", params["c3_w"], 8)
+    write_hex(ls_dir / "c3_bias.hex", params["c3_b"], 32)
+    write_hex(ls_dir / "c3_expected.hex", result["C3"], 8)
+
+    write_hex(ls_dir / "c5_act.hex", result["S4"], 8)
+    write_hex(ls_dir / "c5_wgt.hex", params["c5_w"], 8)
+    write_hex(ls_dir / "c5_bias.hex", params["c5_b"], 32)
+    write_hex(ls_dir / "c5_expected.hex", result["C5"], 8)
+
+    write_hex(ls_dir / "f6_act.hex", result["C5"].reshape(-1), 8)
+    write_hex(ls_dir / "f6_wgt.hex", params["f6_w"], 8)
+    write_hex(ls_dir / "f6_bias.hex", params["f6_b"], 32)
+    write_hex(ls_dir / "f6_expected.hex", result["F6"], 8)
+
+    write_hex(ls_dir / "cls_act.hex", result["F6"], 8)
+    write_hex(ls_dir / "cls_wgt.hex", params["cls_w"], 8)
+    write_hex(ls_dir / "cls_bias.hex", params["cls_b"], 32)
+    write_hex(ls_dir / "cls_expected.hex", cls_expected, 8)
+    write_hex(ls_dir / "cls_accumulator.hex", cls_acc, 64)
+
+    print(
+        f"layer_shapes: C1 1x32x32->6x28x28, C3 6x14x14->16x10x10 "
+        f"({conn_ones}/96 connections), C5 16x5x5->120x1x1, F6 120->84, "
+        f"classifier 84->10, prediction={result['prediction']}"
+    )
+
+    return f"""// ---- tb_layer_shapes.sv ----
+// C1: 1x32x32 -> 6x28x28, full connectivity
+`define TV_LS_C1_ACT_COUNT {image.size}
+`define TV_LS_C1_WGT_COUNT {params["c1_w"].size}
+`define TV_LS_C1_BIAS_COUNT {params["c1_b"].size}
+`define TV_LS_C1_OUT_COUNT {result["C1"].size}
+`define TV_LS_C1_IN_CH 1
+`define TV_LS_C1_OUT_CH 6
+`define TV_LS_C1_IN_H 32
+`define TV_LS_C1_IN_W 32
+
+// C3: 6x14x14 -> 16x10x10, real sparse LeCun-98 connectivity
+`define TV_LS_C3_ACT_COUNT {result["S2"].size}
+`define TV_LS_C3_WGT_COUNT {params["c3_w"].size}
+`define TV_LS_C3_BIAS_COUNT {params["c3_b"].size}
+`define TV_LS_C3_OUT_COUNT {result["C3"].size}
+`define TV_LS_C3_IN_CH 6
+`define TV_LS_C3_OUT_CH 16
+`define TV_LS_C3_IN_H 14
+`define TV_LS_C3_IN_W 14
+`define TV_LS_C3_CONN_ONES {conn_ones}
+
+// C5: 16x5x5 -> 120x1x1, full connectivity -- MAX_OUT_CH reached standalone
+`define TV_LS_C5_ACT_COUNT {result["S4"].size}
+`define TV_LS_C5_WGT_COUNT {params["c5_w"].size}
+`define TV_LS_C5_BIAS_COUNT {params["c5_b"].size}
+`define TV_LS_C5_OUT_COUNT {result["C5"].size}
+`define TV_LS_C5_IN_CH 16
+`define TV_LS_C5_OUT_CH 120
+`define TV_LS_C5_IN_H 5
+`define TV_LS_C5_IN_W 5
+
+// F6: dense_engine 120 -> 84 -- MAX_OUT_LEN reached standalone
+`define TV_LS_F6_ACT_COUNT {result["C5"].size}
+`define TV_LS_F6_WGT_COUNT {params["f6_w"].size}
+`define TV_LS_F6_BIAS_COUNT {params["f6_b"].size}
+`define TV_LS_F6_OUT_COUNT {result["F6"].size}
+`define TV_LS_F6_IN_LEN 120
+`define TV_LS_F6_OUT_LEN 84
+
+// classifier stage: dense_engine 84 -> 10, shift 0 / relu off, same instance
+// as F6 reconfigured -- out_acc_o is the signal classifier_argmax votes on
+`define TV_LS_CLS_ACT_COUNT {result["F6"].size}
+`define TV_LS_CLS_WGT_COUNT {params["cls_w"].size}
+`define TV_LS_CLS_BIAS_COUNT {params["cls_b"].size}
+`define TV_LS_CLS_OUT_COUNT {cls_expected.size}
+`define TV_LS_CLS_IN_LEN 84
+`define TV_LS_CLS_OUT_LEN 10
+`define TV_LS_EXPECTED_CLASS {result['prediction']}
+"""
+
+
 def main() -> None:
     VECTOR_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -1062,6 +1199,7 @@ def main() -> None:
         generate_pe_vectors(),
         generate_extremes_vectors(),
         generate_top_vectors(),
+        generate_layer_shapes_vectors(),
     ]
 
     header = "// Generated by golden/generate_vectors.py; do not hand edit.\n"

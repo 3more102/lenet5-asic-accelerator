@@ -16,7 +16,7 @@ test_hand_calculated_convolution (golden.test_golden.GoldenModelTests.test_hand_
 test_requantize_rounding_and_saturation (golden.test_golden.GoldenModelTests.test_requantize_rounding_and_saturation) ... ok
 
 ----------------------------------------------------------------------
-Ran 15 tests in 0.349s
+Ran 15 tests in 0.235s
 
 OK
 iverilog -g2012 -Wall -tnull -s conv2d_engine rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv
@@ -133,6 +133,7 @@ dense_row_mac: 9540 differential cases, peak 131072 / -130048
 conv5x5_pe stream: 848 pixels / 3147 rows, sat 87+/80-, relu-clamped 215, 48 single-beat, 32/32 shifts, 428 back-to-back
 extremes: conv 16x5x5 -> 2x1x1 (peak |acc| 7,502,600), dense 120 -> 4 (peak |acc| 2,950,780)
 lenet5_top: 1x32x32 -> class 6
+layer_shapes: C1 1x32x32->6x28x28, C3 6x14x14->16x10x10 (60/96 connections), C5 16x5x5->120x1x1, F6 120->84, classifier 84->10, prediction=6
 iverilog -g2012 -Wall -I. -s tb_conv5x5_pe_stream \
 	-o results/tb_pe_stream.vvp rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/stream_hold_check.sv tb/tb_conv5x5_pe_stream.sv
 rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
@@ -390,6 +391,42 @@ PASS tb_extremes: conv2d_engine is bit-exact at the smallest legal configuration
 PASS tb_extremes: dense_engine raw accumulator matches the golden model -- the signal classifier_argmax votes on, previously unchecked
 PASS tb_extremes: int8 extremes and both dimension limits are bit-exact against the golden model
 tb/tb_extremes.sv:621: $finish called at 31200000 (1ps)
+iverilog -g2012 -Wall -I. -s tb_layer_shapes \
+	-o results/tb_layer_shapes.vvp rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/tb_layer_shapes.sv
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+rtl/requantize.sv:40: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+vvp results/tb_layer_shapes.vvp
+  C1 1x32x32 -> 6x28x28: 4704 beats bit-exact against deploy_forward_int8
+PASS tb_layer_shapes: conv2d_engine matches the golden model at the real C1 shape
+  C3 6x14x14 -> 16x10x10: 1600 beats bit-exact, reconfigured from C1 with no reset, 60/96 real connections live
+PASS tb_layer_shapes: conv2d_engine reconfigures cleanly to a new shape and the real sparse C3 connectivity checks out
+  C5 16x5x5 -> 120x1x1: 120 beats bit-exact, reconfigured from C3 with no reset
+PASS tb_layer_shapes: conv2d_engine reaches MAX_OUT_CH=120 standalone and matches the golden model
+  F6 120 -> 84: 84 beats bit-exact against deploy_forward_int8
+PASS tb_layer_shapes: dense_engine reaches MAX_OUT_LEN=84 standalone and matches the golden model
+  classifier 84 -> 10: 10 beats bit-exact, reconfigured from F6 with no reset, argmax picks class 6
+PASS tb_layer_shapes: dense_engine reconfigures cleanly to the classifier shape and out_acc_o argmax matches the golden prediction
+PASS tb_layer_shapes: C1/C3/C5/F6/classifier all bit-exact against the golden model on one reconfigured conv2d_engine and one reconfigured dense_engine
+tb/tb_layer_shapes.sv:533: $finish called at 1475980000 (1ps)
 iverilog -g2012 -Wall -I. -s tb_lenet5_top \
 	-o results/tb_top.vvp rtl/conv5x5_row_mac.sv rtl/requantize.sv rtl/conv5x5_pe.sv rtl/avg_pool2x2_int8.sv rtl/lenet5_c3_connectivity.sv rtl/lenet5_layer_config.sv rtl/conv2d_engine.sv rtl/dense_row_mac.sv rtl/avg_pool2x2_stream.sv rtl/dense_engine.sv rtl/classifier_argmax.sv rtl/lenet5_pool_config.sv rtl/lenet5_dense_config.sv rtl/lenet5_top.sv tb/fsm_cov.sv tb/tb_lenet5_top.sv
 rtl/conv5x5_row_mac.sv:22: sorry: constant selects in always_* processes are not currently supported (all bits will be included).

@@ -310,7 +310,7 @@
 <!-- ============================== A3 ============================== -->
 <section class="shot" id="a3">
   <h2><span class="tag">A3</span>Full open-source regression — Icarus Verilog 12.0</h2>
-  <p class="claim">Proves: all fifteen self-checking testbenches pass, end to end, in a freely reproducible toolchain.</p>
+  <p class="claim">Proves: all sixteen self-checking testbenches pass, end to end, in a freely reproducible toolchain.</p>
 
   <div class="cmd">wsl -e bash scripts/regression_summary.sh</div>
 
@@ -330,21 +330,23 @@
 
   <div class="note caution">
     <span class="h">This capture is superseded — re-capture before presenting</span>
-    The image above predates five testbenches that did not exist when it was taken:
+    The image above predates six testbenches that did not exist when it was taken:
     <code>tb_config_guard</code> (the config-validation reject path),
     <code>tb_robustness</code> (stall invariance and reset interruption), the FSM
     coverage and back-to-back inference checks now inside
-    <code>tb_lenet5_top</code>, and the two block-level MAC sweeps
-    <code>tb_conv5x5_row_mac</code> and <code>tb_dense_row_mac</code>. The regression
-    is <b>14</b> testbenches now, not nine, and prints 26 <code>PASS</code> lines
+    <code>tb_lenet5_top</code>, the two block-level MAC sweeps
+    <code>tb_conv5x5_row_mac</code> and <code>tb_dense_row_mac</code>, and
+    <code>tb_layer_shapes</code> (the real network's own layer shapes with a
+    per-layer oracle). The regression
+    is <b>16</b> testbenches now, not nine, and prints 33 <code>PASS</code> lines
     rather than eight — so the screen still reads <code>12/12</code> and the table
     below describes the current run, not the image. Re-run
     <code>wsl -e bash scripts/regression_summary.sh</code> and re-shoot it; the script
-    now counts distinct testbenches and <b>fails</b> if any of the fifteen stops
+    now counts distinct testbenches and <b>fails</b> if any of the sixteen stops
     reporting, so the screen cannot quietly show fewer tests than it claims.
   </div>
 
-  <h3>The fifteen testbenches, and what each one is actually checking</h3>
+  <h3>The sixteen testbenches, and what each one is actually checking</h3>
   <div class="scroll">
   <table>
     <thead><tr><th>PASS line</th><th>What it verifies</th></tr></thead>
@@ -363,6 +365,7 @@
       <tr><td><code>tb_config_guard</code></td><td>all <b>22</b> config-validation reject conditions flag and leave the engine inert, and a legal config is still accepted afterwards</td></tr>
       <tr><td><code>tb_robustness</code></td><td>the three streaming engines are <b>stall-invariant</b> and recover from a <b>mid-stream reset</b> — each run three times over identical operands, the stalled and aborted runs matching the reference beat for beat</td></tr>
       <tr><td><code>tb_extremes</code></td><td>int8 operand extremes (-128/+127) at the largest and smallest legal layer shapes, and the raw accumulator <code>classifier_argmax</code> votes on, checked against the model for the first time</td></tr>
+      <tr><td><code>tb_layer_shapes</code></td><td>the <b>real network's own five shapes</b> — C1 1&times;32&times;32&rarr;6&times;28&times;28, C3 6&times;14&times;14&rarr;16&times;10&times;10 against the live 60-connection sparse table, C5 16&times;5&times;5&rarr;120&times;1&times;1, F6 120&rarr;84, classifier 84&rarr;10 — driven through standalone <code>conv2d_engine</code> and <code>dense_engine</code> instances, each <b>reconfigured between shapes with no reset</b>, with <em>every beat</em> checked against <code>deploy_forward_int8</code> rather than only the final class</td></tr>
       <tr><td><code>tb_lenet5_top</code></td><td><b>predicted class 6, bit-exact against <code>golden/deploy.py</code> end to end</b>, twice back to back with no reset or weight reload, at exactly 146,544 cycles each, with full control-FSM state and transition coverage</td></tr>
     </tbody>
   </table>
@@ -378,13 +381,13 @@
   <ul>
     <li>
       <b>The last line is the one to point at.</b>
-      <code>15/15 RTL testbenches passed -- full log in results/regression_summary.log</code>
+      <code>16/16 RTL testbenches passed -- full log in results/regression_summary.log</code>
       is not a hand-written banner: the script counts the <em>distinct</em> testbenches
       it actually found reporting <code>PASS</code> in the log, and exits non-zero if
-      that is not exactly fifteen. If one had failed, or had not run at all, the count
-      would not read 15 — so the summary cannot flatter the result. It counts distinct
-      names rather than raw <code>PASS</code> lines on purpose: two testbenches now print
-      several lines each (27 in total), so a raw line count would drift every time a
+      that is not exactly sixteen. If one had failed, or had not run at all, the count
+      would not read 16 — so the summary cannot flatter the result. It counts distinct
+      names rather than raw <code>PASS</code> lines on purpose: several testbenches print
+      multiple lines each (33 in total), so a raw line count would drift every time a
       check is added.
     </li>
     <li>

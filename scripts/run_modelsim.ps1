@@ -9,7 +9,11 @@ try {
         throw "Python vector generation failed."
     }
 
-    vsim -do scripts/modelsim.do
+    # -c is required, not cosmetic: without it vsim tries to open its GUI, and
+    # from a non-interactive session it exits after reading pref.tcl without
+    # ever running the do-file -- with exit code 0, so the caller sees success
+    # for a regression that never ran.
+    vsim -c -do scripts/modelsim.do
     if ($LASTEXITCODE -ne 0) {
         throw "ModelSim/Questa regression failed."
     }

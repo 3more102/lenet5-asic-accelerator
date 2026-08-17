@@ -19,7 +19,7 @@ PY=$(python3 -V 2>&1 | awk '{print $2}')
 # rather than printed, because a testbench that silently stops running still
 # leaves a screen full of green PASS lines -- the failure mode this summary
 # screen would otherwise hide.
-EXPECTED_TBS=15
+EXPECTED_TBS=16
 
 echo "+ make regression   (Icarus $IVL, Python $PY)"
 echo "  ... running, a few minutes: sim-top alone simulates ~356,000 cycles"

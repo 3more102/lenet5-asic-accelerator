@@ -421,12 +421,22 @@ about stimulus.
 
 ## Required before tapeout
 
-- trained-network C1, C3, and C5 layer tests;
-- extreme *legal* dimension configurations beyond the largest and smallest
-  (`tb_config_guard.sv` covers the invalid ones -- all 22 reject conditions
+- trained-network C1, C3, and C5 layer tests (`tb_layer_shapes.sv` now exercises
+  these layers at their real shapes with a strong per-layer oracle -- see below
+  -- but on the same deterministic-random, not-trained weights every other tier
+  uses; the "trained" half of this item is unchanged);
+- extreme *legal* dimension configurations beyond the largest and smallest, and
+  reconfiguration between shapes on the same engine instance
+  (`tb_config_guard.sv` covers the invalid configs -- all 22 reject conditions
   across the four engines that implement config validation, each proven inert
-  and clearing on the next legal config -- and `tb_extremes.sv` now covers both
-  ends of the legal range, but not the interior);
+  and clearing on the next legal config -- `tb_extremes.sv` covers both ends of
+  the legal range, and `tb_layer_shapes.sv` now drives `conv2d_engine` and
+  `dense_engine` through the real network's own five interior shapes -- C1, C3,
+  C5, F6, and the classifier -- reconfiguring each engine between them on the
+  same instance with no reset, exactly as `lenet5_top` does and as no
+  standalone engine-level testbench had exercised before. Interior shapes
+  *other than* the network's own five remain unswept -- this closes the
+  specific gap the real design exercises, not an exhaustive interior sweep);
 - legal counter ranges (random output stalls, stable-output-under-stall
   assertions and reset interruption policy are now covered -- see the
   robustness note above);
@@ -484,6 +494,11 @@ A passing run must show:
 - `conv2d_engine` and `dense_engine` bit-exact with -128 and +127 at every
   operand position, at both the largest and smallest legal layer shapes, and
   `dense_engine`'s raw `out_acc_o` matching the golden model beat for beat;
+- `conv2d_engine` and `dense_engine` bit-exact against `deploy_forward_int8` at
+  each of the network's own five layer shapes (C1, C3, C5, F6, classifier),
+  every beat compared, with each engine reconfigured between shapes on the same
+  instance and no reset in between, and the live C3 table reporting 60 of 96
+  connections;
 - `lenet5_top` predicted class matching `deploy_forward_int8` on the full
   canonical 32x32x1 input, and the same class again on a second back-to-back
   inference with no reset and no weight reload;

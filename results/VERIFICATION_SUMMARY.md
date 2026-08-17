@@ -1,22 +1,23 @@
 # Verification Summary
 
-Date: 2026-08-07, re-verified eight times (seven on 2026-08-15, one on
-2026-08-16) — after the requantize
+Date: 2026-08-07, re-verified nine times (seven on 2026-08-15, one on
+2026-08-16, one on 2026-08-17) — after the requantize
 pipelining change, after adding controller-FSM coverage and the
 config-validation reject tier, after adding the stall-invariance and
 reset-interruption tier, after adding the operand/dimension extremes tier, after
 adding post-synthesis formal equivalence, after extending both formal and
 simulation to the sky130hd-mapped netlist, after giving the two
-multiply-accumulate blocks a testbench of their own, and after giving the PE's
-control logic one. See the eight Addenda at the end. The body below reflects the
-first re-verification; **where a later addendum moves a number, the later one is
-authoritative** — that means the cycle figures come from the second (measured per
-inference rather than read off `$finish`) and the testbench count from the
-**eighth** (**15**, not 9, 10, 11, 12 or 14). The fifth and sixth add checks that
-are not testbenches at all and are not counted; the sixth re-runs existing
-testbenches against gates instead of RTL, which is a second run of an existing
-testbench rather than a new one. The seventh and eighth add genuinely new
-testbenches — two and one — which is why the count moves.
+multiply-accumulate blocks a testbench of their own, after giving the PE's
+control logic one, and after giving the real network's own C1/C3/C5/F6/classifier
+shapes a strong per-layer oracle. See the nine Addenda at the end. The body below
+reflects the first re-verification; **where a later addendum moves a number, the
+later one is authoritative** — that means the cycle figures come from the second
+(measured per inference rather than read off `$finish`) and the testbench count
+from the **ninth** (**16**, not 9, 10, 11, 12, 14 or 15). The fifth and sixth add
+checks that are not testbenches at all and are not counted; the sixth re-runs
+existing testbenches against gates instead of RTL, which is a second run of an
+existing testbench rather than a new one. The seventh, eighth and ninth add
+genuinely new testbenches — two, one and one — which is why the count moves.
 
 ## Status
 
@@ -795,3 +796,133 @@ ModelSim ASE 18.1. `scripts/regression_summary.sh` asserts the count of 15.
 2026-08-16. The filenames are kept because earlier addenda cite them; the
 content is always the latest full regression rather than a snapshot, and git
 history holds the earlier versions.
+
+## Ninth addendum — 2026-08-17: the real network's own interior shapes, and engine reconfiguration
+
+Narrows the "extreme legal dimension configurations... but not the interior"
+and "trained-network C1, C3, and C5 layer tests" items from
+`docs/VERIFICATION_PLAN.md`. The testbench count moves from **15 to 16**.
+
+**The gap it closes.** `tb_lenet5_top.sv` already drives `conv2d_engine`
+through C1, C3 and C5 and `dense_engine` through F6 and the classifier — but
+it only ever checks the *final predicted class*. An argmax over 10 classes
+tolerates a great deal of intermediate error, so a layer can be quietly wrong
+and the top-level check still passes. Every other tier that does check
+per-layer output (`tb_conv2d_engine`, `tb_dense_engine`, `tb_extremes`, and
+the rest) drives synthetic shapes chosen for stimulus quality, not the real
+network's own dimensions. Nothing in the project had ever checked a per-layer
+output at the shapes `lenet5_top` actually uses.
+
+**`tb_layer_shapes.sv` closes it by instantiating `conv2d_engine` and
+`dense_engine` standalone — true `MAX_*` defaults, not `lenet5_top`'s
+internal wiring — and driving each through the real network's own five
+shapes in sequence, each layer's full beat stream checked against
+`golden/deploy.py:deploy_forward_int8` directly:**
+
+| Layer | Shape | Beats | Notes |
+|---|---|---:|---|
+| C1 | 1x32x32 → 6x28x28 | 4,704 | first use of `conv2d_engine` in this tier |
+| C3 | 6x14x14 → 16x10x10 | 1,600 | reconfigured from C1 with **no reset**; 60/96 real sparse connections live |
+| C5 | 16x5x5 → 120x1x1 | 120 | reconfigured from C3 with no reset; **`MAX_OUT_CH`=120 reached standalone for the first time** |
+| F6 | 120 → 84 | 84 | first use of `dense_engine` in this tier; **`MAX_OUT_LEN`=84 reached standalone for the first time** |
+| classifier | 84 → 10 | 10 | reconfigured from F6 with no reset; `out_acc_o` argmax picks class 6, matching the golden prediction |
+
+**Two things had never been exercised by any standalone engine-level
+testbench before**: `conv2d_engine` reconfigured C1→C3→C5 on one instance
+with no intervening reset, and `dense_engine` reconfigured F6→classifier the
+same way. `lenet5_top` does exactly this in production — one `conv2d_engine`
+instance shared across C1/C3/C5, though `lenet5_top` happens to use two
+separate `dense_engine` instances for F6 and the classifier rather than
+reconfiguring one, so the dense-side reconfiguration here is a block-level
+exercise of a capability the module supports rather than a reproduction of
+`lenet5_top`'s own wiring.
+
+**The oracle is not new code.** `deploy_forward_int8` already returns every
+intermediate array (`C1, S2, C3, S4, C5, F6, classifier_accumulators,
+prediction`) — the same function `tb_lenet5_top.sv` calls for its
+end-to-end check. This tier reuses that return value per layer, and reuses
+`tb_lenet5_top.sv`'s own seed (`SEED=3004`) so the stimulus is bit-identical
+to what the real demo already drives, not a new synthetic input.
+
+**Not claimed.** `random_deploy_parameters` is exactly that — deterministic
+random, shape-correct weights, the same as every other tier in this project.
+This closes the *dimension and reconfiguration* half of the two
+`VERIFICATION_PLAN.md` items above; it does not touch the *trained-weights*
+half of either, and `tb_layer_shapes.sv`'s own header says so directly.
+
+**Watchdog.** 400,000 cycles budgeted, ~147,598 used — comparable margin to
+the other engine-level tiers.
+
+**Proven able to fail — and the negative results are worth recording along
+with the positive one.** Three mutations were attempted on the live tables
+and registers this tier depends on; the first two were reverted as
+uninformative before the third became the tier's evidence.
+
+| Mutation | Result |
+|---|---|
+| `dense_engine.out_idx_q` self-holds instead of reloading on `start_i` | Caught by `tb_robustness` (beat 0 diverges from the oracle) **and** `tb_lenet5_top` (second inference predicts 9, not 6) — both pre-existing tiers. Reverted: too broad to demonstrate anything specific to reconfiguration. |
+| `dense_engine.cfg_out_len_q` self-holds instead of latching `cfg_out_len_i` | Broke every single-run testbench that touches `dense_engine`, including ones with no reconfiguration at all (`sim-f6`, `sim-extremes`, `sim-robustness`, `sim-classifier`, `sim-classifier-tie`). Reverted: a config register's reset value (0) is never a legal config, so self-holding it fails even the first-ever run — it cannot isolate anything about reconfiguration either. |
+| `lenet5_c3_connectivity`: output map 0 drops input 0 (59 of 60 real connections instead of 60) | **This is the tier's evidence — see below.** |
+
+The first two are left in the table rather than dropped, because they taught
+something concrete: a self-hold mutation only isolates a reconfiguration-specific
+gap when it targets a genuine sequencing *counter* that legitimately starts at
+its reset value — not a *config register*, whose reset value is never legal
+and which therefore breaks the very first run regardless of reconfiguration.
+
+**The C3 mutation, run against both `tb_layer_shapes` and `tb_lenet5_top`:**
+
+- `tb_layer_shapes`: **FATAL, immediately**, in `load_c3()` —
+  `"live lenet5_c3_connectivity produced 59 connections, golden/lenet5.py:
+  c3_connectivity() says 60"` — naming the exact defect at the exact point it
+  was introduced.
+- `tb_lenet5_top`: **also FATAL — but not on the predicted class.** Class 6
+  still matched the golden model; C3's peak accumulator magnitude is small
+  enough (measured elsewhere in this project at 3) that one dropped
+  connection did not flip the argmax. What failed instead was the cycle-count
+  regression check — **146,144 measured against 146,544 expected**, a
+  400-cycle discrepancy that is the real, measurable cost of one fewer
+  MAC-accumulation group. That check gives no indication of *what* changed;
+  it would pass or fail identically for any defect that happened to move the
+  cycle count by any amount.
+
+Both mutation and revert were run under Icarus; `git diff --stat
+rtl/lenet5_c3_connectivity.sv` confirmed a byte-identical revert before either
+file was left in this state.
+
+**This is the tier's real value, stated precisely rather than as a bigger
+"mutations caught" number.** Almost any defect in a heavily-covered design
+perturbs *some* assertion somewhere — that `tb_lenet5_top` also failed here is
+close to expected, not a strong result on its own. The distinction this tier
+demonstrates is *diagnostic content*: one failure says "a specific connection
+in a specific table is wrong, off by one," the other says "timing moved,"
+with nothing to point at why. Every other addendum in this document has drawn
+the same line somewhere — the sixth's "this measures the stimulus, not the
+netlist," the eighth's harness matching on `$fatal` message text instead of
+verdict — and this is that same distinction applied to a passing top-level
+regression that would otherwise read as unqualified good news.
+
+**Mutation accounting, stated precisely.** Three injected, three caught — but
+only the third is evidence for *this* tier; the other two were caught by
+pre-existing tiers and are recorded above as reverted rather than banked as a
+result. Running total: **90 caught across ten campaigns**, every campaign with a
+passing unmutated control.
+
+**Counts that changed:** 15 testbenches → **16**, 27 `PASS` lines → **33**.
+`scripts/regression_summary.sh`'s `EXPECTED_TBS` was updated to match and
+still fails if any of the sixteen stops reporting.
+
+**Both simulators agree exactly.** Icarus Verilog 12.0 (WSL2) and ModelSim
+ASE 18.1 (Windows-native) report identical PASS lines, identical predicted
+class, identical cycle counts, and identical `tb_layer_shapes` finish time
+(1,475,980 ns). `results/regression_summary.log` and
+`results/modelsim_regression_20260817.log` hold this run.
+
+One tooling note worth keeping: `scripts/run_modelsim.ps1` invokes
+`vsim -do scripts/modelsim.do` without `-c`, which in this environment opened
+a GUI session and exited after loading preferences without ever running the
+do-file — a silent no-op, not a failure either PowerShell or `vsim` itself
+reported as an error (`$LASTEXITCODE` was 0). `vsim -c -do scripts/modelsim.do`
+runs the full batch regression correctly. `run_modelsim.ps1` has worked from
+an interactive desktop session in every prior cycle; this only surfaced when
+run from this non-interactive automation context.
