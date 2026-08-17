@@ -49,7 +49,7 @@ fixed-point contract.
 
 ## Verification status
 
-All eighteen regression stages below pass under Icarus Verilog 12.0 and Siemens
+All nineteen regression stages below pass under Icarus Verilog 12.0 and Siemens
 ModelSim; generic synthesis passes under Yosys. Separately from simulation,
 `make equiv` proves by SAT that each synthesized netlist computes the same
 function as its RTL — 1,592 equivalence points across the three synthesizable
@@ -88,6 +88,23 @@ the sparse C3 table fails it immediately with the offending connection count;
 the same corruption leaves `tb_lenet5_top`'s predicted class correct and trips
 only its cycle-count check, 400 cycles off, with no indication of what moved.
 
+Everything above checks the RTL against a golden model driven by *untrained*
+weights. That is the right stimulus for arithmetic — uniformly random weights
+push accumulators through ranges a trained network never visits — but it cannot
+answer whether the accelerator recognises a digit, because the model it is
+compared against does not either. `tb_trained_mnist` closes that. A LeNet-5 with
+this design's exact topology, including the 60/96 sparse C3 table as a training
+constraint, reaches **99.13%** on the MNIST test set in float and **99.11%**
+after quantization to the power-of-two fixed-point scheme `requantize.sv`
+implements — a 0.02-point drop, with per-layer shifts calibrated to 9/8/9/9
+rather than the flat 7 every other tier uses. The RTL then classifies the first
+ten MNIST test digits, in dataset order and unmodified, **10 of 10 correctly**,
+matching the golden model exactly on each. It is also the only tier that
+instantiates `lenet5_top` at non-default `SHIFT_*` parameters, and the only one
+that streams *different* images back to back with the weight ROMs resident —
+which is what makes its third assertion possible: every inference must cost an
+identical number of cycles, so inference time cannot depend on image data.
+
 | Check | What it proves |
 |---|---|
 | `golden.test_golden` | quantization corner cases + the full floating LeNet-5 shape chain |
@@ -108,6 +125,7 @@ only its cycle-count check, 400 cycles off, with no indication of what moved.
 | `tb_extremes` | -128 and +127 at every operand position, at the largest layer the engines accept (400 MACs) and the smallest legal one; a second pass with weights cancelling to zero at shift 0 resolves a single wrong product; `dense_engine`'s raw `out_acc_o` checked against the golden model |
 | `tb_layer_shapes` | `conv2d_engine` and `dense_engine` driven standalone through the real network's own five shapes — C1 1x32x32→6x28x28, C3 6x14x14→16x10x10 with the live 60-connection sparse table, C5 16x5x5→120x1x1, F6 120→84, classifier 84→10 — each engine reconfigured between shapes on one instance with no reset, every beat checked against `deploy_forward_int8` rather than only the final class |
 | `tb_lenet5_top` | full 32x32 image end-to-end vs `deploy_forward_int8`, twice back-to-back with no reset, plus 20/20 state and 33/33 transition coverage of the control FSM |
+| `tb_trained_mnist` | a *trained* network (99.11% INT8 on the MNIST test set) classifying ten real MNIST digits in dataset order, 10/10 correct and all ten matching the golden model; the only tier at non-default `SHIFT_*` parameters (9/8/9/9), and the only one streaming different images with weights resident — which lets it assert that every inference costs identical cycles regardless of image data |
 
 ## Nominal cost
 

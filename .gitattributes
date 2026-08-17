@@ -13,6 +13,11 @@ Makefile    text eol=lf
 *.wlf       binary
 *.vcd       binary
 *.vvp       binary
+# .npz is a zip archive. Git's `text=auto` autodetection would almost certainly
+# classify it binary on its own, but "almost certainly" is not a property to
+# leave a trained-model artifact resting on -- CRLF translation would corrupt it
+# silently, and the only symptom would be a load failure much later.
+*.npz       binary
 
 # --- GitHub linguist ---
 # Without these the language bar reports this as an HTML/Python repo: the

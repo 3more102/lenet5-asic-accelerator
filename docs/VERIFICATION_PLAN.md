@@ -421,10 +421,24 @@ about stimulus.
 
 ## Required before tapeout
 
-- trained-network C1, C3, and C5 layer tests (`tb_layer_shapes.sv` now exercises
-  these layers at their real shapes with a strong per-layer oracle -- see below
-  -- but on the same deterministic-random, not-trained weights every other tier
-  uses; the "trained" half of this item is unchanged);
+- ~~trained-network C1, C3, and C5 layer tests~~ **closed at the network level**
+  by `tb_trained_mnist.sv`. `golden/train_lenet5.py` trains a LeNet-5 with this
+  design's exact topology -- including the 60/96 sparse C3 table as a training
+  constraint, so no weight is ever learned into a connection the hardware cannot
+  express -- and post-training-quantizes it into the power-of-two scheme
+  `rtl/requantize.sv` implements: 99.13% float, 99.11% INT8 on the MNIST test
+  set. The RTL classifies ten unmodified MNIST test digits, in dataset order,
+  10/10 correctly and all ten matching `deploy_forward_int8`.
+
+  What is *not* claimed: per-beat checking of C1/C3/C5 with trained weights
+  specifically. `tb_layer_shapes.sv` does per-beat checking at those shapes with
+  random weights, and that is deliberately not repeated here, because it would
+  be weaker stimulus rather than additional coverage. The datapath's correctness
+  at a given shape does not depend on where the weights came from, and trained
+  weights cluster near zero -- they exercise a *narrower* accumulator range than
+  the uniform random weights every arithmetic tier already uses. The trained
+  network answers "does this recognise a digit"; the random weights answer "is
+  the arithmetic right"; neither substitutes for the other;
 - extreme *legal* dimension configurations beyond the largest and smallest, and
   reconfiguration between shapes on the same engine instance
   (`tb_config_guard.sv` covers the invalid configs -- all 22 reject conditions
@@ -459,8 +473,22 @@ about stimulus.
   now runs every mapped leaf block against the golden vectors, but with
   zero-delay gates and no back-annotation, so nothing here checks timing);
 - SRAM model replacement tests;
-- calibrated per-layer quantization scales (the deployment model currently
-  uses a fixed shift=7 for every layer -- see `docs/ARCHITECTURE.md` Section 7);
+- ~~calibrated per-layer quantization scales~~ **closed**. `lenet5_top` already
+  exposed `SHIFT_C1/C3/C5/F6` as parameters, so no RTL change was needed; what
+  was missing was a principled way to choose them. `golden/train_lenet5.py`
+  now calibrates each layer's shift from the measured accumulator distribution
+  on 512 *training* images -- `2^shift ~= P99.9(|acc|)/127`, a percentile rather
+  than the max, trading a few saturated outliers for resolution on everything
+  else, which is what `requantize`'s clamp is for. The result is 9/8/9/9, not
+  the flat 7, and it costs 0.02 accuracy points against float (99.13% -> 99.11%).
+  `tb_trained_mnist.sv` passes those values straight into the DUT's parameters,
+  making it the only tier that runs `lenet5_top` at non-default shifts.
+
+  Two scope limits worth stating: the calibration set is drawn from training
+  data, never the test set, so the accuracy figure is reported once and is not
+  a tuned number; and the scheme is still power-of-two, symmetric, per-*layer*.
+  Per-channel scales or a non-power-of-two multiplier would need a multiplier in
+  `requantize.sv` that the design deliberately does not have;
 - OpenROAD/place-and-route extension to the newly-synthesizable
   `avg_pool2x2_int8`/`dense_row_mac` (only `conv5x5_pe` has an OpenROAD
   config today); Yosys synthesis of `avg_pool2x2_stream`/`dense_engine`/
@@ -477,7 +505,11 @@ green -- see `results/icarus_regression_20260807.log` and
 `results/modelsim_run.log`. `make synth` needs the same WSL/Yosys path.
 A passing run must show:
 
-- fifteen Python unit tests passing (`python -m unittest golden.test_golden -v`);
+- twenty-one Python unit tests passing (`python -m unittest golden.test_golden -v`),
+  six of them new with the trained tier -- five covering the trained artifact
+  (including that the fast batched int8 forward behind the accuracy figure is
+  bit-identical to `deploy_forward_int8`) and one pinning that input
+  quantization dispatches on dtype rather than on the data;
 - PE test passing;
 - C3 table test passing with 60 connections;
 - `conv2d_engine` outputs matching the Python golden model;

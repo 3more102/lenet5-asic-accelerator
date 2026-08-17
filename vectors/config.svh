@@ -169,3 +169,16 @@
 `define TV_LS_CLS_IN_LEN 84
 `define TV_LS_CLS_OUT_LEN 10
 `define TV_LS_EXPECTED_CLASS 6
+
+// ---- tb_trained_mnist.sv ----
+`define TV_TR_NUM_IMAGES 10
+`define TV_TR_LABEL_MATCHES 10
+`define TV_TR_WATCHDOG_CYCLES 2000000
+// Calibrated per-layer shifts, replacing the flat shift=7 every random-weight
+// tier uses. tb_trained_mnist.sv passes these straight into lenet5_top's
+// SHIFT_C1/C3/C5/F6 parameters, so this is also the only tier that drives the
+// top level at anything other than its default shift values.
+`define TV_TR_SHIFT_C1 9
+`define TV_TR_SHIFT_C3 8
+`define TV_TR_SHIFT_C5 9
+`define TV_TR_SHIFT_F6 9

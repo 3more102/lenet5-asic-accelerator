@@ -1,23 +1,25 @@
 # Verification Summary
 
-Date: 2026-08-07, re-verified nine times (seven on 2026-08-15, one on
-2026-08-16, one on 2026-08-17) — after the requantize
+Date: 2026-08-07, re-verified ten times (seven on 2026-08-15, one on
+2026-08-16, two on 2026-08-17) — after the requantize
 pipelining change, after adding controller-FSM coverage and the
 config-validation reject tier, after adding the stall-invariance and
 reset-interruption tier, after adding the operand/dimension extremes tier, after
 adding post-synthesis formal equivalence, after extending both formal and
 simulation to the sky130hd-mapped netlist, after giving the two
 multiply-accumulate blocks a testbench of their own, after giving the PE's
-control logic one, and after giving the real network's own C1/C3/C5/F6/classifier
-shapes a strong per-layer oracle. See the nine Addenda at the end. The body below
+control logic one, after giving the real network's own C1/C3/C5/F6/classifier
+shapes a strong per-layer oracle, and after training a real network and running
+real MNIST digits through the RTL. See the ten Addenda at the end. The body below
 reflects the first re-verification; **where a later addendum moves a number, the
 later one is authoritative** — that means the cycle figures come from the second
 (measured per inference rather than read off `$finish`) and the testbench count
-from the **ninth** (**16**, not 9, 10, 11, 12, 14 or 15). The fifth and sixth add
-checks that are not testbenches at all and are not counted; the sixth re-runs
+from the **tenth** (**17**, not 9, 10, 11, 12, 14, 15 or 16). The fifth and sixth
+add checks that are not testbenches at all and are not counted; the sixth re-runs
 existing testbenches against gates instead of RTL, which is a second run of an
-existing testbench rather than a new one. The seventh, eighth and ninth add
-genuinely new testbenches — two, one and one — which is why the count moves.
+existing testbench rather than a new one. The seventh, eighth, ninth and tenth
+add genuinely new testbenches — two, one, one and one — which is why the count
+moves. The tenth also moves the Python unit-test count from 15 to **21**.
 
 ## Status
 
@@ -926,3 +928,163 @@ reported as an error (`$LASTEXITCODE` was 0). `vsim -c -do scripts/modelsim.do`
 runs the full batch regression correctly. `run_modelsim.ps1` has worked from
 an interactive desktop session in every prior cycle; this only surfaced when
 run from this non-interactive automation context.
+
+---
+
+## Tenth addendum — 2026-08-17: a trained network, and real MNIST digits through the RTL
+
+### The gap this closes, stated plainly
+
+Every tier described above — all sixteen of them — checks `lenet5_top` and its
+engines against `golden/deploy.py:deploy_forward_int8` driven by
+`random_deploy_parameters`. The golden model's own docstring says what those
+weights are: "not trained and are not expected to classify MNIST."
+
+That is the correct choice for the arithmetic tiers, and it is worth being
+precise about why, because it is not a compromise. Uniformly random int8 weights
+drive the accumulators through ranges a trained network never visits — a trained
+network's weights cluster near zero, so its accumulator excursions are *smaller*.
+The random weights are harder stimulus, which is why `tb_extremes`,
+`tb_conv5x5_row_mac`, `tb_dense_row_mac` and the rest all use them.
+
+What they could not do is answer the first question any outside reader asks:
+does the accelerator actually recognise a digit? Until now the honest answer was
+"unknown — the design computes exactly what the model computes, and the model
+does not classify anything either."
+
+### What was built
+
+`golden/train_lenet5.py` (offline; deliberately **not** in the regression or CI)
+trains a float LeNet-5 whose topology is exactly what `rtl/lenet5_top.sv`
+implements, then post-training-quantizes it into the fixed-point scheme
+`rtl/requantize.sv` implements — symmetric int8 weights, int32 biases, one
+power-of-two right shift per layer. No per-channel scales and no zero points,
+because the hardware has neither.
+
+Two design points are load-bearing rather than incidental:
+
+- **The sparse C3 table is a training constraint.** The 36 unconnected input
+  maps of the LeCun Table I topology are masked in the forward pass *and* zeroed
+  in the gradient every step. Training densely and masking afterwards would ship
+  a network different from the one being verified — weights would have been
+  learned into connections the silicon cannot express.
+- **The shift is calibrated, not guessed.** For each layer,
+  `2^shift ≈ P99.9(|accumulator|)/127`, measured on 512 *training* images. A
+  percentile rather than the maximum, trading a handful of saturated outliers for
+  resolution on everything else — which is what `requantize`'s clamp exists for.
+
+### Results
+
+| | |
+|---|---|
+| Float test accuracy | **99.13%** (full 10,000-image MNIST test set) |
+| INT8 test accuracy | **99.11%** — 0.02 points lost to quantization |
+| Calibrated shifts | c1=**9**, c3=**8**, c5=**9**, f6=**9** (not the flat 7) |
+| RTL on real digits | first ten test digits, dataset order, **10/10 correct** |
+| Agreement with the model | 10/10 matched `deploy_forward_int8` exactly |
+| Per-inference cost | **146,544 cycles**, identical on all ten images |
+
+The digits are the first ten in the MNIST test set in dataset order, unmodified.
+That is deliberate: selecting images the network classifies correctly would make
+the accuracy assertion circular. The calibration set is drawn from training data
+and the test set is touched once, so 99.11% is a reported figure, not a tuned one.
+
+### New coverage, beyond the accuracy claim
+
+`tb_trained_mnist.sv` is the only tier that:
+
+- **runs `lenet5_top` at non-default `SHIFT_*` parameters.** Those parameters
+  already existed; nothing had ever driven them at anything but the default 7,
+  so the per-layer shift plumbing was carried but unexercised.
+- **streams different images with the weight ROMs resident.** `tb_lenet5_top`
+  runs two inferences, but on the *same* image; here ten different images run
+  back to back and only `ROM_SEL_IMAGE` is rewritten between them.
+- **asserts inference cost is independent of the data.** Because the ten images
+  differ, "every inference took exactly 146,544 cycles" is a real property here.
+  In `tb_lenet5_top`, where both runs use one image, the equivalent check can
+  only prove state returns to idle.
+
+### Scope — what is *not* claimed
+
+Per-beat checking of C1/C3/C5 with trained weights specifically is not done, and
+is not a gap. `tb_layer_shapes.sv` already does per-beat checking at exactly
+those shapes with random weights, which is *stronger* stimulus for the datapath;
+the datapath's correctness at a shape does not depend on where the weights came
+from. The two tiers answer different questions and neither substitutes for the
+other.
+
+The quantization scheme remains power-of-two, symmetric and per-layer.
+Per-channel or non-power-of-two scaling would require a multiplier in
+`requantize.sv` that the design deliberately does not have — and at 0.02 points
+of loss, this result argues it is not needed.
+
+The Python unit-test count moves from 15 to 21. Four of the six additions check
+the trained artifact (shapes/dtypes, that unconnected C3 taps are exactly zero,
+that the calibrated shifts are legal and are *not* the flat default, and that the
+network classifies the demo digits). The fifth ties down something that would
+otherwise be an unverified claim: the full-test-set accuracy is computed by a
+batched im2col path, because the reference does its convolution in a Python
+triple loop and would take hours over 10,000 images. That makes 99.11% a claim
+about the *fast* function, so a test asserts the fast path is bit-identical to
+`deploy_forward_int8` on real digits.
+
+The sixth pins a real defect found while reviewing this work rather than by a
+failing test. `quantize_image` accepts both raw MNIST pixels and pre-normalised
+floats, and originally decided which it had been handed by inspecting the data
+(`scale iff x.max() > 1.0`). That takes the wrong branch for a legitimately dark
+uint8 image whose brightest pixel is 0 or 1, turning a near-black pixel into a
+saturated 127 -- silently, since nothing raises. It now dispatches on dtype,
+which cannot depend on the data. Real MNIST digits all contain a 255, so no
+committed vector changes; the bug was latent, not active. The same review
+removed the second copy of that mapping in `train_lenet5.py`, which had been
+sitting directly under a comment in `trained.py` warning that a second copy
+would silently change what the hardware is asked.
+
+### Proven able to fail — and the first mutation that did not
+
+Two mutations were injected. The first is worth recording precisely because it
+was *not* caught; deleting it would leave a more flattering but less useful
+record.
+
+**Mutation 1 — `lenet5_top`'s C1 stage routes `SHIFT_C3` instead of `SHIFT_C1`.**
+Chosen because it is invisible to every other tier by construction: with the
+default flat shift=7, `SHIFT_C1 == SHIFT_C3`, so the mutation is a no-op for
+everything except a tier using calibrated shifts. With 9/8/9/9 it makes C1
+requantize one bit too coarsely.
+
+Result: **not caught.** All ten digits still classified correctly. The reason is
+structural rather than lucky — a one-step shift error on a single layer is close
+to a uniform scale factor on everything downstream, and `argmax` is invariant to
+a positive scale. So this is a real robustness observation about the design (a
+per-layer shift can be off by one without changing these ten decisions), and a
+reminder that "only this tier can reach it" is a statement about *reachability*,
+not about detection. The claim that this tier exercises non-default `SHIFT_*`
+parameters stands; a claim that it *catches shift-routing bugs* would not, and
+is not made anywhere in this repository.
+
+**Mutation 2 — the image ROM latches only the first image ever written.**
+A `image_locked_q` register set once address `IMG_COUNT-1` is written, gating
+further `ROM_SEL_IMAGE` writes. This is a plausible "load once" optimization bug,
+and it is the bug class `tb_lenet5_top` is blind to *by construction*: that
+testbench runs two inferences on the **same** image, so a stale image produces
+exactly the answer it expects.
+
+| Testbench | Result under mutation 2 |
+|---|---|
+| `tb_trained_mnist` | **FATAL on image 1**: *"RTL predicted 7, golden INT8 model predicted 2 — the hardware and the model disagree"*. Image 1 is a 2; the locked ROM still held image 0's 7 |
+| `tb_lenet5_top` | **fully green** — all four PASS lines, including *"back-to-back inference reproduced class 6 with no reset and no weight reload"* and both inferences at 146,544 cycles |
+
+That is the tier's real result. Not "one more mutation caught" — a bug that the
+existing end-to-end testbench cannot detect no matter how many times it runs,
+because its two inferences share an image. Streaming *different* images is not a
+cosmetic difference in stimulus; it is what makes an entire failure mode
+observable.
+
+Both mutations were reverted and the full regression re-run green as the
+unmutated control, per this project's standing rule that a campaign without a
+passing control proves nothing.
+
+Running total after this campaign: **91 caught across eleven campaigns**, every
+campaign with a passing unmutated control. Two injected here, one caught — and
+the miss is deliberately part of the record, because a tally that only counts
+hits stops being evidence about the tests and becomes advertising.

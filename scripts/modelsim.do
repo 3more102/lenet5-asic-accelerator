@@ -37,7 +37,8 @@ vlog -sv +incdir+. \
     tb/tb_extremes.sv \
     tb/fsm_cov.sv \
     tb/tb_lenet5_top.sv \
-    tb/tb_layer_shapes.sv
+    tb/tb_layer_shapes.sv \
+    tb/tb_trained_mnist.sv
 
 vsim -c work.tb_conv5x5_pe
 onfinish stop
@@ -115,6 +116,11 @@ run -all
 quit -sim
 
 vsim -c work.tb_layer_shapes
+onfinish stop
+run -all
+quit -sim
+
+vsim -c work.tb_trained_mnist
 onfinish stop
 run -all
 quit -sim

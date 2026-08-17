@@ -100,7 +100,16 @@ def deploy_forward_int8(
 def random_deploy_parameters(seed: int = 11) -> dict[str, np.ndarray]:
     """Deterministic shape-correct int8 parameters for verification/demo use.
 
-    These values are not trained and are not expected to classify MNIST.
+    These values are not trained and are not expected to classify MNIST. That
+    is a feature for verification, not a limitation: uniformly random weights
+    drive accumulators across ranges a trained network -- whose weights cluster
+    near zero -- never visits, which is why every arithmetic tier in this
+    project uses them.
+
+    For the complementary case, a genuinely trained network with per-layer
+    calibrated shifts, see golden/trained.py:trained_parameters(). Use that
+    when the question is "does this classify a digit"; use this when the
+    question is "is the arithmetic right".
     """
 
     rng = np.random.default_rng(seed)

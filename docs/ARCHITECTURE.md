@@ -211,12 +211,19 @@ reference, and its own bit-exact Python counterpart is
 (alongside `golden/quantized_conv.py`'s per-operator kernels) that chains the
 RTL's actual design choices end to end:
 
-- untrained, deterministic weights/biases (`random_deploy_parameters`,
-  matching `conv2d_engine`/`generate_vectors.py`'s existing "deterministic
-  random, not trained" convention -- trained-weight sourcing is still open,
-  same as the canonical model);
-- a fixed per-layer shift (`DEFAULT_SHIFTS`, currently 7 for C1/C3/C5/F6),
-  not yet a calibrated quantization/export step;
+- two parameter sets, for two different questions. `random_deploy_parameters`
+  is untrained and deterministic (the "deterministic random, not trained"
+  convention `conv2d_engine`/`generate_vectors.py` already used); it is the
+  better *arithmetic* stimulus, because uniform weights drive accumulators
+  through ranges a trained network never reaches, and every tier except one
+  uses it. `golden/trained.py:trained_parameters` is a genuinely trained
+  network -- see `golden/train_lenet5.py` -- and answers the one question the
+  random set cannot;
+- a per-layer shift. `DEFAULT_SHIFTS` is a flat 7 for C1/C3/C5/F6 and is what
+  the random-weight tiers use. The trained network ships calibrated shifts
+  instead (9/8/9/9), chosen from measured accumulator statistics on training
+  images; `lenet5_top`'s `SHIFT_C1/C3/C5/F6` parameters carry them into the
+  hardware, and `tb_trained_mnist.sv` is the tier that exercises them;
 - **ReLU**, not scaled tanh, after every stage;
 - **fixed** (non-trainable) 2x2 average pooling for S2/S4, not the paper's
   trainable-coefficient subsample;
@@ -227,8 +234,19 @@ RTL's actual design choices end to end:
 directly, so this is the model to extend if the RTL's quantization or
 classifier choice ever changes. `forward_canonical` remains untouched as the
 paper reference; the two models are deliberately not required to agree with
-each other. Still open for a real deployable classifier: trained weights,
-per-layer calibrated scales (rather than a fixed shift=7), and a decision on
-whether ReLU/dense+argmax should be revisited once real accuracy numbers are
-available.
+each other.
+
+The two items that were open here -- trained weights and per-layer calibrated
+scales -- are now closed, and the third has an answer. A LeNet-5 with this
+design's exact topology, trained under the 60/96 sparse C3 constraint and
+quantized to this scheme, reaches 99.13% float and **99.11% INT8** on the MNIST
+test set. So the ReLU / average-pool / dense+argmax substitutions for the
+paper's tanh / trainable-subsample / RBF cost essentially nothing at this task,
+and the power-of-two requantizer costs 0.02 accuracy points against float.
+There is no longer a reason to revisit those choices on accuracy grounds.
+
+What remains open is narrower than "a real deployable classifier": per-channel
+or non-power-of-two scales, which `rtl/requantize.sv` deliberately cannot
+express without gaining a multiplier, and which this result suggests are not
+needed.
 
