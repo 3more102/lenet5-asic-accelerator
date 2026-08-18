@@ -192,7 +192,7 @@ case would fail rather than quietly pass.
 
 `conv5x5_pe` inherits it, since its path was requantize-dominated:
 16.008 → 14.568 ns (62.5 → 68.6 MHz), 3,094 → 2,891 cells. Combined with the
-pipeline register in the previous section, the PE went **26.759 → 14.568 ns
+pipeline register in the section below, the PE went **26.759 → 14.568 ns
 overall — 37.4 → 68.6 MHz, 1.84×** — from two independent, separately
 measured fixes.
 
@@ -249,15 +249,36 @@ The +33 flip-flops are exactly the new register: 32 bits of `result_q` plus
 one `rq_valid_q`. **1.67× the frequency for 3.8% more area** is the kind of
 trade this project previously had no way to even state, let alone measure.
 
-**What the path became.** The new setup path
-(`asic/sta/results/conv5x5_pe_10ns.sta.log`) starts at `shift_i[0]` and runs
-through a 33-deep `maj3_1` chain into the output flop — i.e. it is now purely
-the `requantize` carry chain described in the section above, with the row-MAC
-no longer in series with it. The remaining bottleneck is therefore the *same*
-one the standalone `requantize` analysis identified, and the same two
-independent fixes apply: constant-folding `shift_i` (now literally the
-startpoint of the critical path) for area, and a pipelined or carry-select
-adder for the rest of the frequency. Neither is implemented.
+**What the path became.** Immediately after the pipeline register — and before
+the rounding rewrite in the section above — the worst path was purely the
+`requantize` carry chain: `shift_i` through a 33-deep `maj3_1` run into the
+output flop, with the row-MAC no longer in series with it.
+
+**The rewrite then moved it again, and the current report says something
+different.** Read `asic/sta/results/conv5x5_pe_10ns.sta.log` as it stands:
+
+```
+Startpoint: wgt_row_i[1] (input port clocked by core_clk)
+Endpoint:   _5673_ (rising edge-triggered flip-flop clocked by core_clk)
+            ...
+            14.2403   data arrival time
+            -4.5676   slack (VIOLATED)
+```
+
+The path now starts at a **weight input**, carries **14** `maj3_1` cells rather
+than 33, and ends at a flip-flop through a `mux2_1` — the
+`first_i ? bias_i : accumulator_q` select. That is **pipeline stage 1**: the
+row-MAC adder tree plus the accumulate. Stage 2 is no longer critical, which is
+exactly what the rewrite was for; the standalone `requantize` path is now
+`acc_i[3] → data_o[2]` through eight `or4_1` and three `nor4_1` cells, with zero
+`maj3_1`.
+
+**So the remaining fixes are not the ones this section originally listed.**
+Constant-folding `shift_i` is still worth doing for **area**, but it no longer
+buys frequency — `shift_i` is off the critical path. Moving Fmax now means
+attacking stage 1: a register between the adder tree and the accumulate, or a
+carry-save accumulator so the carry resolves once per output pixel instead of
+once per row. Neither is implemented.
 
 **Also applied to `conv2d_engine` — but unmeasurable there.** The production
 datapath (`lenet5_top` → `conv2d_engine`) inlines `conv5x5_row_mac` and
